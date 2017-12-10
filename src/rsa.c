@@ -149,16 +149,18 @@ void RSADestroyKeyPair(struct RSAKeyPair *key)
 
 int RSAEncrypt(struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure)
 {
-	MontExpMod(key->mont, secure, message, key->pub);
-	return 0;
+	int result;
+	result = MontExpMod(key->mont, secure, message, key->pub);
+	return result;
 }
 
 int RSADecrypt(struct RSAKeyPair* key, struct BigNumber *secure, /*out*/struct BigNumber *message)
 {
+	int result;
 	if (key->priv == NULL)
-		return 1;
-	MontExpMod(key->mont, message, secure, key->priv);
-	return 0;
+		return BN_ERR_INVALID_DATA;
+	result = MontExpMod(key->mont, message, secure, key->priv);
+	return result;
 }
 
 int RSAVerify(struct RSAKeyPair* key, struct BigNumber *secure, struct BigNumber *message)
@@ -177,8 +179,8 @@ int RSAVerify(struct RSAKeyPair* key, struct BigNumber *secure, struct BigNumber
 	BnFree(decrypted);
 
 	if (result == 0)
-		return 0;	// validated
-	return 1;
+		return BN_ERR_SUCCESS;	// validated
+	return BN_ERR_INVALID_DATA;
 }
 
 #define CHECK_KEY_DATA(cond)		if (!(cond)) { result = BN_ERR_INVALID_DATA; goto _EXIT; }
