@@ -1,10 +1,10 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
 #pragma once
-#ifndef __RA_RSA_H__
-#define __RA_RSA_H__
+#ifndef __RA_PK_H__
+#define __RA_PK_H__
 
-#include "bignumber.h"
+#include "racrypt_com.h"
 
 #ifdef __cplusplus
 extern "C" {

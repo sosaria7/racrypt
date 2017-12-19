@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bignumber.h"
-#include "asn1.h"
 
+#include <racrypt.h>
+#include "asn1.h"
 
 #define ASN1_NODE_CHUNK		10
 #define ASN1_DATA_STACK		10

@@ -1,0 +1,69 @@
+
+PREFIX    = /usr/local
+LIBPATH   = $(PREFIX)/lib
+INCPATH   = $(PREFIX)/include
+DATAPATH  = $(PREFIX)/share/doc/libtomcrypt/pdf
+BINPATH   = $(PREFIX)/bin
+CC        = cc
+AR        = ar
+ARFLAGS   = r
+RANLIB    = ranlib
+CFLAGS    = -O2 -Wall
+
+RA_CFLAGS  = -Isrc/include -Itests $(CFLAGS)
+RA_LDFLAGS = $(LDFLAGS)
+
+VERSION=1.0.0
+
+LIBMAIN_S =libracrypt.a
+
+OBJECTS=src/com/bignumber.o	\
+		src/com/gcd.o	\
+		src/com/montexpmod.o	\
+		src/com/prime.o	\
+		src/pk/asn1.o	\
+		src/pk/rsa.o	\
+		src/digest/sha1.o	\
+		src/digest/sha2.o
+
+TOBJECTS=src/test/test.o
+
+HEADERS=src/include/racrypt.h	\
+		src/include/racrypt_com.h	\
+		src/include/racrypt_digest.h	\
+		src/include/racrypt_pk.h
+
+HEADERS_I=src/pk/asn1.h
+
+default: $(LIBMAIN_S)
+
+$(OBJECTS): $(HEADERS) $(HEADERS_I)
+$(TOBJECTS): $(HEADERS)
+
+.SUFFIXES: .o .c
+.c.o:
+	$(CC) $(RA_CFLAGS) -c $< -o $@
+
+$(LIBMAIN_S): $(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $(OBJECTS)
+	$(RANLIB) $@
+
+test: $(TOBJECTS) $(LIBMAIN_S)
+	$(CC) $(TOBJECTS) $(LIBMAIN_S) $(RA_LDFLAGS) -o $@
+
+all: $(LIBMAIN_S) test
+
+clean:
+	-@rm -f $(OBJECTS) $(TOBJECTS)
+	-@rm -f $(LIBMAIN_S)
+	-@rm -f test
+
+
+install: $(LIBMAIN_S) $(HEADERS)
+	@mkdir -p $(DESTDIR)$(INCPATH)
+	@cp $(LIBMAIN_S) $(DESTDIR)$(LIBPATH)/
+	@cp $(HEADERS) $(DESTDIR)$(INCPATH)/
+
+
+
+

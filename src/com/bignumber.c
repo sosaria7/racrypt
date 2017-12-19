@@ -15,8 +15,7 @@
 #define snprintf _snprintf
 #endif
 
-#include "bignumber.h"
-
+#include <racrypt.h>
 
 static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
 static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);

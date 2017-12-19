@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bignumber.h"
-#include "gcd.h"
+#include <racrypt.h>
 
 // r = gcd(m,n)
 // Euclidean algorithm

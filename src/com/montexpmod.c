@@ -6,10 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bignumber.h"
-#include "gcd.h"
-#include "montexpmod.h"
-
+#include <racrypt.h>
 
 struct MontCtx
 {

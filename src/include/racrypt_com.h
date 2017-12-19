@@ -1,8 +1,8 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
 #pragma once
-#ifndef __RA_BIG_NUMBER_H__
-#define __RA_BIG_NUMBER_H__
+#ifndef __RA_COM_H__
+#define __RA_COM_H__
 
 #include <stdint.h>
 
@@ -95,6 +95,22 @@ uint64_t _BnGetUInt64(struct BigNumber *bn);
 void _BnInvert(struct BigNumber *bn);
 int _BnGetMSBPos(uint32_t val);
 int BnGetBitLength(struct BigNumber *bn);
+
+/* gcd */
+int GetGCD(/*out*/struct BigNumber *r, struct BigNumber *m, struct BigNumber *n);
+int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*out*/struct BigNumber *b, struct BigNumber *m, struct BigNumber *n, int isUnsigned);
+
+/* Montgomery expmod */
+struct MontCtx;
+int MontCreate(struct BigNumber *N, /*out*/struct MontCtx **montCtx);
+void MontDestroy(struct MontCtx *ctx);
+int MontExpMod(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
+
+/* prime */
+int GenPrimeNumber(struct BigNumber *bn, int bit);
+int GenPrimeNumberEx(struct BigNumber *bn, int bit, int(*progress)(int count, void* userData), void* userData, uint32_t *seedp);
+int IsPrimeNumber(struct BigNumber *bn);
+
 
 #ifdef __cplusplus
 }

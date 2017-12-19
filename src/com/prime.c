@@ -4,9 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "bignumber.h"
-#include "montexpmod.h"
-#include "prime.h"
+#include <racrypt.h>
 
 static uint32_t primes[] = {
 	3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,

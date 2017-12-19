@@ -6,12 +6,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "bignumber.h"
-#include "gcd.h"
-#include "montexpmod.h"
-#include "prime.h"
 #include "asn1.h"
-#include "rsa.h"
+#include <racrypt.h>
 
 struct RSAKeyPair {
 	struct BigNumber *mod;		// n
