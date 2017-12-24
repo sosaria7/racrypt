@@ -181,7 +181,7 @@ void RaSha1Update(struct RaSha1Ctx *ctx, const uint8_t *data, int len)
 		memcpy(ctx->buffer + bufferFilled, data, len);
 }
 
-void RaSha1Finish(struct RaSha1Ctx *ctx, /*out*/uint8_t output[20])
+void RaSha1Final(struct RaSha1Ctx *ctx, /*out*/uint8_t output[20])
 {
 	uint32_t val;
 
@@ -223,5 +223,5 @@ void RaSha1(const uint8_t *data, int len, /*out*/uint8_t output[20])
 	struct RaSha1Ctx ctx;
 	RaSha1Init(&ctx);
 	RaSha1Update(&ctx, data, len);
-	RaSha1Finish(&ctx, output);
+	RaSha1Final(&ctx, output);
 }

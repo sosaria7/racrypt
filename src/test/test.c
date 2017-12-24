@@ -162,10 +162,10 @@ static long GetElapsedTimeInMillisec(struct Timer *t)
 	return (long)(elapsed * 1000 / t->freq.QuadPart);
 }
 
-static void PrintElapsed(struct Timer *t, char* message)
+static void PrintElapsed(struct Timer *t, char* prefix)
 {
 	long elapsed = GetElapsedTimeInMillisec(t);
-	printf("%s", message);
+	printf("%s", prefix);
 	PrintTime(elapsed);
 }
 
@@ -601,6 +601,9 @@ void printHex(char* prefix, uint8_t* data, int len)
 
 // sha1
 static uint8_t message1[] = "The quick brown fox jumps over the lazy dog";
+static uint8_t md2_1[16] = { 0x03, 0xd8, 0x5a, 0x0d, 0x62, 0x9d, 0x2c, 0x44, 0x2e, 0x98, 0x75, 0x25, 0x31, 0x9f, 0xc4, 0x71 };
+static uint8_t md4_1[16] = { 0x1b, 0xee, 0x69, 0xa4, 0x6b, 0xa8, 0x11, 0x18, 0x5c, 0x19, 0x47, 0x62, 0xab, 0xae, 0xae, 0x90 };
+static uint8_t md5_1[16] = { 0x9e, 0x10, 0x7d, 0x9d, 0x37, 0x2b, 0xb6, 0x82, 0x6b, 0xd8, 0x1d, 0x35, 0x42, 0xa4, 0x19, 0xd6 };
 static uint8_t sha1_1[20] = { 0x2f, 0xd4, 0xe1, 0xc6, 0x7a, 0x2d, 0x28, 0xfc, 0xed, 0x84, 0x9e, 0xe1, 0xbb, 0x76, 0xe7, 0x39, 0x1b, 0x93, 0xeb, 0x12 };
 static uint8_t sha224_1[28] = { 0x73, 0x0e, 0x10, 0x9b, 0xd7, 0xa8, 0xa3, 0x2b, 0x1c, 0xb9, 0xd9, 0xa0, 0x9a, 0xa2, 0x32, 0x5d, 0x24, 0x30, 0x58, 0x7d, 0xdb, 0xc0, 0xc3, 0x8b, 0xad, 0x91, 0x15, 0x25 };
 static uint8_t sha256_1[32] = { 0xd7, 0xa8, 0xfb, 0xb3, 0x07, 0xd7, 0x80, 0x94, 0x69, 0xca, 0x9a, 0xbc, 0xb0, 0x08, 0x2e, 0x4f, 0x8d, 0x56, 0x51, 0xe4, 0x6d, 0x3c, 0xdb, 0x76, 0x2d, 0x02, 0xd0, 0xbf, 0x37, 0xc9, 0xe5, 0x92 };
@@ -610,6 +613,9 @@ static uint8_t sha512_224_1[28] = { 0x94, 0x4c, 0xd2, 0x84, 0x7f, 0xb5, 0x45, 0x
 static uint8_t sha512_256_1[32] = { 0xdd, 0x9d, 0x67, 0xb3, 0x71, 0x51, 0x9c, 0x33, 0x9e, 0xd8, 0xdb, 0xd2, 0x5a, 0xf9, 0x0e, 0x97, 0x6a, 0x1e, 0xee, 0xfd, 0x4a, 0xd3, 0xd8, 0x89, 0x00, 0x5e, 0x53, 0x2f, 0xc5, 0xbe, 0xf0, 0x4d };
 
 static uint8_t message2[] = "The quick brown fox jumps over the lazy dog.............................................................................";
+static uint8_t md2_2[16] = { 0xea, 0xc1, 0x2e, 0x69, 0x71, 0xc9, 0xc3, 0xa6, 0x97, 0xf9, 0xf4, 0x4a, 0x4b, 0x70, 0x24, 0xff };
+static uint8_t md4_2[16] = { 0x0f, 0xa4, 0x2a, 0x5f, 0x1c, 0xef, 0x63, 0xef, 0x1b, 0x89, 0x12, 0x1d, 0x86, 0x67, 0x1a, 0x66 };
+static uint8_t md5_2[16] = { 0x9a, 0x5c, 0xd2, 0x70, 0x8a, 0x30, 0x6a, 0xa9, 0xdb, 0xdd, 0x52, 0x32, 0x8a, 0xb1, 0xde, 0x47 };
 static uint8_t sha1_2[20] = { 0xbb, 0xef, 0x4a, 0xf0, 0x72, 0x60, 0xff, 0x06, 0x76, 0x0d, 0x3d, 0xea, 0xb5, 0x51, 0x7e, 0xc3, 0xce, 0x13, 0xcf, 0xc5 };
 static uint8_t sha224_2[28] = { 0xdc, 0x72, 0xeb, 0x74, 0xa7, 0x84, 0xf6, 0xea, 0x01, 0xdb, 0x7d, 0x3a, 0xec, 0x40, 0xeb, 0xf9, 0x98, 0x3c, 0x80, 0x22, 0xe8, 0x4f, 0x33, 0x55, 0x32, 0x76, 0xb4, 0xf1 };
 static uint8_t sha256_2[32] = { 0x18, 0x7b, 0xce, 0xcb, 0xae, 0x50, 0xc7, 0xfc, 0xbf, 0x34, 0x08, 0x5d, 0x12, 0x2b, 0x09, 0xbf, 0x2d, 0x26, 0x0a, 0x14, 0x07, 0xf3, 0x25, 0xca, 0x0a, 0x9c, 0x1b, 0x1f, 0x41, 0x4f, 0x77, 0x76 };
@@ -620,43 +626,8 @@ static uint8_t sha512_256_2[32] = { 0x9e, 0x85, 0x57, 0x07, 0x16, 0x4b, 0x22, 0x
 
 
 
-//static uint8_t message1[] = "";
+// digest
 int test6()
-{
-	int result;
-	uint8_t digest[20];
-
-	printf("\n");
-	printf("test sha1\n");
-	printf("message1 = %s\n", message1);
-
-	RaSha1(message1, sizeof(message1) - 1, digest);
-	printHex("message1_sha1 = ", digest, 20);
-	if (memcmp(digest, sha1_1, 20) != 0) {
-		printf("sha1(message1) failed\n");
-		result = BN_ERR_INVALID_DATA;
-		goto _EXIT;
-	}
-
-	printf("\n");
-	printf("message2 = %s\n", message2);
-
-	RaSha1(message2, sizeof(message2) - 1, digest);
-	printHex("message2_sha1 = ", digest, 20);
-	if (memcmp(digest, sha1_2, 20) != 0) {
-		printf("sha1(message2) failed\n");
-		result = BN_ERR_INVALID_DATA;
-		goto _EXIT;
-	}
-
-	result = BN_ERR_SUCCESS;
-_EXIT:
-
-	return result;
-}
-
-// sha2
-int test7()
 {
 	int result;
 	struct RaSha2Ctx ctx;
@@ -666,47 +637,79 @@ int test7()
 	printf("test sha2\n");
 	printf("message1 = %s\n", message1);
 
+	RaMd2(message1, sizeof(message1) - 1, digest);
+	printHex("md2(message1) = ", digest, sizeof(md2_1));
+	if (memcmp(digest, md2_1, sizeof(md2_1)) != 0) {
+		printf("md2(message1) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	RaMd4(message1, sizeof(message1) - 1, digest);
+	printHex("md4(message1) = ", digest, sizeof(md4_1));
+	if (memcmp(digest, md4_1, sizeof(md4_1)) != 0) {
+		printf("md4(message1) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	RaMd5(message1, sizeof(message1) - 1, digest);
+	printHex("md5(message1) = ", digest, sizeof(md5_1));
+	if (memcmp(digest, md5_1, sizeof(md5_1)) != 0) {
+		printf("md5(message1) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	RaSha1(message1, sizeof(message1) - 1, digest);
+	printHex("sha1(message1) = ", digest, sizeof(sha1_1));
+	if (memcmp(digest, sha1_1, sizeof(sha1_1)) != 0) {
+		printf("sha1(message1) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
 	RaSha256(message1, sizeof(message1) - 1, digest);
-	printHex("message1_sha256 = ", digest, 32);
-	if (memcmp(digest, sha256_1, 32) != 0) {
-		printf("sha256(message1) failed\n");
+	printHex("sha-256(message1) = ", digest, sizeof(sha256_1));
+	if (memcmp(digest, sha256_1, sizeof(sha256_1)) != 0) {
+		printf("sha-256(message1) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 	RaSha2Init(&ctx, RA_DGST_SHA2_512);
 	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message1_sha512 = ", digest, 64);
+	RaSha2Final(&ctx, digest);
+	printHex("sha-512(message1) = ", digest, sizeof(sha512_1));
 	if (memcmp(digest, sha512_1, sizeof(sha512_1)) != 0) {
-		printf("sha512(message1) failed\n");
+		printf("sha-512(message1) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_224);
 	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message1_sha224 = ", digest, sizeof(sha224_1));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-224(message1) = ", digest, sizeof(sha224_1));
 	if (memcmp(digest, sha224_1, sizeof(sha224_1)) != 0) {
-		printf("sha224(message1) failed\n");
+		printf("sha-224(message1) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_384);
 	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message1_sha384 = ", digest, sizeof(sha384_1));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-384(message1) = ", digest, sizeof(sha384_1));
 	if (memcmp(digest, sha384_1, sizeof(sha384_1)) != 0) {
-		printf("sha384(message1) failed\n");
+		printf("sha-384(message1) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_512_224);
 	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message1_sha512_224 = ", digest, sizeof(sha512_224_1));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-512/224(message1) = ", digest, sizeof(sha512_224_1));
 	if (memcmp(digest, sha512_224_1, sizeof(sha512_224_1)) != 0) {
 		printf("sha-512/224(message1) failed\n");
 		result = BN_ERR_INVALID_DATA;
@@ -715,10 +718,10 @@ int test7()
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_512_256);
 	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message1_sha512_256 = ", digest, sizeof(sha512_256_1));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-512/256(message1) = ", digest, sizeof(sha512_256_1));
 	if (memcmp(digest, sha512_256_1, sizeof(sha512_256_1)) != 0) {
-		printf("sha512_256_1(message1) failed\n");
+		printf("sha-512/256(message1) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
@@ -726,48 +729,80 @@ int test7()
 	printf("\n");
 	printf("message2 = %s\n", message2);
 
+	RaMd2(message2, sizeof(message2) - 1, digest);
+	printHex("md2(message2) = ", digest, sizeof(md2_2));
+	if (memcmp(digest, md2_2, sizeof(md2_2)) != 0) {
+		printf("md2(message2) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	RaMd4(message2, sizeof(message2) - 1, digest);
+	printHex("md4(message2) = ", digest, sizeof(md4_2));
+	if (memcmp(digest, md4_2, sizeof(md4_2)) != 0) {
+		printf("md4(message2) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	RaMd5(message2, sizeof(message2) - 1, digest);
+	printHex("md5(message2) = ", digest, sizeof(md5_2));
+	if (memcmp(digest, md5_2, sizeof(md5_2)) != 0) {
+		printf("md5(message2) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	RaSha1(message2, sizeof(message2) - 1, digest);
+	printHex("sha1(message2) = ", digest, sizeof(sha1_2));
+	if (memcmp(digest, sha1_2, sizeof(sha1_2)) != 0) {
+		printf("sha1(message2) failed\n");
+		result = BN_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
 	RaSha256(message2, sizeof(message2) - 1, digest);
-	printHex("message1_sha256 = ", digest, 32);
-	if (memcmp(digest, sha256_2, 32) != 0) {
-		printf("sha256(message1) failed\n");
+	printHex("sha-256(message2) = ", digest, sizeof(sha256_2));
+	if (memcmp(digest, sha256_2, sizeof(sha256_2)) != 0) {
+		printf("sha-256(message2) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_512);
 	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message2_sha512 = ", digest, sizeof(sha512_2));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-512(message2) = ", digest, sizeof(sha512_2));
 	if (memcmp(digest, sha512_2, sizeof(sha512_2)) != 0) {
-		printf("sha512_256_2(message2) failed\n");
+		printf("sha-512(message2) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_224);
 	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message2_sha224 = ", digest, sizeof(sha224_2));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-224(message2) = ", digest, sizeof(sha224_2));
 	if (memcmp(digest, sha224_2, sizeof(sha224_2)) != 0) {
-		printf("sha224(message2) failed\n");
+		printf("sha-224(message2) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_384);
 	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message2_sha384 = ", digest, sizeof(sha384_2));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-384(message2) = ", digest, sizeof(sha384_2));
 	if (memcmp(digest, sha384_2, sizeof(sha384_2)) != 0) {
-		printf("sha384(message2) failed\n");
+		printf("sha-384(message2) failed\n");
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_512_224);
 	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message2_sha512_224 = ", digest, sizeof(sha512_224_2));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-512/224(message2) = ", digest, sizeof(sha512_224_2));
 	if (memcmp(digest, sha512_224_2, sizeof(sha512_224_2)) != 0) {
 		printf("sha-512/224(message2) failed\n");
 		result = BN_ERR_INVALID_DATA;
@@ -776,8 +811,8 @@ int test7()
 
 	RaSha2Init(&ctx, RA_DGST_SHA2_512_256);
 	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Finish(&ctx, digest);
-	printHex("message2_sha512_256 = ", digest, sizeof(sha512_256_2));
+	RaSha2Final(&ctx, digest);
+	printHex("sha-512/256(message2) = ", digest, sizeof(sha512_256_2));
 	if (memcmp(digest, sha512_256_2, sizeof(sha512_256_2)) != 0) {
 		printf("sha-512/256(message2) failed\n");
 		result = BN_ERR_INVALID_DATA;
@@ -789,6 +824,7 @@ _EXIT:
 
 	return result;
 }
+
 
 int main()
 {
@@ -836,10 +872,11 @@ int main()
 	printf("\n--------------------------------\n");
 	printf("test6 start\n");
 	test6();
+	if (result != BN_ERR_SUCCESS) {
+		printf("test6 error: %d\n", result);
+		goto _EXIT;
+	}
 
-	printf("\n--------------------------------\n");
-	printf("test7 start\n");
-	test7();
 
 	printf("\n");
 

@@ -23,6 +23,9 @@ OBJECTS=src/com/bignumber.o	\
 		src/com/prime.o	\
 		src/pk/asn1.o	\
 		src/pk/rsa.o	\
+		src/digest/md2.o	\
+		src/digest/md4.o	\
+		src/digest/md5.o	\
 		src/digest/sha1.o	\
 		src/digest/sha2.o
 
@@ -48,15 +51,15 @@ $(LIBMAIN_S): $(OBJECTS)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 	$(RANLIB) $@
 
-test: $(TOBJECTS) $(LIBMAIN_S)
+racrypt_test: $(TOBJECTS) $(LIBMAIN_S)
 	$(CC) $(TOBJECTS) $(LIBMAIN_S) $(RA_LDFLAGS) -o $@
 
-all: $(LIBMAIN_S) test
+all: $(LIBMAIN_S) racrypt_test
 
 clean:
 	-@rm -f $(OBJECTS) $(TOBJECTS)
 	-@rm -f $(LIBMAIN_S)
-	-@rm -f test
+	-@rm -f racrypt_test
 
 
 install: $(LIBMAIN_S) $(HEADERS)

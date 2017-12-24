@@ -208,7 +208,7 @@ void RaSha256Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 		memcpy(ctx->buffer + bufferFilled, data, len);
 }
 
-void RaSha256Finish(struct RaSha2Ctx *ctx, /*out*/uint8_t output[32])
+void RaSha256Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[32])
 {
 	uint32_t val;
 
@@ -254,7 +254,7 @@ void RaSha256(const uint8_t *data, int len, /*out*/uint8_t output[32])
 	struct RaSha2Ctx ctx;
 	RaSha256Init(&ctx);
 	RaSha256Update(&ctx, data, len);
-	RaSha256Finish(&ctx, output);
+	RaSha256Final(&ctx, output);
 }
 
 #undef SHA2_W0
@@ -334,7 +334,7 @@ void RaSha512_224Init(struct RaSha2Ctx *ctx)
 	for (i = 0; i < 8; i++)
 		ctx->h[i] ^= U64(0xa5a5a5a5a5a5a5a5);
 	RaSha512Update(ctx, "SHA-512/224", 11);
-	RaSha512Finish(ctx, buffer);
+	RaSha512Final(ctx, buffer);
 	*/
 
 	ctx->totalLen_h = 0;
@@ -360,7 +360,7 @@ void RaSha512_256Init(struct RaSha2Ctx *ctx)
 	for (i = 0; i < 8; i++)
 		ctx->h[i] ^= U64(0xa5a5a5a5a5a5a5a5);
 	RaSha512Update(ctx, "SHA-512/256", 11);
-	RaSha512Finish(ctx, buffer);
+	RaSha512Final(ctx, buffer);
 	*/
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
@@ -456,7 +456,7 @@ void RaSha512Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 		memcpy(ctx->buffer + bufferFilled, data, len);
 }
 
-void RaSha512Finish(struct RaSha2Ctx *ctx, /*out*/uint8_t output[64])
+void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[64])
 {
 	uint32_t val;
 
@@ -510,7 +510,7 @@ void RaSha512(const uint8_t *data, int len, /*out*/uint8_t output[64])
 	struct RaSha2Ctx ctx;
 	RaSha512Init(&ctx);
 	RaSha512Update(&ctx, data, len);
-	RaSha512Finish(&ctx, output);
+	RaSha512Final(&ctx, output);
 }
 
 void RaSha2Init(struct RaSha2Ctx *ctx, enum RaDigestAlgorithm algorithm)
@@ -555,19 +555,19 @@ void RaSha2Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 	}
 }
 
-void RaSha2Finish(struct RaSha2Ctx *ctx, /*out*/uint8_t *output)
+void RaSha2Final(struct RaSha2Ctx *ctx, /*out*/uint8_t *output)
 {
 	switch (ctx->algorithm)
 	{
 	case RA_DGST_SHA2_224:
 	case RA_DGST_SHA2_256:	default:
-		RaSha256Finish(ctx, output);
+		RaSha256Final(ctx, output);
 		break;
 	case RA_DGST_SHA2_384:
 	case RA_DGST_SHA2_512:
 	case RA_DGST_SHA2_512_224:
 	case RA_DGST_SHA2_512_256:
-		RaSha512Finish(ctx, output);
+		RaSha512Final(ctx, output);
 		break;
 	}
 }
