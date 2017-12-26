@@ -27,7 +27,8 @@ OBJECTS=src/com/bignumber.o	\
 		src/digest/md4.o	\
 		src/digest/md5.o	\
 		src/digest/sha1.o	\
-		src/digest/sha2.o
+		src/digest/sha2.o	\
+		src/digest/has160.o
 
 TOBJECTS=src/test/test.o
 

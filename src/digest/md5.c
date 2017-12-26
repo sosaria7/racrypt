@@ -184,7 +184,7 @@ void RaMd5Final(struct RaMd5Ctx *ctx, /*out*/uint8_t output[16])
 	bufferFilled = ctx->totalLen_l & 0x3f;
 	ctx->buffer[bufferFilled++] = 0x80;
 	bufferLeft = 64 - bufferFilled;
-	if (bufferLeft <= 8) {
+	if (bufferLeft < 8) {
 		memset(ctx->buffer + bufferFilled, 0, bufferLeft);
 		RaMd5Process(ctx, ctx->buffer);
 		bufferLeft = 64;

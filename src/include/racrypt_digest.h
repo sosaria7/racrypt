@@ -113,6 +113,21 @@ void RaMd2Update(struct RaMd2Ctx *ctx, const uint8_t *data, int len);
 void RaMd2Final(struct RaMd2Ctx *ctx, /*out*/uint8_t data[16]);
 void RaMd2(const uint8_t *data, int len, /*out*/uint8_t output[16]);
 
+struct RaHas160Ctx
+{
+	uint32_t totalLen_h;
+	uint32_t totalLen_l;
+	uint32_t h[5];
+	uint8_t buffer[64];
+};
+
+int RaHas160Create(struct RaHas160Ctx **ctxp);
+void RaHas160Destroy(struct RaHas160Ctx *ctx);
+void RaHas160Init(struct RaHas160Ctx *ctx);
+void RaHas160Update(struct RaHas160Ctx *ctx, const uint8_t *data, int len);
+void RaHas160Final(struct RaHas160Ctx *ctx, /*out*/uint8_t data[20]);
+void RaHas160(const uint8_t *data, int len, /*out*/uint8_t output[20]);
+
 #ifdef __cplusplus
 }
 #endif

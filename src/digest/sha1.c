@@ -195,7 +195,7 @@ void RaSha1Final(struct RaSha1Ctx *ctx, /*out*/uint8_t output[20])
 	bufferFilled = ctx->totalLen_l & 0x3f;
 	ctx->buffer[bufferFilled++] = 0x80;
 	bufferLeft = 64 - bufferFilled;
-	if (bufferLeft <= 8) {
+	if (bufferLeft < 8) {
 		memset(ctx->buffer + bufferFilled, 0, bufferLeft);
 		RaSha1Process(ctx, ctx->buffer);
 		bufferLeft = 64;
