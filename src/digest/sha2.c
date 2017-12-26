@@ -84,7 +84,7 @@ void RaSha224Init(struct RaSha2Ctx *ctx)
 	w[(n) & 15] += w[(n - 7) & 15] + SHA2_W1(temp);	\
 	}
 
-#define SHA2_P12(A, B, C, D, E, F, G, H, n) {	\
+#define SHA2_P2(A, B, C, D, E, F, G, H, n) {	\
 	SHA2_W(n);	\
 	SHA2_P1(A, B, C, D, E, F, G, H, n);	\
 	}
@@ -101,14 +101,14 @@ void RaSha224Init(struct RaSha2Ctx *ctx)
 	SHA2_P1(b, c, d, e, f, g, h, a, (i + 7));	\
 }
 #define SHA2_P2_DO8(i) {	\
-	SHA2_P12(a, b, c, d, e, f, g, h, (i + 0));	\
-	SHA2_P12(h, a, b, c, d, e, f, g, (i + 1));	\
-	SHA2_P12(g, h, a, b, c, d, e, f, (i + 2));	\
-	SHA2_P12(f, g, h, a, b, c, d, e, (i + 3));	\
-	SHA2_P12(e, f, g, h, a, b, c, d, (i + 4));	\
-	SHA2_P12(d, e, f, g, h, a, b, c, (i + 5));	\
-	SHA2_P12(c, d, e, f, g, h, a, b, (i + 6));	\
-	SHA2_P12(b, c, d, e, f, g, h, a, (i + 7));	\
+	SHA2_P2(a, b, c, d, e, f, g, h, (i + 0));	\
+	SHA2_P2(h, a, b, c, d, e, f, g, (i + 1));	\
+	SHA2_P2(g, h, a, b, c, d, e, f, (i + 2));	\
+	SHA2_P2(f, g, h, a, b, c, d, e, (i + 3));	\
+	SHA2_P2(e, f, g, h, a, b, c, d, (i + 4));	\
+	SHA2_P2(d, e, f, g, h, a, b, c, (i + 5));	\
+	SHA2_P2(c, d, e, f, g, h, a, b, (i + 6));	\
+	SHA2_P2(b, c, d, e, f, g, h, a, (i + 7));	\
 }
 
 // sha256 defines
