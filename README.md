@@ -1,2 +1,2 @@
 # racrypt
-A RSA library written in C language
+A crypto library written in C language
