@@ -844,10 +844,10 @@ int test7()
 	int result = BN_ERR_SUCCESS;
 	struct RaAesCtx ctx;
 	uint8_t key[32];
-	uint8_t input[512];
+	uint8_t input[10240];
 	int inputLen;
-	uint8_t encrypted[512];
-	uint8_t decrypted[512];
+	uint8_t encrypted[1024];
+	uint8_t decrypted[1024];
 	uint8_t iv[16];
 	int readLen;
 	int writtenLen;
@@ -855,6 +855,7 @@ int test7()
 	int leftLen;
 	int srcOffset;
 	int destOffset;
+	struct Timer t;
 
 	memset(iv, 0, 16);
 
@@ -923,7 +924,7 @@ int test7()
 	for (i = 0; i < 32; i++) {
 		key[i] = rand() % 256;
 	}
-	inputLen = (rand() % 256) + 256;	// 256~511
+	inputLen = (rand() % 768) + 256;	// 256~1023
 	for (i = 0; i < inputLen; i++) {
 		input[i] = rand() % 256;
 	}
@@ -1056,6 +1057,28 @@ int test7()
 		printf("AES/128/CBC continus crypt failed\n");
 		result = BN_ERR_INVALID_DATA;
 	}
+
+	// performance test
+	memset( decrypted, 0, sizeof( decrypted ) );
+	InitTimer( &t );
+	for ( i = 0; i < 102400; i++ )
+		RaAesInit( &ctx, key, RA_AES_128, RA_AES_MODE_CBC );
+	PrintElapsed( &t, "AES/128/CBC Init * 100k times elapsed: " );
+
+	inputLen = sizeof(input);
+	memset( input, 0, inputLen );
+
+	RaAesSetIV( &ctx, iv );
+	InitTimer( &t );
+	for ( i = 0; i < 102400; i++ )
+		writtenLen = RaAesEncrypt( &ctx, input, inputLen, input );
+	PrintElapsed( &t, "AES/128/CBC Encrypt 1GB elapsed: " );
+
+	RaAesSetIV( &ctx, iv );
+	InitTimer( &t );
+	for ( i = 0; i < 102400; i++ )
+		RaAesDecrypt( &ctx, input, writtenLen, input );
+	PrintElapsed( &t, "AES/128/CBC Decrypt 1GB elapsed: " );
 
 	if (result == BN_ERR_SUCCESS) {
 		printf("AES test ok\n");

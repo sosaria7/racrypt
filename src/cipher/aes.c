@@ -794,8 +794,8 @@ int RaAesEncrypt(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t
 	while (length >= RA_BLOCK_LEN_AES) {
 		RaAesEncryptBlock(ctx, input, output);
 		input += RA_BLOCK_LEN_AES;
-		output += RA_BLOCK_LEN_AES;
 		length -= RA_BLOCK_LEN_AES;
+		output += RA_BLOCK_LEN_AES;
 		written_len += RA_BLOCK_LEN_AES;
 	}
 	if (length > 0) {
@@ -858,8 +858,8 @@ int RaAesDecrypt(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t
 	while (length >= RA_BLOCK_LEN_AES) {
 		RaAesDecryptBlock(ctx, input, output);
 		input += RA_BLOCK_LEN_AES;
-		output += RA_BLOCK_LEN_AES;
 		length -= RA_BLOCK_LEN_AES;
+		output += RA_BLOCK_LEN_AES;
 		written_len += RA_BLOCK_LEN_AES;
 	}
 	if (length > 0) {

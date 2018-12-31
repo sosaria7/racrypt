@@ -46,16 +46,16 @@ struct RaSha2Ctx
 	uint8_t buffer[128];
 	enum RaDigestAlgorithm	algorithm;
 };
-#define RA_DGST_LEN_MD2			16
-#define RA_DGST_LEN_MD4			16
-#define RA_DGST_LEN_MD5			16
-#define RA_DGST_LEN_SHA1		20
-#define RA_DGST_LEN_SHA224		28
-#define RA_DGST_LEN_SHA256		32
-#define RA_DGST_LEN_SHA384		48
-#define RA_DGST_LEN_SHA512		64
-#define RA_DGST_LEN_SHA512_224	28
-#define RA_DGST_LEN_SHA512_256	32
+#define RA_DGST_LEN_MD2				16
+#define RA_DGST_LEN_MD4				16
+#define RA_DGST_LEN_MD5				16
+#define RA_DGST_LEN_SHA1			20
+#define RA_DGST_LEN_SHA2_224		28
+#define RA_DGST_LEN_SHA2_256		32
+#define RA_DGST_LEN_SHA2_384		48
+#define RA_DGST_LEN_SHA2_512		64
+#define RA_DGST_LEN_SHA2_512_224	28
+#define RA_DGST_LEN_SHA2_512_256	32
 
 int RaSha2Create(struct RaSha2Ctx **ctxp);
 void RaSha2Destroy(struct RaSha2Ctx *ctx);

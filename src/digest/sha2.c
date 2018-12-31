@@ -244,7 +244,7 @@ void RaSha256Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[32])
 	PUT_UINT32_BE(output + 16, ctx->h[4]);
 	PUT_UINT32_BE(output + 20, ctx->h[5]);
 	PUT_UINT32_BE(output + 24, ctx->h[6]);
-	if (ctx->algorithm != RA_DGST_LEN_SHA224) {
+	if ( ctx->algorithm != RA_DGST_SHA2_224 ) {
 		PUT_UINT32_BE(output + 28, ctx->h[7]);
 	}
 }
