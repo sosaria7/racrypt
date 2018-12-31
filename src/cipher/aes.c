@@ -94,11 +94,7 @@ int main()
 	}
 	for (i = 0; i < 256; i++) {
 		xtime8[i] = xtime4[xtime2[i]];
-	}
-	for (i = 0; i < 256; i++) {
 		xtime9[i] = xtime8[i] ^ i;
-	}
-	for (i = 0; i < 256; i++) {
 		xtime14[i] = xtime8[i] ^ xtime4[i] ^ xtime2[i];
 	}
 
