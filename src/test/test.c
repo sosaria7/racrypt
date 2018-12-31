@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <racrypt.h>
 
@@ -821,10 +822,251 @@ int test6()
 	return result;
 }
 
+static uint8_t aes128_ecb1[] = {
+	0xdc, 0xd3, 0x09, 0x6e, 0x63, 0x6c, 0x77, 0x85, 0xa4, 0x27, 0x21, 0x84, 0x67, 0x47, 0xd1, 0xc3,
+	0x76, 0xbc, 0x10, 0x16, 0xc5, 0xfa, 0x0e, 0x33, 0x82, 0x3e, 0xe4, 0x82, 0x3b, 0xb6, 0x0f, 0x45,
+	0x29, 0xf5, 0xcb, 0xf2, 0x20, 0xad, 0x17, 0x9a, 0x71, 0x6b, 0x24, 0x3a, 0x56, 0xcd, 0x50, 0x0b };
+static uint8_t aes128_cbc1[] = {
+	0xdc, 0xd3, 0x09, 0x6e, 0x63, 0x6c, 0x77, 0x85, 0xa4, 0x27, 0x21, 0x84, 0x67, 0x47, 0xd1, 0xc3,
+	0x23, 0x49, 0xbe, 0x98, 0x99, 0x3a, 0x01, 0x0c, 0x7c, 0xe1, 0xb9, 0xa9, 0xbc, 0x35, 0x0b, 0x31,
+	0xb5, 0x1f, 0xb2, 0xe6, 0x06, 0xd0, 0xf4, 0xc2, 0x55, 0xd7, 0xda, 0xdf, 0x6d, 0xbe, 0xdf, 0x65 };
+static uint8_t aes128_cfb1[] = {
+	0x32, 0x81, 0x2e, 0xf4, 0x9e, 0xff, 0x45, 0x58, 0xe3, 0x6c, 0x98, 0x2b, 0xa5, 0x43, 0x45, 0x0e,
+	0x08, 0xcd, 0xe2, 0xb6, 0xd8, 0x98, 0x6f, 0x11, 0xcd, 0xe5, 0x79, 0xd4, 0x29, 0x4f, 0x52, 0x30,
+	0xce, 0x6f, 0x2e, 0x2c, 0xa1, 0xaa, 0xf0, 0xa6, 0x16, 0x78, 0x84, 0x4f, 0x91, 0x87, 0xda, 0x03 };
+static uint8_t aes128_ofb1[] = {
+	0x32, 0x81, 0x2e, 0xf4, 0x9e, 0xff, 0x45, 0x58, 0xe3, 0x6c, 0x98, 0x2b, 0xa5, 0x43, 0x45, 0x0e,
+	0x91, 0xfa, 0xc5, 0x6a, 0x38, 0x97, 0xf3, 0xa7, 0x60, 0xf3, 0x7c, 0x8c, 0x45, 0x9b, 0xad, 0xc8,
+	0xc9, 0x69, 0xd6, 0x01, 0x6e, 0xa7, 0x8a, 0x60, 0x37, 0x1f, 0xd3, 0xbf, 0x89, 0xf1, 0xbb, 0xb7 };
+// aes
+int test7()
+{
+	int result = BN_ERR_SUCCESS;
+	struct RaAesCtx ctx;
+	uint8_t key[32];
+	uint8_t input[512];
+	int inputLen;
+	uint8_t encrypted[512];
+	uint8_t decrypted[512];
+	uint8_t iv[16];
+	int readLen;
+	int writtenLen;
+	int i;
+	int leftLen;
+	int srcOffset;
+	int destOffset;
+
+	memset(iv, 0, 16);
+
+	/* fixed data encryption/decryption test */
+	memset( key, 0, sizeof( key ) );
+
+	memcpy( input, message1, sizeof( message1 ) );
+	inputLen = sizeof(message1);
+	memset( decrypted, 0, sizeof( decrypted ) );
+	RaAesInit( &ctx, key, RA_AES_128, RA_AES_MODE_ECB );
+	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7 );
+	printHex( "AES/128/ECB = ", encrypted, writtenLen );
+	if ( writtenLen != sizeof( aes128_ecb1 ) || memcmp( encrypted, aes128_ecb1, writtenLen ) ) {
+		printf( "AES/128/ECB encrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+	writtenLen = RaAesDecryptFinal( &ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7 );
+	if ( inputLen != writtenLen || memcmp( input, decrypted, writtenLen ) != 0 ) {
+		printf( "AES/128/ECB decrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	RaAesInit( &ctx, key, RA_AES_128, RA_AES_MODE_CBC );
+	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7 );
+	printHex( "AES/128/CBC = ", encrypted, writtenLen );
+	if ( writtenLen != sizeof( aes128_cbc1 ) || memcmp( encrypted, aes128_cbc1, writtenLen ) ) {
+		printf( "AES/128/ECB encrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+	RaAesSetIV( &ctx, iv );
+	writtenLen = RaAesDecryptFinal( &ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7 );
+	if ( inputLen != writtenLen || memcmp( input, decrypted, writtenLen ) != 0 ) {
+		printf( "AES/128/CBC decrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	RaAesInit( &ctx, key, RA_AES_128, RA_AES_MODE_CFB);
+	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7 );
+	printHex( "AES/128/CFB = ", encrypted, writtenLen );
+	if ( writtenLen != sizeof( aes128_cfb1 ) || memcmp( encrypted, aes128_cfb1, writtenLen ) ) {
+		printf( "AES/128/CFB encrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+	RaAesSetIV( &ctx, iv );
+	writtenLen = RaAesDecryptFinal( &ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7 );
+	if ( inputLen != writtenLen || memcmp( input, decrypted, writtenLen ) != 0 ) {
+		printf( "AES/128/CFB decrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	RaAesInit( &ctx, key, RA_AES_128, RA_AES_MODE_OFB );
+	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7 );
+	printHex( "AES/128/OFB = ", encrypted, writtenLen );
+	if ( writtenLen != sizeof( aes128_ofb1 ) || memcmp( encrypted, aes128_ofb1, writtenLen ) ) {
+		printf( "AES/128/OFB encrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+	RaAesSetIV( &ctx, iv );
+	writtenLen = RaAesDecryptFinal( &ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7 );
+	if ( inputLen != writtenLen || memcmp( input, decrypted, writtenLen ) != 0 ) {
+		printf( "AES/128/OFB decrypt failed\n" );
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	/* randam data encryption/decryption test */
+	for (i = 0; i < 32; i++) {
+		key[i] = rand() % 256;
+	}
+	inputLen = (rand() % 256) + 256;	// 256~511
+	for (i = 0; i < inputLen; i++) {
+		input[i] = rand() % 256;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_ECB);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/128/ECB failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/128/CBC failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_192, RA_AES_MODE_ECB);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/192/ECB failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_192, RA_AES_MODE_CBC);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/192/CBC failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_256, RA_AES_MODE_ECB);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/256/ECB failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_256, RA_AES_MODE_CBC);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/256/CBC failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+	
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CFB);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/128/CFB failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_OFB);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+	RaAesSetIV(&ctx, iv);
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/128/OFB failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+
+	// encrypt continus data
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
+	RaAesSetIV(&ctx, iv);
+	leftLen = inputLen;
+	srcOffset = 0;
+	destOffset = 0;
+	while (leftLen > 0) {
+		readLen = (rand() % 100) + 1;
+		if (readLen > leftLen)
+			readLen = leftLen;
+		writtenLen = RaAesEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
+		srcOffset += readLen;
+		destOffset += writtenLen;
+		leftLen -= readLen;
+	}
+	writtenLen = RaAesEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_AES_PADDING_PKCS7);
+	destOffset += writtenLen;
+
+	// decrypt continus data
+	RaAesSetIV(&ctx, iv);
+	leftLen = destOffset;
+	srcOffset = 0;
+	destOffset = 0;
+
+	// padding size can be up to 16 bytes.
+	while (leftLen > 16) {
+		readLen = (rand() % 50) + 1;
+		if (readLen > leftLen - 16)
+			break;
+		readLen = (rand() % readLen) + 1;
+		writtenLen = RaAesDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
+		srcOffset += readLen;
+		destOffset += writtenLen;
+		leftLen -= readLen;
+	}
+	writtenLen = RaAesDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_AES_PADDING_PKCS7);
+	destOffset += writtenLen;
+
+	writtenLen = destOffset;
+
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("AES/128/CBC continus crypt failed\n");
+		result = BN_ERR_INVALID_DATA;
+	}
+
+	if (result == BN_ERR_SUCCESS) {
+		printf("AES test ok\n");
+	}
+	return result;
+}
 
 int main()
 {
 	int result;
+	srand((unsigned)time(0));
 
 	printf("\n--------------------------------\n");
 	printf("test1 start\n");
@@ -867,12 +1109,19 @@ int main()
 
 	printf("\n--------------------------------\n");
 	printf("test6 start\n");
-	test6();
+	result = test6();
 	if (result != BN_ERR_SUCCESS) {
 		printf("test6 error: %d\n", result);
 		goto _EXIT;
 	}
 
+	printf("\n--------------------------------\n");
+	printf("test7 start\n");
+	result = test7();
+	if (result != BN_ERR_SUCCESS) {
+		printf("test7 error: %d\n", result);
+		goto _EXIT;
+	}
 
 	printf("\n");
 
