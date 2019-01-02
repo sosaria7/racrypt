@@ -330,6 +330,14 @@ static const uint32_t revLookup3[256] = {
 #endif
 #endif
 
+#ifdef WORDS_BIGENDIAN
+#define W2B(w, n)		(uint8_t)(w >> ((3-n)*8))
+#define B2W(a, b, c, d)	( ( a << 24 ) | ( b << 16 ) | ( c << 8 ) | d )
+#else
+#define W2B(w, n)		(uint8_t)(w >> ((n)*8))
+#define B2W(a, b, c, d)	( a | ( b << 8 ) | ( c << 16 ) | ( d << 24 ) )
+#endif
+
 int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaAesMode opMode, struct RaAesCtx **ctxp)
 {
 	struct RaAesCtx *ctx;
@@ -491,11 +499,12 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 
 	// rev_key = key * rev_mix_col = rev_sub(sub(key)) * rev_mix_col = rev_lookup(sub(key))
 	for (i = 0; i < ctx->nr; i++) {
-#define I(x,y)		s[((uint8_t*)prevKey)[x*4 + y]]
-		curKey[0] = RT0(I(0, 0)) ^ RT1(I(0, 1)) ^ RT2(I(0, 2)) ^ RT3(I(0, 3));
-		curKey[1] = RT0(I(1, 0)) ^ RT1(I(1, 1)) ^ RT2(I(1, 2)) ^ RT3(I(1, 3));
-		curKey[2] = RT0(I(2, 0)) ^ RT1(I(2, 1)) ^ RT2(I(2, 2)) ^ RT3(I(2, 3));
-		curKey[3] = RT0(I(3, 0)) ^ RT1(I(3, 1)) ^ RT2(I(3, 2)) ^ RT3(I(3, 3));
+#define I(x,y)		s[W2B( prevKey[x], y )]
+		curKey[0] = RT0( I( 0, 0 ) ) ^ RT1( I( 0, 1 ) ) ^ RT2( I( 0, 2 ) ) ^ RT3( I( 0, 3 ) );
+		curKey[1] = RT0( I( 1, 0 ) ) ^ RT1( I( 1, 1 ) ) ^ RT2( I( 1, 2 ) ) ^ RT3( I( 1, 3 ) );
+		curKey[2] = RT0( I( 2, 0 ) ) ^ RT1( I( 2, 1 ) ) ^ RT2( I( 2, 2 ) ) ^ RT3( I( 2, 3 ) );
+		curKey[3] = RT0( I( 3, 0 ) ) ^ RT1( I( 3, 1 ) ) ^ RT2( I( 3, 2 ) ) ^ RT3( I( 3, 3 ) );
+#undef I
 		curKey += 4;
 		prevKey += 4;
 	}
@@ -513,82 +522,42 @@ void RaAesGetIV(struct RaAesCtx *ctx, /*out*/uint8_t iv[16])
 	memcpy(iv, ctx->iv, 16);
 }
 
-
-#undef I
-#define I(x,y)		((uint8_t*)input)[x*4 + y]
-
-inline static void AesFwdProcess(uint32_t *input, uint32_t *output, uint32_t *key)
+inline static void AesFwdProcess(uint32_t *i, uint32_t *o, uint32_t *key)
 {
 	// sub byte, shift row, mix col, add key
 	// (shift_sub(input) * mix_col) + key
 	// = lookup(shift(input)) + key
-	output[0] = FT0(I(0, 0)) ^ FT1(I(1, 1)) ^ FT2(I(2, 2)) ^ FT3(I(3, 3)) ^ key[0];
-	output[1] = FT0(I(1, 0)) ^ FT1(I(2, 1)) ^ FT2(I(3, 2)) ^ FT3(I(0, 3)) ^ key[1];
-	output[2] = FT0(I(2, 0)) ^ FT1(I(3, 1)) ^ FT2(I(0, 2)) ^ FT3(I(1, 3)) ^ key[2];
-	output[3] = FT0(I(3, 0)) ^ FT1(I(0, 1)) ^ FT2(I(1, 2)) ^ FT3(I(2, 3)) ^ key[3];
+	o[0] = FT0( W2B( i[0], 0 ) ) ^ FT1( W2B( i[1], 1 ) ) ^ FT2( W2B( i[2], 2 ) ) ^ FT3( W2B( i[3], 3 ) ) ^ key[0];
+	o[1] = FT0( W2B( i[1], 0 ) ) ^ FT1( W2B( i[2], 1 ) ) ^ FT2( W2B( i[3], 2 ) ) ^ FT3( W2B( i[0], 3 ) ) ^ key[1];
+	o[2] = FT0( W2B( i[2], 0 ) ) ^ FT1( W2B( i[3], 1 ) ) ^ FT2( W2B( i[0], 2 ) ) ^ FT3( W2B( i[1], 3 ) ) ^ key[2];
+	o[3] = FT0( W2B( i[3], 0 ) ) ^ FT1( W2B( i[0], 1 ) ) ^ FT2( W2B( i[1], 2 ) ) ^ FT3( W2B( i[2], 3 ) ) ^ key[3];
 }
 
-inline static void AesRevProcess(uint32_t *input, uint32_t *output, uint32_t *rev_key)
+inline static void AesRevProcess(uint32_t *i, uint32_t *o, uint32_t *rev_key)
 {
 	// rev_shift row, rev_sub byte, add key, rev_mix col
 	// (rev_shift_sub(input) + key) * rev_mix_col = (rev_shift_sub(input) * rev_mix_col) + (key * rev_mix_col)
 	// = (rev_shift_sub(input) * rev_mix_col) + rev_key = rev_lookup(rev_shift(input)) + rev_key
-	output[0] = RT0(I(0, 0)) ^ RT1(I(3, 1)) ^ RT2(I(2, 2)) ^ RT3(I(1, 3)) ^ rev_key[0];
-	output[1] = RT0(I(1, 0)) ^ RT1(I(0, 1)) ^ RT2(I(3, 2)) ^ RT3(I(2, 3)) ^ rev_key[1];
-	output[2] = RT0(I(2, 0)) ^ RT1(I(1, 1)) ^ RT2(I(0, 2)) ^ RT3(I(3, 3)) ^ rev_key[2];
-	output[3] = RT0(I(3, 0)) ^ RT1(I(2, 1)) ^ RT2(I(1, 2)) ^ RT3(I(0, 3)) ^ rev_key[3];
+	o[0] = RT0( W2B( i[0], 0 ) ) ^ RT1( W2B( i[3], 1 ) ) ^ RT2( W2B( i[2], 2 ) ) ^ RT3( W2B( i[1], 3 ) ) ^ rev_key[0];
+	o[1] = RT0( W2B( i[1], 0 ) ) ^ RT1( W2B( i[0], 1 ) ) ^ RT2( W2B( i[3], 2 ) ) ^ RT3( W2B( i[2], 3 ) ) ^ rev_key[1];
+	o[2] = RT0( W2B( i[2], 0 ) ) ^ RT1( W2B( i[1], 1 ) ) ^ RT2( W2B( i[0], 2 ) ) ^ RT3( W2B( i[3], 3 ) ) ^ rev_key[2];
+	o[3] = RT0( W2B( i[3], 0 ) ) ^ RT1( W2B( i[2], 1 ) ) ^ RT2( W2B( i[1], 2 ) ) ^ RT3( W2B( i[0], 3 ) ) ^ rev_key[3];
 }
 
-inline static void AesFwdSubByteShiftRow(uint32_t *input, uint32_t *output)
+inline static void AesFwdSubByteShiftRow(uint32_t *i, uint32_t *o)
 {
-	uint8_t *o;
-
-	o = (uint8_t*)output;
-	o[0] = s[I(0, 0)];
-	o[1] = s[I(1, 1)];
-	o[2] = s[I(2, 2)];
-	o[3] = s[I(3, 3)];
-	o += 4;
-	o[0] = s[I(1, 0)];
-	o[1] = s[I(2, 1)];
-	o[2] = s[I(3, 2)];
-	o[3] = s[I(0, 3)];
-	o += 4;
-	o[0] = s[I(2, 0)];
-	o[1] = s[I(3, 1)];
-	o[2] = s[I(0, 2)];
-	o[3] = s[I(1, 3)];
-	o += 4;
-	o[0] = s[I(3, 0)];
-	o[1] = s[I(0, 1)];
-	o[2] = s[I(1, 2)];
-	o[3] = s[I(2, 3)];
+	o[0] = B2W( s[W2B( i[0], 0 )], s[W2B( i[1], 1 )], s[W2B( i[2], 2 )], s[W2B( i[3], 3 )] );
+	o[1] = B2W( s[W2B( i[1], 0 )], s[W2B( i[2], 1 )], s[W2B( i[3], 2 )], s[W2B( i[0], 3 )] );
+	o[2] = B2W( s[W2B( i[2], 0 )], s[W2B( i[3], 1 )], s[W2B( i[0], 2 )], s[W2B( i[1], 3 )] );
+	o[3] = B2W( s[W2B( i[3], 0 )], s[W2B( i[0], 1 )], s[W2B( i[1], 2 )], s[W2B( i[2], 3 )] );
 }
 
-inline static void AesRevSubByteShiftRow(uint32_t *input, uint32_t *output)
+inline static void AesRevSubByteShiftRow(uint32_t *i, uint32_t *o)
 {
-	uint8_t *o;
-
-	o = (uint8_t*)output;
-	o[0] = rev_s[I(0, 0)];
-	o[1] = rev_s[I(3, 1)];
-	o[2] = rev_s[I(2, 2)];
-	o[3] = rev_s[I(1, 3)];
-	o += 4;
-	o[0] = rev_s[I(1, 0)];
-	o[1] = rev_s[I(0, 1)];
-	o[2] = rev_s[I(3, 2)];
-	o[3] = rev_s[I(2, 3)];
-	o += 4;
-	o[0] = rev_s[I(2, 0)];
-	o[1] = rev_s[I(1, 1)];
-	o[2] = rev_s[I(0, 2)];
-	o[3] = rev_s[I(3, 3)];
-	o += 4;
-	o[0] = rev_s[I(3, 0)];
-	o[1] = rev_s[I(2, 1)];
-	o[2] = rev_s[I(1, 2)];
-	o[3] = rev_s[I(0, 3)];
+	o[0] = B2W( rev_s[W2B( i[0], 0 )], rev_s[W2B( i[3], 1 )], rev_s[W2B( i[2], 2 )], rev_s[W2B( i[1], 3 )] );
+	o[1] = B2W( rev_s[W2B( i[1], 0 )], rev_s[W2B( i[0], 1 )], rev_s[W2B( i[3], 2 )], rev_s[W2B( i[2], 3 )] );
+	o[2] = B2W( rev_s[W2B( i[2], 0 )], rev_s[W2B( i[1], 1 )], rev_s[W2B( i[0], 2 )], rev_s[W2B( i[3], 3 )] );
+	o[3] = B2W( rev_s[W2B( i[3], 0 )], rev_s[W2B( i[2], 1 )], rev_s[W2B( i[1], 2 )], rev_s[W2B( i[0], 3 )] );
 }
 
 static void RaAesEncryptData(struct RaAesCtx *ctx, const uint8_t input[16], uint8_t output[16], uint32_t *iv)
