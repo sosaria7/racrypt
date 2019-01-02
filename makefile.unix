@@ -2,7 +2,6 @@
 PREFIX    = /usr/local
 LIBPATH   = $(PREFIX)/lib
 INCPATH   = $(PREFIX)/include
-DATAPATH  = $(PREFIX)/share/doc/libtomcrypt/pdf
 BINPATH   = $(PREFIX)/bin
 CC        = cc
 AR        = ar
