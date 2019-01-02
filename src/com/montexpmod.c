@@ -273,7 +273,7 @@ int MontExpMod(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber
 	pendBit = 0;
     oddBit = 0;
 	for (i = b->length - 1; i >= 0; i--) {
-		mask = (uint32_t)(1 << (BN_WORD_BIT-1));
+		mask = (uint32_t)(1U << (BN_WORD_BIT-1));
 		for (j = 0; j < BN_WORD_BIT; j++) {
 
 			if ((*bd) & mask) {

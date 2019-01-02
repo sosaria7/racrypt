@@ -11,7 +11,7 @@ RANLIB    = ranlib
 CFLAGS    = -O2 -Wall
 
 RA_CFLAGS  = -Isrc/include $(CFLAGS)
-RA_LDFLAGS = $(LDFLAGS)
+RA_LDFLAGS = $(LDFLAGS) -lrt
 
 VERSION=1.0.0
 
