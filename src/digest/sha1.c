@@ -10,6 +10,9 @@
 
 #include <racrypt.h>
 
+#define UNROLL      1
+#define RL(X, n)					((X << n) | (X >> (32 - n)))
+#define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
 int RaSha1Create(struct RaSha1Ctx **ctxp)
 {
@@ -46,7 +49,6 @@ void RaSha1Init(struct RaSha1Ctx *ctx)
 #define GET_UINT32_BE(b)		(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
 #define PUT_UINT32_BE(b, v)		{ (b)[0] = (v)>>24; (b)[1] = ((v)>>16) & 0xff; (b)[2] = ((v)>>8) & 0xff; (b)[3] = (v) & 0xff; }
 
-#define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define SHA1_P1(A, B, C, D, E, n)		{	\
 	E = (RL(A,5) + F(B, C, D) + E + K + w[n & 15]);	\
 	B = RL(B, 30);	\
@@ -78,7 +80,9 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 	uint32_t temp;
 	uint32_t w[16];
 	uint32_t a, b, c, d, e;
+#ifndef UNROLL
 	int i;
+#endif
 
 	a = ctx->h[0];
 	b = ctx->h[1];
@@ -86,32 +90,43 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 	d = ctx->h[3];
 	e = ctx->h[4];
 
-	w[0] = GET_UINT32_BE(data);
-	w[1] = GET_UINT32_BE(data + 4);
-	w[2] = GET_UINT32_BE(data + 8);
-	w[3] = GET_UINT32_BE(data + 12);
-	w[4] = GET_UINT32_BE(data + 16);
-	w[5] = GET_UINT32_BE(data + 20);
-	w[6] = GET_UINT32_BE(data + 24);
-	w[7] = GET_UINT32_BE(data + 28);
-	w[8] = GET_UINT32_BE(data + 32);
-	w[9] = GET_UINT32_BE(data + 36);
-	w[10] = GET_UINT32_BE(data + 40);
-	w[11] = GET_UINT32_BE(data + 44);
-	w[12] = GET_UINT32_BE(data + 48);
-	w[13] = GET_UINT32_BE(data + 52);
-	w[14] = GET_UINT32_BE(data + 56);
-	w[15] = GET_UINT32_BE(data + 60);
-
+    memcpy(w, data, 64);
+#ifndef WORDS_BIGENDIAN
+#ifndef UNROLL
+    for (i = 0; i < 16; i++ )
+        w[i] = CHANGE_ENDIAN(w[i]);
+#else
+    w[0] = CHANGE_ENDIAN(w[0]);
+    w[1] = CHANGE_ENDIAN(w[1]);
+    w[2] = CHANGE_ENDIAN(w[2]);
+    w[3] = CHANGE_ENDIAN(w[3]);
+    w[4] = CHANGE_ENDIAN(w[4]);
+    w[5] = CHANGE_ENDIAN(w[5]);
+    w[6] = CHANGE_ENDIAN(w[6]);
+    w[7] = CHANGE_ENDIAN(w[7]);
+    w[8] = CHANGE_ENDIAN(w[8]);
+    w[9] = CHANGE_ENDIAN(w[9]);
+    w[10] = CHANGE_ENDIAN(w[10]);
+    w[11] = CHANGE_ENDIAN(w[11]);
+    w[12] = CHANGE_ENDIAN(w[12]);
+    w[13] = CHANGE_ENDIAN(w[13]);
+    w[14] = CHANGE_ENDIAN(w[14]);
+    w[15] = CHANGE_ENDIAN(w[15]);
+#endif
+#endif
 
 //#define F(B, C, D)				((B & C) | (~B & D))
 #define F(B, C, D)				(D ^ (B & (C ^ D)))
 #define K						0x5a827999
-	
+#ifndef UNROLL
 	for (i = 0; i < 15; i += 5) {
 		SHA1_P1_DO5(i);
 	}
-
+#else
+    SHA1_P1_DO5(0);
+    SHA1_P1_DO5(5);
+    SHA1_P1_DO5(10);
+#endif
 	SHA1_P1(a, b, c, d, e, 15);
 	SHA1_P2(e, a, b, c, d, 16);
 	SHA1_P2(d, e, a, b, c, 17);
@@ -122,30 +137,47 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 #undef K
 #define F(B, C, D)				(B ^ C ^ D)
 #define K						0x6ed9eba1
-
+#ifndef UNROLL
 	for (i = 20; i < 40; i += 5) {
 		SHA1_P2_DO5(i);
 	}
+#else
+    SHA1_P2_DO5(20);
+    SHA1_P2_DO5(25);
+    SHA1_P2_DO5(30);
+    SHA1_P2_DO5(35);
+#endif
 
 #undef F
 #undef K
 //#define F(B, C, D)				((B & C) | (C & D) | (D & B))
 #define F(B, C, D)				((B & (C | D)) | (C & D))
 #define K						0x8f1bbcdc
-
+#ifndef UNROLL
 	for (i = 40; i < 60; i += 5) {
 		SHA1_P2_DO5(i);
 	}
+#else
+    SHA1_P2_DO5(40);
+    SHA1_P2_DO5(45);
+    SHA1_P2_DO5(50);
+    SHA1_P2_DO5(55);
+#endif
 
 #undef F
 #undef K
 #define F(B, C, D)				(B ^ C ^ D)
 #define K						0xca62c1d6
-
+#ifndef UNROLL
 	for (i = 60; i < 80; i += 5) {
 		SHA1_P2_DO5(i);
 	}
-
+#else
+    SHA1_P2_DO5(60);
+    SHA1_P2_DO5(65);
+    SHA1_P2_DO5(70);
+    SHA1_P2_DO5(75);
+#endif
 	ctx->h[0] += a;
 	ctx->h[1] += b;
 	ctx->h[2] += c;

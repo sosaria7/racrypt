@@ -10,6 +10,10 @@
 
 #include <racrypt.h>
 
+#define UNROLL		1
+#define RL(X, n)					((X << n) | (X >> (32 - n)))
+#define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
+
 int RaSha2Create(struct RaSha2Ctx **ctxp)
 {
 	struct RaSha2Ctx *ctx;
@@ -119,6 +123,7 @@ void RaSha224Init(struct RaSha2Ctx *ctx)
 #define SHA2_S1(T)	(RR(T, 6) ^ RR(T, 11) ^ RR(T, 25))
 #define SHA2_K(n)	raSha256K[n]
 
+
 static const uint32_t raSha256K[64] = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -135,8 +140,9 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 	uint32_t temp;
 	uint32_t w[16];
 	uint32_t a, b, c, d, e, f, g, h;
+#ifndef UNROLL
 	int i;
-
+#endif
 	a = (uint32_t)ctx->h[0];
 	b = (uint32_t)ctx->h[1];
 	c = (uint32_t)ctx->h[2];
@@ -146,23 +152,32 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 	g = (uint32_t)ctx->h[6];
 	h = (uint32_t)ctx->h[7];
 
-	w[0] = GET_UINT32_BE(data);
-	w[1] = GET_UINT32_BE(data + 4);
-	w[2] = GET_UINT32_BE(data + 8);
-	w[3] = GET_UINT32_BE(data + 12);
-	w[4] = GET_UINT32_BE(data + 16);
-	w[5] = GET_UINT32_BE(data + 20);
-	w[6] = GET_UINT32_BE(data + 24);
-	w[7] = GET_UINT32_BE(data + 28);
-	w[8] = GET_UINT32_BE(data + 32);
-	w[9] = GET_UINT32_BE(data + 36);
-	w[10] = GET_UINT32_BE(data + 40);
-	w[11] = GET_UINT32_BE(data + 44);
-	w[12] = GET_UINT32_BE(data + 48);
-	w[13] = GET_UINT32_BE(data + 52);
-	w[14] = GET_UINT32_BE(data + 56);
-	w[15] = GET_UINT32_BE(data + 60);
+    memcpy(w, data, 64);
+#ifndef WORDS_BIGENDIAN
+#ifndef UNROLL
+    for (i = 0; i < 16; i++ )
+        w[i] = CHANGE_ENDIAN(w[i]);
+#else
+    w[0] = CHANGE_ENDIAN(w[0]);
+    w[1] = CHANGE_ENDIAN(w[1]);
+    w[2] = CHANGE_ENDIAN(w[2]);
+    w[3] = CHANGE_ENDIAN(w[3]);
+    w[4] = CHANGE_ENDIAN(w[4]);
+    w[5] = CHANGE_ENDIAN(w[5]);
+    w[6] = CHANGE_ENDIAN(w[6]);
+    w[7] = CHANGE_ENDIAN(w[7]);
+    w[8] = CHANGE_ENDIAN(w[8]);
+    w[9] = CHANGE_ENDIAN(w[9]);
+    w[10] = CHANGE_ENDIAN(w[10]);
+    w[11] = CHANGE_ENDIAN(w[11]);
+    w[12] = CHANGE_ENDIAN(w[12]);
+    w[13] = CHANGE_ENDIAN(w[13]);
+    w[14] = CHANGE_ENDIAN(w[14]);
+    w[15] = CHANGE_ENDIAN(w[15]);
+#endif
+#endif
 
+#ifndef UNROLL
 	for (i = 0; i < 16; i += 8) {
 		SHA2_P1_DO8(i);
 	}
@@ -170,6 +185,16 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 	for (i = 16; i < 64; i += 8) {
 		SHA2_P2_DO8(i);
 	}
+#else
+	SHA2_P1_DO8(0);
+	SHA2_P1_DO8(8);
+	SHA2_P2_DO8(16);
+	SHA2_P2_DO8(24);
+	SHA2_P2_DO8(32);
+	SHA2_P2_DO8(40);
+	SHA2_P2_DO8(48);
+	SHA2_P2_DO8(56);
+#endif
 
 	ctx->h[0] += a;
 	ctx->h[1] += b;
@@ -244,7 +269,7 @@ void RaSha256Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[32])
 	PUT_UINT32_BE(output + 16, ctx->h[4]);
 	PUT_UINT32_BE(output + 20, ctx->h[5]);
 	PUT_UINT32_BE(output + 24, ctx->h[6]);
-	if ( ctx->algorithm != RA_DGST_SHA2_224 ) {
+	if (ctx->algorithm != RA_DGST_SHA2_224) {
 		PUT_UINT32_BE(output + 28, ctx->h[7]);
 	}
 }

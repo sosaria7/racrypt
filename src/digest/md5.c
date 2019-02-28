@@ -10,6 +10,10 @@
 
 #include <racrypt.h>
 
+#define	UNROLL						1
+#define RL(X, n)					((X << n) | (X >> (32 - n)))
+#define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
+
 static const int md5R[64] = {
 	7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
 	5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
@@ -58,7 +62,6 @@ void RaMd5Init(struct RaMd5Ctx *ctx)
 #define GET_UINT32_LE(b)		(((b)[3] << 24)|((b)[2] << 16)|((b)[1] << 8)|(b)[0])
 #define PUT_UINT32_LE(b, v)		{ (b)[3] = (v)>>24; (b)[2] = ((v)>>16) & 0xff; (b)[1] = ((v)>>8) & 0xff; (b)[0] = (v) & 0xff; }
 
-#define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define K(n)						(md5K[n])
 #define R(n)						(md5R[n])
 
@@ -78,64 +81,101 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 {
 	uint32_t w[16];
 	uint32_t a, b, c, d;
+#ifndef UNROLL
 	int i;
+#endif
 
 	a = ctx->h[0];
 	b = ctx->h[1];
 	c = ctx->h[2];
 	d = ctx->h[3];
 
-	w[0] = GET_UINT32_LE(data);
-	w[1] = GET_UINT32_LE(data + 4);
-	w[2] = GET_UINT32_LE(data + 8);
-	w[3] = GET_UINT32_LE(data + 12);
-	w[4] = GET_UINT32_LE(data + 16);
-	w[5] = GET_UINT32_LE(data + 20);
-	w[6] = GET_UINT32_LE(data + 24);
-	w[7] = GET_UINT32_LE(data + 28);
-	w[8] = GET_UINT32_LE(data + 32);
-	w[9] = GET_UINT32_LE(data + 36);
-	w[10] = GET_UINT32_LE(data + 40);
-	w[11] = GET_UINT32_LE(data + 44);
-	w[12] = GET_UINT32_LE(data + 48);
-	w[13] = GET_UINT32_LE(data + 52);
-	w[14] = GET_UINT32_LE(data + 56);
-	w[15] = GET_UINT32_LE(data + 60);
-
+	memcpy(w, data, 64);
+#ifdef WORDS_BIGENDIAN
+#ifndef UNROLL
+    for (i = 0; i < 16; i++ )
+        w[i] = CHANGE_ENDIAN(w[i]);
+#else
+    w[0] = CHANGE_ENDIAN(w[0]);
+    w[1] = CHANGE_ENDIAN(w[1]);
+    w[2] = CHANGE_ENDIAN(w[2]);
+    w[3] = CHANGE_ENDIAN(w[3]);
+    w[4] = CHANGE_ENDIAN(w[4]);
+    w[5] = CHANGE_ENDIAN(w[5]);
+    w[6] = CHANGE_ENDIAN(w[6]);
+    w[7] = CHANGE_ENDIAN(w[7]);
+    w[8] = CHANGE_ENDIAN(w[8]);
+    w[9] = CHANGE_ENDIAN(w[9]);
+    w[10] = CHANGE_ENDIAN(w[10]);
+    w[11] = CHANGE_ENDIAN(w[11]);
+    w[12] = CHANGE_ENDIAN(w[12]);
+    w[13] = CHANGE_ENDIAN(w[13]);
+    w[14] = CHANGE_ENDIAN(w[14]);
+    w[15] = CHANGE_ENDIAN(w[15]);
+#endif
+#endif
 
 #define F(B, C, D)				(D ^ (B & (C ^ D)))
 #define W(n)					(w[n])
-	
+
+#ifndef UNROLL
 	for (i = 0; i < 16; i += 4) {
 		MD5_P_DO4(i);
 	}
+#else
+    MD5_P_DO4(0);
+    MD5_P_DO4(4);
+    MD5_P_DO4(8);
+    MD5_P_DO4(12);
+#endif
 
 #undef F
 #undef W
 #define F(B, C, D)				(C ^ (D & (B ^ C)))
 #define W(n)					(w[(5 * n + 1) % 16])
 
+#ifndef UNROLL
 	for (i = 16; i < 32; i += 4) {
 		MD5_P_DO4(i);
 	}
+#else
+    MD5_P_DO4(16);
+    MD5_P_DO4(20);
+    MD5_P_DO4(24);
+    MD5_P_DO4(28);
+#endif
 
 #undef F
 #undef W
 #define F(B, C, D)				(B ^ C ^ D)
 #define W(n)					(w[(3 * n + 5) % 16])
 
+#ifndef UNROLL
 	for (i = 32; i < 48; i += 4) {
 		MD5_P_DO4(i);
 	}
+#else
+    MD5_P_DO4(32);
+    MD5_P_DO4(36);
+    MD5_P_DO4(40);
+    MD5_P_DO4(44);
+#endif
 
 #undef F
 #undef W
 #define F(B, C, D)				(C ^ (B | (~D)))
 #define W(n)					(w[(7 * n) % 16])
 
+#ifndef UNROLL
 	for (i = 48; i < 64; i += 4) {
 		MD5_P_DO4(i);
 	}
+#else
+    MD5_P_DO4(48);
+    MD5_P_DO4(52);
+    MD5_P_DO4(56);
+    MD5_P_DO4(60);
+#endif
 
 	ctx->h[0] += a;
 	ctx->h[1] += b;

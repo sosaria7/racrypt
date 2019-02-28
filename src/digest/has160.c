@@ -10,6 +10,10 @@
 
 #include <racrypt.h>
 
+#define	UNROLL						1
+#define RL(X, n)					((X << n) | (X >> (32 - n)))
+#define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
+
 static const int has160R[80] = {
 	 5, 11,  7, 15,  6, 13,  8, 14,  7, 12,  9, 11,  8, 15,  6, 12,  9, 14,  5, 13,
 	 5, 11,  7, 15,  6, 13,  8, 14,  7, 12,  9, 11,  8, 15,  6, 12,  9, 14,  5, 13,
@@ -51,8 +55,6 @@ void RaHas160Init(struct RaHas160Ctx *ctx)
 
 #define GET_UINT32_LE(b)		(((b)[3] << 24)|((b)[2] << 16)|((b)[1] << 8)|(b)[0])
 #define PUT_UINT32_LE(b, v)		{ (b)[3] = (v)>>24; (b)[2] = ((v)>>16) & 0xff; (b)[1] = ((v)>>8) & 0xff; (b)[0] = (v) & 0xff; }
-
-#define RL(X, n)					((X << n) | (X >> (32 - n)))
 
 #define HAS160_F1(B, C, D)			(D ^ (B & (C ^ D)))
 #define HAS160_F2(B, C, D)			(B ^ C ^ D)
@@ -99,22 +101,30 @@ static void RaHas160Process(struct RaHas160Ctx *ctx, const uint8_t data[64])
 	d = ctx->h[3];
 	e = ctx->h[4];
 
-	w[0] = GET_UINT32_LE(data);
-	w[1] = GET_UINT32_LE(data + 4);
-	w[2] = GET_UINT32_LE(data + 8);
-	w[3] = GET_UINT32_LE(data + 12);
-	w[4] = GET_UINT32_LE(data + 16);
-	w[5] = GET_UINT32_LE(data + 20);
-	w[6] = GET_UINT32_LE(data + 24);
-	w[7] = GET_UINT32_LE(data + 28);
-	w[8] = GET_UINT32_LE(data + 32);
-	w[9] = GET_UINT32_LE(data + 36);
-	w[10] = GET_UINT32_LE(data + 40);
-	w[11] = GET_UINT32_LE(data + 44);
-	w[12] = GET_UINT32_LE(data + 48);
-	w[13] = GET_UINT32_LE(data + 52);
-	w[14] = GET_UINT32_LE(data + 56);
-	w[15] = GET_UINT32_LE(data + 60);
+	memcpy(w, data, 64);
+#ifdef WORDS_BIGENDIAN
+#ifndef UNROLL
+    for (i = 0; i < 16; i++ )
+        w[i] = CHANGE_ENDIAN(w[i]);
+#else
+    w[0] = CHANGE_ENDIAN(w[0]);
+    w[1] = CHANGE_ENDIAN(w[1]);
+    w[2] = CHANGE_ENDIAN(w[2]);
+    w[3] = CHANGE_ENDIAN(w[3]);
+    w[4] = CHANGE_ENDIAN(w[4]);
+    w[5] = CHANGE_ENDIAN(w[5]);
+    w[6] = CHANGE_ENDIAN(w[6]);
+    w[7] = CHANGE_ENDIAN(w[7]);
+    w[8] = CHANGE_ENDIAN(w[8]);
+    w[9] = CHANGE_ENDIAN(w[9]);
+    w[10] = CHANGE_ENDIAN(w[10]);
+    w[11] = CHANGE_ENDIAN(w[11]);
+    w[12] = CHANGE_ENDIAN(w[12]);
+    w[13] = CHANGE_ENDIAN(w[13]);
+    w[14] = CHANGE_ENDIAN(w[14]);
+    w[15] = CHANGE_ENDIAN(w[15]);
+#endif
+#endif
 
 #define F			HAS160_F1
 #define K			HAS160_K1
