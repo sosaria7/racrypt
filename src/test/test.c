@@ -414,7 +414,7 @@ int test4()
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
-
+	printf("Creating KeyPair...\n");
 	InitTimer(&t);
 	result = RSACreateKeyPair(TEST4_KEY_BIT, &key);
 	PrintElapsed(&t, "RSACreateKeyPair elapsed: ");
@@ -660,7 +660,8 @@ int test5_1()
 {
 #define TEST5_1_KEY_BIT		2048
 	int result = BN_ERR_SUCCESS;
-	struct RSAKeyPair* key = NULL;
+	struct RSAKeyPair* privkey = NULL;
+	struct RSAKeyPair* pubkey = NULL;
 	struct BigNumber* m = NULL;
 	struct BigNumber* m2 = NULL;
 	struct BigNumber* s = NULL;
@@ -669,6 +670,8 @@ int test5_1()
 	int i;
 	uint8_t data[TEST5_1_KEY_BIT/8];
 	uint8_t data2[TEST5_1_KEY_BIT / 8];
+	uint8_t* keydata = NULL;
+	int len;
 
 	m = BnNew(TEST5_1_KEY_BIT);
 	m2 = BnNew(TEST5_1_KEY_BIT);
@@ -682,12 +685,35 @@ int test5_1()
 	printf("rsa encrypt/decrypt test\n");
 	for (ntry = 0; ntry < 10; ntry++) {
 		printf("try %d - ", ntry);
+		fflush(stdout);
 		// create key pair
-		result = RSACreateKeyPair(TEST5_1_KEY_BIT, &key);
+		result = RSACreateKeyPair(TEST5_1_KEY_BIT, &privkey);
 		if (result != BN_ERR_SUCCESS) {
 			printf("RSACreateKeyPair failed(%d)\n", result);
 			goto _EXIT;
 		}
+		result = RSAPubKeyToByteArray(privkey, NULL, 0, &len);
+		if (result != BN_ERR_SUCCESS) {
+			printf("RSAPubKeyToByteArray failed(%d)\n", result);
+			goto _EXIT;
+		}
+		keydata = malloc(len);
+		if (keydata == NULL) {
+			result = BN_ERR_OUT_OF_MEMORY;
+			goto _EXIT;
+		}
+		result = RSAPubKeyToByteArray(privkey, keydata, len, NULL);
+		if (result != BN_ERR_SUCCESS) {
+			printf("RSAPubKeyToByteArray failed(%d)\n", result);
+			goto _EXIT;
+		}
+		result = RSACreateKeyFromByteArray(keydata, len, &pubkey);
+		if (result != BN_ERR_SUCCESS) {
+			printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+			goto _EXIT;
+		}
+		free(keydata);
+		keydata = NULL;
 
 		for (mtry = 0; mtry < 50; mtry++) {
 			// generate random data
@@ -697,14 +723,14 @@ int test5_1()
 			data[0] &= 0x7f;
 			BnSetUByteArray(m, data, sizeof(data));
 			// encrypt with public key
-			result = RSAEncrypt(key, m, s);
+			result = RSAEncrypt(pubkey, m, s);
 			if (result != BN_ERR_SUCCESS) {
 				printf("RSAEncrypt failed(%d)\n", result);
 				goto _EXIT;
 			}
 
 			// decrypt with private key
-			result = RSADecrypt(key, s, m2);
+			result = RSADecrypt(privkey, s, m2);
 			if (result != BN_ERR_SUCCESS) {
 				printf("RSADecrypt failed(%d)\n", result);
 				goto _EXIT;
@@ -719,22 +745,24 @@ int test5_1()
 			}
 
 			// sign with private key
-			result = RSASign(key, m, s);
+			result = RSASign(privkey, m, s);
 			if (result != BN_ERR_SUCCESS) {
 				printf("RSASign failed(%d)\n", result);
 				goto _EXIT;
 			}
 
 			// verify with public key
-			result = RSAVerify(key, s, m2);
+			result = RSAVerify(pubkey, s, m2);
 			if (result != BN_ERR_SUCCESS) {
 				printf("RSAVerify failed(%d)\n", result);
 				goto _EXIT;
 			}
 			printf("."); fflush(stdout);
 		}
-		RSADestroyKeyPair(key);
-		key = NULL;
+		RSADestroyKeyPair(privkey);
+		privkey = NULL;
+		RSADestroyKeyPair(pubkey);
+		pubkey = NULL;
 		printf("\n");
 	}
 	printf(" - ok\n");
@@ -744,8 +772,12 @@ _EXIT:
 	BN_SAFEFREE(m);
 	BN_SAFEFREE(m2);
 	BN_SAFEFREE(s);
-	if (key != NULL)
-		free(key);
+	if (keydata != NULL)
+		free(keydata);
+	if (privkey != NULL)
+		RSADestroyKeyPair(privkey);
+	if (pubkey != NULL)
+		RSADestroyKeyPair(pubkey);
 	return result;
 }
 
