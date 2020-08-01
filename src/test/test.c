@@ -1137,10 +1137,10 @@ int test7()
 		goto _EXIT;
 	}
 
-	printf("randam data encryption/decryption test\n");
+	printf("random data encryption/decryption test\n");
 	for (ntry = 0; ntry < 20000 && result == BN_ERR_SUCCESS; ntry++)
 	{
-		/* randam data encryption/decryption test */
+		/* random data encryption/decryption test */
 		for (i = 0; i < 32; i++) {
 			key[i] = rand() % 256;
 		}
