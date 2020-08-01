@@ -31,7 +31,7 @@ struct ASN1Ctx {
 	struct ASN1Node **prevLink;
 	struct ASN1Node *none;
 
-	uint8_t* data;
+	const uint8_t* data;
 	int dataEnd;
 	int dataIndex;
 	int dataSP;
@@ -206,7 +206,7 @@ _EXIT:
 	return result;
 }
 
-int ASN1CreateContext(uint8_t *data, int dataLen, /*out*/struct ASN1Ctx **ctxp)
+int ASN1CreateContext(const uint8_t *data, int dataLen, /*out*/struct ASN1Ctx **ctxp)
 {
 	int result;
 	struct ASN1Ctx *ctx;

@@ -38,6 +38,7 @@ int RaHas160Create(struct RaHas160Ctx **ctxp)
 void RaHas160Destroy(struct RaHas160Ctx *ctx)
 {
 	if (ctx != NULL) {
+		memset(ctx, 0, sizeof(struct RaHas160Ctx));
 		free(ctx);
 	}
 }

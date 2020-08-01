@@ -8,6 +8,8 @@
 #include <time.h>
 
 #include <racrypt.h>
+static void printHex( char* prefix, uint8_t* data, int len );
+//static void printHexData( char* prefix, uint8_t* data, int len );
 
 static uint8_t prime[] = {
 0x91, 0x33, 0xa5, 0x78, 0x41, 0xc5, 0xeb, 0xc8, 0x92, 0xa3, 0x67, 0x4a, 0x42, 0xda, 0x13, 0x1e,
@@ -222,7 +224,7 @@ int test1()
 		goto _EXIT;
 	}
 
-	BnSetInt64(bn1, -1);
+	BnSetInt64(bn1, 135);
 
 	count = BnToByteArray(bn1, buffer, sizeof(buffer));
 	if (BnToByteArray(bn1, NULL, 0) != count) {
@@ -232,6 +234,10 @@ int test1()
 	if (BnCmp(bn1, bn2) != 0) {
 		printf("error BnToByteArray() or BnSetByteArray()\n");
 	}
+	BnSetUByteArray( bn2, buffer, count );
+	printHex( "hex=", buffer, count );
+	BnToFixedByteArray( bn2, buffer, 1 );
+	printHex( "fixed_hex=", buffer, 1 );
 
 	//BnSetInt(bn1, 0xffffffff);
 	//BnSetUInt64(bn1, 0xffffffff82345678);
@@ -358,13 +364,14 @@ _EXIT:
 
 int test3()
 {
+#define TEST3_KEY_BIT		2048
 	int result;
 	struct BigNumber *bn1 = NULL;
 	struct Timer t;
 	long elapsed;
 	int count = 0;
 
-	bn1 = BnNew(2048);      // 2048bit      
+	bn1 = BnNew(TEST3_KEY_BIT);      // 2048bit      
 	if (bn1 == NULL) {
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
@@ -372,7 +379,7 @@ int test3()
 
 	printf("Generate Prime Number");
 	InitTimer(&t);
-	GenPrimeNumberEx(bn1, 2048, primeProgress, &count, NULL);
+	GenPrimeNumberEx(bn1, TEST3_KEY_BIT, primeProgress, &count, NULL);
 	printf("\n");
 	elapsed = GetElapsedTimeInMillisec(&t);
 	BnPrintLn(bn1);
@@ -390,17 +397,18 @@ _EXIT:
 
 int test4()
 {
+#define TEST4_KEY_BIT		4096
 	int result;
 	struct RSAKeyPair *key = NULL;
 	struct BigNumber *m = NULL;
 	struct BigNumber *s = NULL;
 	struct Timer t;
-	uint8_t buffer[2048 / 8 + 1];
+	uint8_t buffer[TEST4_KEY_BIT / 8 + 1];
 
 	int count;
 
-	m = BnNew(2048);
-	s = BnNew(2048);
+	m = BnNew(TEST4_KEY_BIT);
+	s = BnNew(TEST4_KEY_BIT);
 	if (m == NULL || s == NULL) {
 		printf("BnNew Error\n");
 		result = BN_ERR_OUT_OF_MEMORY;
@@ -408,7 +416,7 @@ int test4()
 	}
 
 	InitTimer(&t);
-	result = RSACreateKeyPair(2048, &key);
+	result = RSACreateKeyPair(TEST4_KEY_BIT, &key);
 	PrintElapsed(&t, "RSACreateKeyPair elapsed: ");
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSACreateKeyPair failed(%d)\n", result);
@@ -422,8 +430,8 @@ int test4()
 	}
 
 	InitTimer(&t);
-	RSAEncrypt(key, m, s);
-	PrintElapsed(&t, "RSAEncrypt elapsed: ");
+	RSASign(key, m, s);
+	PrintElapsed(&t, "RSASign elapsed: ");
 
 	printf("secure=\n");
 	BnPrintLn(s);
@@ -433,6 +441,10 @@ int test4()
 		printf("rsa verify failed\n");
 	}
 	PrintElapsed(&t, "RSAVerify elapsed: ");
+
+	InitTimer(&t);
+	RSAEncrypt(key, m, s);
+	PrintElapsed(&t, "RSAEncrypt elapsed: ");
 
 	BnSetUInt(m, 0);
 
@@ -455,9 +467,12 @@ _EXIT:
 
 int test5()
 {
+#define TEST5_KEY_BIT		2048
 	int result;
-	struct RSAKeyPair *key = NULL;
+	struct RSAKeyPair *privkey = NULL;
+	struct RSAKeyPair* pubkey = NULL;
 	struct BigNumber *m = NULL;
+	struct BigNumber* m2 = NULL;
 	struct BigNumber *s = NULL;
 	struct Timer t;
 	uint8_t buffer[2048 / 8 + 1];
@@ -465,19 +480,12 @@ int test5()
 	int count;
 	int len;
 
-	m = BnNew(2048);
-	s = BnNew(2048);
-	if (m == NULL || s == NULL) {
+	m = BnNew(TEST5_KEY_BIT);
+	s = BnNew(TEST5_KEY_BIT);
+	m2 = BnNew(TEST5_KEY_BIT);
+	if (m == NULL || s == NULL || m2 == NULL) {
 		printf("BnNew Error\n");
 		result = BN_ERR_OUT_OF_MEMORY;
-		goto _EXIT;
-	}
-
-	InitTimer(&t);
-	result = RSACreateKeyFromByteArray(pub, sizeof(pub), &key);
-	PrintElapsed(&t, "RSACreateKeyFromByteArray(pub) elapsed: ");
-	if (result != BN_ERR_SUCCESS) {
-		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 
@@ -487,15 +495,18 @@ int test5()
 		goto _EXIT;
 	}
 
-	InitTimer(&t);
-	RSAEncrypt(key, m, s);
-	PrintElapsed(&t, "RSAEncrypt elapsed: ");
 
-	printf("secure=\n");
-	BnPrintLn(s);
+	// RSACreateKeyFromByteArray test
+	InitTimer(&t);
+	result = RSACreateKeyFromByteArray(pub, sizeof(pub), &pubkey);
+	PrintElapsed(&t, "RSACreateKeyFromByteArray(pub) elapsed: ");
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+		goto _EXIT;
+	}
 
 	// RSAPubKeyToByteArray test
-	result = RSAPubKeyToByteArray(key, NULL, 0, &len);
+	result = RSAPubKeyToByteArray(pubkey, NULL, 0, &len);
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSAPubKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
@@ -509,7 +520,7 @@ int test5()
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
-	result = RSAPubKeyToByteArray(key, keyData, len, NULL);
+	result = RSAPubKeyToByteArray(pubkey, keyData, len, NULL);
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSAPubKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
@@ -524,35 +535,17 @@ int test5()
 	free(keyData);
 	keyData = NULL;
 
-	RSADestroyKeyPair(key);
-	key = NULL;
-
+	// create private key
 	InitTimer(&t);
-	result = RSACreateKeyFromByteArray(priv, sizeof(priv), &key);
+	result = RSACreateKeyFromByteArray(priv, sizeof(priv), &privkey);
 	PrintElapsed(&t, "RSACreateKeyFromByteArray(priv) elapsed: ");
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 
-	InitTimer(&t);
-	if (RSAVerify(key, s, m) != 0) {
-		printf("rsa verify failed\n");
-	}
-	PrintElapsed(&t, "RSAVerify elapsed: ");
-
-	BnSetUInt(m, 0);
-
-	InitTimer(&t);
-	RSADecrypt(key, s, m);
-	PrintElapsed(&t, "RSADecrypt elapsed: ");
-
-	count = BnToByteArray(m, buffer, sizeof(buffer));
-	buffer[count] = '\0';
-	printf("message=%s\n", buffer);
-
-	// RSAPubKeyToByteArray test
-	result = RSAPrivKeyToByteArray(key, NULL, 0, &len);
+	// RSAPrivKeyToByteArray test
+	result = RSAPrivKeyToByteArray(privkey, NULL, 0, &len);
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSAPrivKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
@@ -566,7 +559,7 @@ int test5()
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
-	result = RSAPrivKeyToByteArray(key, keyData, len, NULL);
+	result = RSAPrivKeyToByteArray(privkey, keyData, len, NULL);
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSAPrivKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
@@ -581,17 +574,182 @@ int test5()
 	free(keyData);
 	keyData = NULL;
 
+	//-------------------------------
+	// encrypt and decrypt test
+	// encrypt with public key
+	InitTimer(&t);
+	result = RSAEncrypt(pubkey, m, s);
+	PrintElapsed(&t, "RSAEncrypt elapsed: ");
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSAEncrypt failed(%d)\n", result);
+		goto _EXIT;
+	}
+
+	printf("secure=\n");
+	BnPrintLn(s);
+
+	// decrypt with private key
+	InitTimer(&t);
+	result = RSACreateKeyFromByteArray(priv, sizeof(priv), &privkey);
+	PrintElapsed(&t, "RSACreateKeyFromByteArray(priv) elapsed: ");
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+		goto _EXIT;
+	}
+
+	InitTimer(&t);
+	result = RSADecrypt(privkey, s, m2);
+	PrintElapsed(&t, "RSADecrypt elapsed: ");
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSADecrypt failed(%d)\n", result);
+		goto _EXIT;
+	}
+
+	if (BnCmp(m, m2) != 0)
+	{
+		printf("RSADecrypt result is invalid\n");
+		printf("original:\n");
+		BnPrintLn(m);
+		printf("decrypted:\n");
+		BnPrintLn(m);
+		goto _EXIT;
+	}
+	printf("RSADecrypt result ok\n");
+
+	count = BnToByteArray(m, buffer, sizeof(buffer));
+	buffer[count] = '\0';
+	printf("message=%s\n", buffer);
+
+	//----------------------------------------
+	// sign and verify test
+	// sign with private key
+	InitTimer(&t);
+	result = RSASign(privkey, m, s);
+	PrintElapsed(&t, "RSASign elapsed: ");
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSADecrypt failed(%d)\n", result);
+		goto _EXIT;
+	}
+
+	InitTimer(&t);
+	result = RSAVerify(pubkey, s, m);
+	PrintElapsed(&t, "RSAVerify elapsed: ");
+	if (result != BN_ERR_SUCCESS) {
+		printf("rsa verify failed\n");
+		goto _EXIT;
+	}
+
+	BnSetUInt(m, 0);
+
+
 
 _EXIT:
 	BN_SAFEFREE(m);
 	BN_SAFEFREE(s);
-	if (key != NULL)
-		RSADestroyKeyPair(key);
-
+	BN_SAFEFREE(m2);
+	if (privkey != NULL)
+		RSADestroyKeyPair(privkey);
+	if (pubkey != NULL)
+		RSADestroyKeyPair(pubkey);
+	if (keyData != NULL)
+		free(keyData);
 	return result;
 }
 
-void printHex(char* prefix, uint8_t* data, int len)
+int test5_1()
+{
+#define TEST5_1_KEY_BIT		2048
+	int result = BN_ERR_SUCCESS;
+	struct RSAKeyPair* key = NULL;
+	struct BigNumber* m = NULL;
+	struct BigNumber* m2 = NULL;
+	struct BigNumber* s = NULL;
+	int ntry;
+	int mtry;
+	int i;
+	uint8_t data[TEST5_1_KEY_BIT/8];
+	uint8_t data2[TEST5_1_KEY_BIT / 8];
+
+	m = BnNew(TEST5_1_KEY_BIT);
+	m2 = BnNew(TEST5_1_KEY_BIT);
+	s = BnNew(TEST5_1_KEY_BIT);
+	if (m == NULL || s == NULL) {
+		printf("BnNew Error\n");
+		result = BN_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+
+	printf("rsa encrypt/decrypt test\n");
+	for (ntry = 0; ntry < 10; ntry++) {
+		printf("try %d - ", ntry);
+		// create key pair
+		result = RSACreateKeyPair(TEST5_1_KEY_BIT, &key);
+		if (result != BN_ERR_SUCCESS) {
+			printf("RSACreateKeyPair failed(%d)\n", result);
+			goto _EXIT;
+		}
+
+		for (mtry = 0; mtry < 50; mtry++) {
+			// generate random data
+			for (i = 0; i < sizeof(data); i++)
+				data[i] = rand() % 256;
+			// clear msb to make smaller than key
+			data[0] &= 0x7f;
+			BnSetUByteArray(m, data, sizeof(data));
+			// encrypt with public key
+			result = RSAEncrypt(key, m, s);
+			if (result != BN_ERR_SUCCESS) {
+				printf("RSAEncrypt failed(%d)\n", result);
+				goto _EXIT;
+			}
+
+			// decrypt with private key
+			result = RSADecrypt(key, s, m2);
+			if (result != BN_ERR_SUCCESS) {
+				printf("RSADecrypt failed(%d)\n", result);
+				goto _EXIT;
+			}
+
+			BnToFixedByteArray(m2, data2, sizeof(data2));
+
+			if (memcmp(data, data2, sizeof(data2)) != 0) {
+				printf("Decoded data is invalid\n");
+				result = BN_ERR_INVALID_DATA;
+				goto _EXIT;
+			}
+
+			// sign with private key
+			result = RSASign(key, m, s);
+			if (result != BN_ERR_SUCCESS) {
+				printf("RSASign failed(%d)\n", result);
+				goto _EXIT;
+			}
+
+			// verify with public key
+			result = RSAVerify(key, s, m2);
+			if (result != BN_ERR_SUCCESS) {
+				printf("RSAVerify failed(%d)\n", result);
+				goto _EXIT;
+			}
+			printf("."); fflush(stdout);
+		}
+		RSADestroyKeyPair(key);
+		key = NULL;
+		printf("\n");
+	}
+	printf(" - ok\n");
+
+
+_EXIT:
+	BN_SAFEFREE(m);
+	BN_SAFEFREE(m2);
+	BN_SAFEFREE(s);
+	if (key != NULL)
+		free(key);
+	return result;
+}
+
+static void printHex(char* prefix, uint8_t* data, int len)
 {
 	printf("%s", prefix);
 	while (len-- > 0) {
@@ -599,6 +757,30 @@ void printHex(char* prefix, uint8_t* data, int len)
 	}
 	printf("\n");
 }
+
+/*
+static void printHexData( char* prefix, uint8_t* data, int len )
+{
+	int i;
+	printf( "%s", prefix );
+
+	for ( i = 0; i < len; i++ ) {
+		printf( "0x%02x", *data++ );
+		if ( i != len - 1 )
+		{
+			if ( ( i % 16 ) == 15 )
+			{
+				printf( ",\n" );
+			}
+			else
+			{
+				printf( ", " );
+			}
+		}
+	}
+	printf( "\n" );
+}
+*/
 
 // sha1
 static uint8_t message1[] = "The quick brown fox jumps over the lazy dog";
@@ -632,7 +814,7 @@ static uint8_t has160_2[20] = { 0x84, 0x5b, 0x19, 0x7a, 0x70, 0xef, 0x0e, 0x9e, 
 // digest
 int test6()
 {
-	int result;
+	int result = BN_ERR_SUCCESS;
 	struct RaSha2Ctx ctx;
 	uint8_t digest[64];
 
@@ -817,8 +999,6 @@ int test6()
 		result = BN_ERR_INVALID_DATA;
 	}
 
-	result = BN_ERR_SUCCESS;
-
 	return result;
 }
 
@@ -842,12 +1022,13 @@ static uint8_t aes128_ofb1[] = {
 int test7()
 {
 	int result = BN_ERR_SUCCESS;
+#define TEST7_BLOCK_SIZE		4096
 	struct RaAesCtx ctx;
 	uint8_t key[32];
 	uint8_t input[10240];
 	int inputLen;
-	uint8_t encrypted[1024];
-	uint8_t decrypted[1024];
+	uint8_t encrypted[TEST7_BLOCK_SIZE];
+	uint8_t decrypted[TEST7_BLOCK_SIZE];
 	uint8_t iv[16];
 	int readLen;
 	int writtenLen;
@@ -855,6 +1036,7 @@ int test7()
 	int leftLen;
 	int srcOffset;
 	int destOffset;
+	int ntry;
 	struct Timer t;
 
 	memset(iv, 0, 16);
@@ -919,150 +1101,168 @@ int test7()
 		printf( "AES/128/OFB decrypt failed\n" );
 		result = BN_ERR_INVALID_DATA;
 	}
-
-	/* randam data encryption/decryption test */
-	for (i = 0; i < 32; i++) {
-		key[i] = rand() % 256;
-	}
-	inputLen = (rand() % 768) + 256;	// 256~1023
-	for (i = 0; i < inputLen; i++) {
-		input[i] = rand() % 256;
+	if (result != BN_ERR_SUCCESS) {
+		goto _EXIT;
 	}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_ECB);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/128/ECB failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+	printf("randam data encryption/decryption test\n");
+	for (ntry = 0; ntry < 20000 && result == BN_ERR_SUCCESS; ntry++)
+	{
+		/* randam data encryption/decryption test */
+		for (i = 0; i < 32; i++) {
+			key[i] = rand() % 256;
+		}
+		inputLen = (rand() % TEST7_BLOCK_SIZE-256) + 256;	// 256~4096
+		for (i = 0; i < inputLen; i++) {
+			input[i] = rand() % 256;
+		}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/128/CBC failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_ECB);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/128/ECB failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_192, RA_AES_MODE_ECB);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/192/ECB failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/128/CBC failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_192, RA_AES_MODE_CBC);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/192/CBC failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_192, RA_AES_MODE_ECB);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/192/ECB failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_256, RA_AES_MODE_ECB);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/256/ECB failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_192, RA_AES_MODE_CBC);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/192/CBC failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_256, RA_AES_MODE_CBC);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/256/CBC failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
-	
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CFB);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/128/CFB failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_256, RA_AES_MODE_ECB);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/256/ECB failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_OFB);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
-	RaAesSetIV(&ctx, iv);
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/128/OFB failed\n");
-		result = BN_ERR_INVALID_DATA;
-	}
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_256, RA_AES_MODE_CBC);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/256/CBC failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CFB);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/128/CFB failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
 
-	// encrypt continus data
-	memset(decrypted, 0, sizeof(decrypted));
-	RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
-	RaAesSetIV(&ctx, iv);
-	leftLen = inputLen;
-	srcOffset = 0;
-	destOffset = 0;
-	while (leftLen > 0) {
-		readLen = (rand() % 100) + 1;
-		if (readLen > leftLen)
-			readLen = leftLen;
-		writtenLen = RaAesEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
-		srcOffset += readLen;
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_OFB);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_AES_PADDING_PKCS7);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_AES_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/128/OFB failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
+
+		// encrypt continus data
+		//printf("encrypt continus data\n");
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
+		RaAesSetIV(&ctx, iv);
+		leftLen = inputLen;
+		srcOffset = 0;
+		destOffset = 0;
+		while (leftLen > 0) {
+			readLen = (rand() % 100) + 1;
+			if (readLen > leftLen)
+				readLen = leftLen;
+			writtenLen = RaAesEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+		writtenLen = RaAesEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_AES_PADDING_PKCS7);
 		destOffset += writtenLen;
-		leftLen -= readLen;
-	}
-	writtenLen = RaAesEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_AES_PADDING_PKCS7);
-	destOffset += writtenLen;
 
-	// decrypt continus data
-	RaAesSetIV(&ctx, iv);
-	leftLen = destOffset;
-	srcOffset = 0;
-	destOffset = 0;
+		// decrypt continus data
+		RaAesSetIV(&ctx, iv);
+		leftLen = destOffset;
+		srcOffset = 0;
+		destOffset = 0;
 
-	// padding size can be up to 16 bytes.
-	while (leftLen > 16) {
-		readLen = (rand() % 50) + 1;
-		if (readLen > leftLen - 16)
-			break;
-		readLen = (rand() % readLen) + 1;
-		writtenLen = RaAesDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
-		srcOffset += readLen;
+		// padding size can be up to 16 bytes.
+		while (leftLen > 16) {
+			readLen = (rand() % 50) + 1;
+			if (readLen > leftLen - 16)
+				break;
+			readLen = (rand() % readLen) + 1;
+			writtenLen = RaAesDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_AES_PADDING_PKCS7);
 		destOffset += writtenLen;
-		leftLen -= readLen;
+
+		writtenLen = destOffset;
+
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/128/CBC continus crypt failed\n");
+			result = BN_ERR_INVALID_DATA;
+		}
+		if ((ntry % 1000) == 0) {
+			printf("."); fflush(stdout);
+		}
 	}
-	writtenLen = RaAesDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_AES_PADDING_PKCS7);
-	destOffset += writtenLen;
-
-	writtenLen = destOffset;
-
-	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
-		printf("AES/128/CBC continus crypt failed\n");
-		result = BN_ERR_INVALID_DATA;
+	if (result == BN_ERR_SUCCESS) {
+		printf(" - ok\n");
+	}
+	else {
+		printf(" - failed\n");
+		goto _EXIT;
 	}
 
 	// performance test
 	memset( decrypted, 0, sizeof( decrypted ) );
 	InitTimer( &t );
-	for ( i = 0; i < 102400; i++ )
-		RaAesInit( &ctx, key, RA_AES_128, RA_AES_MODE_CBC );
+	for (i = 0; i < 102400; i++) {
+		RaAesInit(&ctx, key, RA_AES_128, RA_AES_MODE_CBC);
+	}
 	PrintElapsed( &t, "AES/128/CBC Init * 100k times elapsed: " );
 
 	inputLen = sizeof(input);
@@ -1070,21 +1270,33 @@ int test7()
 
 	RaAesSetIV( &ctx, iv );
 	InitTimer( &t );
-	for ( i = 0; i < 102400; i++ )
-		writtenLen = RaAesEncrypt( &ctx, input, inputLen, input );
+	for (i = 0; i < 102400; i++) {
+		writtenLen = RaAesEncrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 10239) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
 	PrintElapsed( &t, "AES/128/CBC Encrypt 1GB elapsed: " );
 
 	RaAesSetIV( &ctx, iv );
 	InitTimer( &t );
-	for ( i = 0; i < 102400; i++ )
-		RaAesDecrypt( &ctx, input, writtenLen, input );
+	for (i = 0; i < 102400; i++) {
+		RaAesDecrypt(&ctx, input, writtenLen, input);
+		if ((i % 10240) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
 	PrintElapsed( &t, "AES/128/CBC Decrypt 1GB elapsed: " );
 
 	if (result == BN_ERR_SUCCESS) {
 		printf("AES test ok\n");
 	}
+_EXIT:
 	return result;
 }
+
 
 int main()
 {
@@ -1122,11 +1334,18 @@ int main()
 		printf("test4 error: %d\n", result);
 		goto _EXIT;
 	}
+
 	printf("\n--------------------------------\n");
 	printf("test5 start\n");
 	result = test5();
 	if (result != BN_ERR_SUCCESS) {
 		printf("test5 error: %d\n", result);
+		goto _EXIT;
+	}
+
+	result = test5_1();
+	if (result != BN_ERR_SUCCESS) {
+		printf("test5_1 error: %d\n", result);
 		goto _EXIT;
 	}
 
@@ -1146,8 +1365,8 @@ int main()
 		goto _EXIT;
 	}
 
-	printf("\n");
 
+	printf("\n");
 
 _EXIT:
 

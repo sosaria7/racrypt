@@ -355,6 +355,7 @@ int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaAesMode op
 void RaAesDestroy(struct RaAesCtx *ctx)
 {
 	if (ctx != NULL) {
+		memset(ctx, 0, sizeof(struct RaAesCtx));
 		free(ctx);
 	}
 }

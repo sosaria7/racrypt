@@ -45,6 +45,7 @@ int RaMd5Create(struct RaMd5Ctx **ctxp)
 void RaMd5Destroy(struct RaMd5Ctx *ctx)
 {
 	if (ctx != NULL) {
+		memset(ctx, 0, sizeof(struct RaMd5Ctx));
 		free(ctx);
 	}
 }

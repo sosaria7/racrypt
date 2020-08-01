@@ -114,32 +114,33 @@ void RSADestroyKeyPair(struct RSAKeyPair *key)
 		return;
 	}
 	if (key->mod != NULL) {
-		BnFree(key->mod);
+		BnClearFree(key->mod);
 	}
 	if (key->pub != NULL) {
-		BnFree(key->pub);
+		BnClearFree(key->pub);
 	}
 	if (key->priv != NULL) {
-		BnFree(key->priv);
+		BnClearFree(key->priv);
 	}
 	if (key->prime1 != NULL) {
-		BnFree(key->prime1);
+		BnClearFree(key->prime1);
 	}
 	if (key->prime2 != NULL) {
-		BnFree(key->prime2);
+		BnClearFree(key->prime2);
 	}
 	if (key->exp1 != NULL) {
-		BnFree(key->exp1);
+		BnClearFree(key->exp1);
 	}
 	if (key->exp2 != NULL) {
-		BnFree(key->exp2);
+		BnClearFree(key->exp2);
 	}
 	if (key->coeff != NULL) {
-		BnFree(key->coeff);
+		BnClearFree(key->coeff);
 	}
 	if (key->mont != NULL) {
 		MontDestroy(key->mont);
 	}
+	memset(key, 0, sizeof(struct RSAKeyPair));
 	free(key);
 }
 
@@ -159,17 +160,25 @@ int RSADecrypt(struct RSAKeyPair* key, struct BigNumber *secure, /*out*/struct B
 	return result;
 }
 
+int RSASign( struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure )
+{
+	int result;
+	if ( key->priv == NULL )
+		return BN_ERR_INVALID_DATA;
+	result = MontExpMod( key->mont, secure, message, key->priv );
+	return result;
+}
+
 int RSAVerify(struct RSAKeyPair* key, struct BigNumber *secure, struct BigNumber *message)
 {
 	int result;
 	struct BigNumber *decrypted;
-	if (key->priv == NULL)
-		return 1;
+
 	decrypted = BnNewW(key->mod->length);
 	if (decrypted == NULL)
-		return 1;
+		return BN_ERR_OUT_OF_MEMORY;
 
-	MontExpMod(key->mont, decrypted, secure, key->priv);
+	MontExpMod(key->mont, decrypted, secure, key->pub);
 	result = BnCmp(message, decrypted);
 
 	BnFree(decrypted);
@@ -177,6 +186,11 @@ int RSAVerify(struct RSAKeyPair* key, struct BigNumber *secure, struct BigNumber
 	if (result == 0)
 		return BN_ERR_SUCCESS;	// validated
 	return BN_ERR_INVALID_DATA;
+}
+
+int RSAKeyBitLength( struct RSAKeyPair* key )
+{
+	return BnGetBitLength( key->mod );
 }
 
 #define CHECK_KEY_DATA(cond)		if (!(cond)) { result = BN_ERR_INVALID_DATA; goto _EXIT; }
@@ -255,7 +269,7 @@ _EXIT:
 	return result;
 }
 
-static int RSANewASN1Integer(uint8_t *asn1Data, struct ASN1Node *node, /*out*/struct BigNumber **bnp)
+static int RSANewASN1Integer(const uint8_t *asn1Data, struct ASN1Node *node, /*out*/struct BigNumber **bnp)
 {
 	int result;
 	struct BigNumber *bn = NULL;
@@ -292,7 +306,7 @@ _EXIT:
 }
 
 // pkcs#1 public key
-int RSACreateKeyPub(uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
+int RSACreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
 {
 	int result;
 	struct RSAKeyPair *key;
@@ -340,7 +354,7 @@ _EXIT:
 
 
 // pkcs#1 private key
-int RSACreateKeyPriv(uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
+int RSACreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
 
 {
 	int result;
@@ -418,7 +432,7 @@ _EXIT:
 
 
 // pkcs#8, byte array = BER
-int RSACreateKeyFromByteArray(uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
+int RSACreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
 {
 	int result;
 	struct ASN1Ctx *ctx = NULL;

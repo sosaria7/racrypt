@@ -12,7 +12,7 @@ extern "C" {
 
 // max_bit_len = 32 * BN_WORD_LEN
 #define BN_WORD_LEN		100
-#define BN_WORD_BIT		(sizeof(uint32_t)*8)		// 32
+#define BN_WORD_BIT		((int)sizeof(uint32_t)*8)		// 32
 #define BN_ISZERO(bn)	((bn)->length == 1 && (bn)->data[0] == 0)
 #define BN_ISONE(bn)	((bn)->length == 1 && (bn)->sign == 0 && (bn)->data[0] == 1)
 #define BN_ISNEG(bn)	((bn)->sign)
@@ -39,14 +39,15 @@ struct BigNumber* BnNewW(int length);
 struct BigNumber* BnNew(int bit);
 struct BigNumber* BnClone(struct BigNumber *bn);
 void BnFree(struct BigNumber* bn);
+void BnClearFree(struct BigNumber* bn);
 
 void BnSetInt(struct BigNumber *bn, int32_t value);
 void BnSetInt64(struct BigNumber *bn, int64_t value);
 void BnSetUInt(struct BigNumber *bn, uint32_t value);
 void BnSetUInt64(struct BigNumber *bn, uint64_t value);
 int BnSet(struct BigNumber *bn, struct BigNumber *bn2);
-int BnSetByteArray(struct BigNumber *bn, uint8_t *data, int len);
-int BnSetUByteArray(struct BigNumber *bn, uint8_t *data, int len);
+int BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len);
+int BnSetUByteArray(struct BigNumber *bn, const uint8_t *data, int len);
 
 int BnCmp(struct BigNumber *a, struct BigNumber *b);
 int BnCmpInt(struct BigNumber *a, int32_t val);
@@ -79,6 +80,7 @@ int BnGetRandomOdd(struct BigNumber *bn, int bit, uint32_t *seedp);
 int BnGetRandomRSA(struct BigNumber *bn, int bit, uint32_t *seedp);
 
 int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen);
+int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen );
 void BnPrint(struct BigNumber *bn);
 void BnPrintLn(struct BigNumber *bn);
 void BnPrint10(struct BigNumber *bn);

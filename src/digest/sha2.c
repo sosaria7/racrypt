@@ -30,6 +30,7 @@ int RaSha2Create(struct RaSha2Ctx **ctxp)
 void RaSha2Destroy(struct RaSha2Ctx *ctx)
 {
 	if (ctx != NULL) {
+		memset(ctx, 0, sizeof(struct RaSha2Ctx));
 		free(ctx);
 	}
 }

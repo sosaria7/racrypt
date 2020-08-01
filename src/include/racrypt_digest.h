@@ -82,6 +82,7 @@ struct RaMd5Ctx
 	uint8_t buffer[64];
 };
 int RaMd5Create(struct RaMd5Ctx **ctxp);
+void RaMd5Destroy( struct RaMd5Ctx *ctx );
 void RaMd5Init(struct RaMd5Ctx *ctx);
 void RaMd5Update(struct RaMd5Ctx *ctx, const uint8_t *data, int len);
 void RaMd5Final(struct RaMd5Ctx *ctx, /*out*/uint8_t data[16]);
@@ -95,6 +96,7 @@ struct RaMd4Ctx
 	uint8_t buffer[64];
 };
 int RaMd4Create(struct RaMd4Ctx **ctxp);
+void RaMd4Destroy( struct RaMd4Ctx *ctx );
 void RaMd4Init(struct RaMd4Ctx *ctx);
 void RaMd4Update(struct RaMd4Ctx *ctx, const uint8_t *data, int len);
 void RaMd4Final(struct RaMd4Ctx *ctx, /*out*/uint8_t data[16]);
@@ -108,6 +110,7 @@ struct RaMd2Ctx
 	uint8_t buffer[16];
 };
 int RaMd2Create(struct RaMd2Ctx **ctxp);
+void RaMd2Destroy( struct RaMd2Ctx *ctx );
 void RaMd2Init(struct RaMd2Ctx *ctx);
 void RaMd2Update(struct RaMd2Ctx *ctx, const uint8_t *data, int len);
 void RaMd2Final(struct RaMd2Ctx *ctx, /*out*/uint8_t data[16]);

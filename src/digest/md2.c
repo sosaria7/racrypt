@@ -51,6 +51,7 @@ int RaMd2Create(struct RaMd2Ctx **ctxp)
 void RaMd2Destroy(struct RaMd2Ctx *ctx)
 {
 	if (ctx != NULL) {
+		memset(ctx, 0, sizeof(struct RaMd2Ctx));
 		free(ctx);
 	}
 }

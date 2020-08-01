@@ -24,7 +24,7 @@ struct ASN1Node {
 };
 struct ASN1Ctx;
 
-int ASN1CreateContext(uint8_t *data, int dataLen, struct ASN1Ctx **ctxp);
+int ASN1CreateContext(const uint8_t *data, int dataLen, struct ASN1Ctx **ctxp);
 void ASN1DestroyContext(struct ASN1Ctx *ctx);
 int ASN1GetRoot(struct ASN1Ctx *ctx, /*out*/struct ASN1Node **nodep);
 

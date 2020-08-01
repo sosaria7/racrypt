@@ -62,6 +62,12 @@ void BnFree(struct BigNumber * bn)
 	free(bn);
 }
 
+void BnClearFree(struct BigNumber* bn)
+{
+	memset(bn, 0, sizeof(struct BigNumber) + sizeof(uint32_t) * bn->max_length);
+	free(bn);
+}
+
 void BnSetInt(struct BigNumber *bn, int32_t value)
 {
 	if (value < 0)
@@ -119,29 +125,34 @@ int BnSet(struct BigNumber *bn, struct BigNumber *bn2)
 	return BN_ERR_SUCCESS;
 }
 
-static int _BnSetByteArray(struct BigNumber *bn, uint8_t *data, int len, int isSigned)
+static int _BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len, int isSigned)
 {
 	int word;
 	int byte;
-	uint8_t *d;
+	const uint8_t *d;
 	uint32_t *bd;
+	const uint8_t *end;
 
 	if (len <= 0) {
 		return BN_ERR_INVALID_PARAM;
 	}
 
 	d = &data[0];
+	end = &data[len];
 
 	if (isSigned) {
 		bn->sign = d[0] >> 7;
-		if ( len > 1 && ( d[0] == 0x00 || d[0] == 0xff ) ){
-			d++;
-			len--;
+		if ( d[0] == 0x00 || d[0] == 0xff )
+		{
+			while ( len > 1 && ( d[0] == data[0] || d[0] == data[0] ) ) {
+				d++;
+				len--;
+			}
 		}
 	}
 	else {
 		bn->sign = 0;
-		if ( len > 1 && d[0] == 0x00 ){
+		while ( len > 1 && d[0] == 0x00 ){
 			d++;
 			len--;
 		}
@@ -178,7 +189,7 @@ static int _BnSetByteArray(struct BigNumber *bn, uint8_t *data, int len, int isS
 
 	bd--;
 
-	while(d < data+len) {
+	while(d < end) {
 		*bd = (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3];
 		if (bn->sign)
 			*bd = ~*bd;
@@ -194,12 +205,12 @@ static int _BnSetByteArray(struct BigNumber *bn, uint8_t *data, int len, int isS
 	return BN_ERR_SUCCESS;
 }
 
-int BnSetByteArray(struct BigNumber *bn, uint8_t *data, int len)
+int BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len)
 {
 	return _BnSetByteArray(bn, data, len, 1);
 }
 
-int BnSetUByteArray(struct BigNumber *bn, uint8_t *data, int len)
+int BnSetUByteArray(struct BigNumber *bn, const uint8_t *data, int len)
 {
 	return _BnSetByteArray(bn, data, len, 0);
 }
@@ -1228,7 +1239,8 @@ int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen)
 		}
 		if (bufferlen < len) {
 			return 0;
-		}		bit = (bit / 8) * 8;
+		}
+		bit = (bit / 8) * 8;
 		for (i = bn->length - 1; i >= 0; i--) {
 			word = bn->data[i];
 			while ( bit >= 0 ) {
@@ -1241,6 +1253,47 @@ int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen)
 
 		return offset;
 	}
+}
+
+int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen )
+{
+	int i;
+	int offset;
+	int bit;
+	int len;
+	uint32_t word;
+
+	// positive value only
+	if ( bn->sign && !BN_ISZERO( bn ) )
+	{
+		return 0;
+	}
+	word = bn->data[bn->length - 1];
+	bit = _BnGetMSBPos( word );
+
+	len = ( bit / 8 + 1 ) + ( bn->length - 1 ) * 4;
+	if ( buffer == NULL ) {
+		return len;
+	}
+	if ( bufferlen < len ) {
+		return 0;
+	}
+	offset = bufferlen - len;
+	// fill zeros
+	memset( buffer, 0, offset );
+
+	bit = ( bit / 8 ) * 8;
+	for ( i = bn->length - 1; i >= 0; i-- ) {
+		word = bn->data[i];
+		while ( bit >= 0 ) {
+			buffer[offset] = (uint8_t)( word >> bit );
+			bit -= 8;
+			offset++;
+		}
+		bit = 24;
+	}
+
+	return offset;
 }
 
 void BnPrint(struct BigNumber *bn)

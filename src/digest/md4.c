@@ -43,6 +43,7 @@ int RaMd4Create(struct RaMd4Ctx **ctxp)
 void RaMd4Destroy(struct RaMd4Ctx *ctx)
 {
 	if (ctx != NULL) {
+		memset(ctx, 0, sizeof(struct RaMd4Ctx));
 		free(ctx);
 	}
 }

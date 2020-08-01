@@ -82,11 +82,12 @@ _EXIT:
 void MontDestroy(struct MontCtx* ctx)
 {
 	if (ctx != NULL) {
-		BnFree(ctx->N);
-		BnFree(ctx->NB);
-		BnFree(ctx->BB);
-		BnFree(ctx->tmp);
-		BnFree(ctx->mul);
+		BnClearFree(ctx->N);
+		BnClearFree(ctx->NB);
+		BnClearFree(ctx->BB);
+		BnClearFree(ctx->tmp);
+		BnClearFree(ctx->mul);
+		memset(ctx, 0, sizeof(struct MontCtx));
 		free(ctx);
 	}
 }

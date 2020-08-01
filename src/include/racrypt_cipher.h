@@ -96,7 +96,7 @@ void RaAesGetIV(struct RaAesCtx *ctx, /*out*/uint8_t iv[16]);
 * And the rest of the data that is not encrypted in this time is combined with the following input data for encryption.\n
 * If the input data length is various, prepair additional 16bytes of output data space than input data.\n
 * example)\n
-* - 1st: input: 30byte, ouput 16byte. 14bytes are remained in the internal buffer
+* - 1st: input: 30byte, output 16byte. 14bytes are remained in the internal buffer
 * - 2nd: input: 18byte, output 32byte. The Previous data is combined and encrypted together
 * @param ctx		AES context
 * @param input		data to be encrypted
