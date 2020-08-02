@@ -590,14 +590,6 @@ int test5()
 
 	// decrypt with private key
 	InitTimer(&t);
-	result = RSACreateKeyFromByteArray(priv, sizeof(priv), &privkey);
-	PrintElapsed(&t, "RSACreateKeyFromByteArray(priv) elapsed: ");
-	if (result != BN_ERR_SUCCESS) {
-		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
-		goto _EXIT;
-	}
-
-	InitTimer(&t);
 	result = RSADecrypt(privkey, s, m2);
 	PrintElapsed(&t, "RSADecrypt elapsed: ");
 	if (result != BN_ERR_SUCCESS) {

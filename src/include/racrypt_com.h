@@ -15,6 +15,8 @@ extern "C" {
 #define BN_WORD_BIT		((int)sizeof(uint32_t)*8)		// 32
 #define BN_ISZERO(bn)	((bn)->length == 1 && (bn)->data[0] == 0)
 #define BN_ISONE(bn)	((bn)->length == 1 && (bn)->sign == 0 && (bn)->data[0] == 1)
+#define BN_ISTWO(bn)	((bn)->length == 1 && (bn)->sign == 0 && (bn)->data[0] == 2)
+#define BN_ISEVEN(bn)	(((bn)->data[0] & 1) == 0)
 #define BN_ISNEG(bn)	((bn)->sign)
 #define BN_SAFEFREE(bn)	{if(bn != NULL){ BnFree(bn); bn = NULL; }}
 

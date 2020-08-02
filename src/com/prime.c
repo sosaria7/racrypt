@@ -6,7 +6,7 @@
 
 #include <racrypt.h>
 
-static uint32_t primes[] = {
+static const uint32_t primes[] = {
 	3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
 	59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
 	137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223,
@@ -285,10 +285,10 @@ static int CheckMillerRabin(struct BigNumber *bn, int count, uint32_t *seedp, /*
 	uint32_t data;
 	struct MontCtx *ctx = NULL;
 
-	if (BN_ISZERO(bn) || BN_ISONE(bn))
-		return 0;
-	if (BnCmpInt(bn, 2) == 0)
-		return 1;
+	if (BN_ISZERO(bn) || BN_ISONE(bn) || BN_ISEVEN(bn) ) {
+		*probable = BN_ISTWO(bn);
+		return BN_ERR_SUCCESS;
+	}
 
 	n1 = BnClone(bn);
 	BnSubInt(n1, 1);	// n1 = n - 1
