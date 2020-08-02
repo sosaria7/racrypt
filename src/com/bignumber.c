@@ -1110,6 +1110,17 @@ int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
 	int word;
 	int i;
 
+	if (bit <= 0) {
+		BnSetInt(bn, 0);
+		return BN_ERR_SUCCESS;
+	}
+
+	word = (bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
+	if (bn->max_length < word) {
+		assert(0);
+		return BN_ERR_NUMBER_SIZE;
+	}
+
 	if (seedp != NULL && *seedp != 0) {
 		seed = *seedp;
 	}
@@ -1121,17 +1132,8 @@ int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		seed = (uint32_t) ts.tv_nsec;
 #endif
-	}
-	if (bit <= 0) {
-		BnSetInt(bn, 0);
-		return BN_ERR_SUCCESS;
-	}
-	_rand32(&seed);
-
-	word = (bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
-	if (bn->max_length < word) {
-		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		_rand32(&seed);
+		_rand32(&seed);
 	}
 
 	for (i = 0; i < word; i++) {
