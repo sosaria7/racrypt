@@ -1,12 +1,13 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
+#include <racrypt.h>
+
 #include <stdio.h>
 
 #include <limits.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <assert.h>
 #include <time.h>
 
@@ -14,8 +15,6 @@
 #include <Windows.h>
 #define snprintf _snprintf
 #endif
-
-#include <racrypt.h>
 
 static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
 static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
@@ -1106,9 +1105,7 @@ static uint32_t _rand32(uint32_t *seedp)
 
 int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
 {
-	uint32_t seed;
 	int word;
-	int i;
 
 	if (bit <= 0) {
 		BnSetInt(bn, 0);
@@ -1121,24 +1118,8 @@ int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
 		return BN_ERR_NUMBER_SIZE;
 	}
 
-	if (seedp != NULL && *seedp != 0) {
-		seed = *seedp;
-	}
-	else {
-#ifdef _WIN32
-		seed = GetTickCount();
-#else
-		struct timespec ts;
-		clock_gettime(CLOCK_MONOTONIC, &ts);
-		seed = (uint32_t) ts.tv_nsec;
-#endif
-		_rand32(&seed);
-		_rand32(&seed);
-	}
+	BnGenRandomByteArray((uint8_t*)bn->data, word * BN_WORD_BYTE, seedp);
 
-	for (i = 0; i < word; i++) {
-		bn->data[i] = _rand32(&seed);
-	}
 	bit %= BN_WORD_BIT;
 
 	if (bit > 0) {
@@ -1147,8 +1128,7 @@ int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
 	bn->length = word;
 	while (bn->length > 1 && bn->data[bn->length - 1] == 0)
 		bn->length--;
-	if (seedp != NULL)
-		*seedp = seed;
+
 	return BN_ERR_SUCCESS;
 }
 
@@ -1178,6 +1158,94 @@ int BnGetRandomRSA(struct BigNumber *bn, int bit, uint32_t *seedp)
 	bit = ((bit - 1) % BN_WORD_BIT);
 	bn->data[word - 1] |= 1 << bit;
 	bn->length = word;
+	return BN_ERR_SUCCESS;
+}
+
+int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
+{
+	uint32_t seed;
+	uint32_t random;
+	int remain;
+
+	if (seedp != NULL && *seedp != 0) {
+		seed = *seedp;
+	}
+	else {
+
+#ifdef _WIN32
+		seed = GetTickCount();
+#else
+
+#	ifdef HAVE_TIMES
+		{
+			struct tms ts;
+			seed = (uint32_t)((uint64_t)(uint32_t)times(&ts) * 1000 / sysconf(_SC_CLK_TCK));
+		}
+#	else
+		{
+			struct timespec ts;
+			clock_gettime(CLOCK_MONOTONIC, &ts);
+			seed = (uint32_t)(((uint64_t)(uint32_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000 ));
+		}
+#	endif
+
+#endif
+		_rand32(&seed);
+		_rand32(&seed);
+	}
+
+	if (len <= 0) {
+		if (seedp != NULL)
+			*seedp = seed;
+		return BN_ERR_SUCCESS;
+	}
+
+	remain = (int)((uintptr_t)data % 4);
+
+	if (len >= 3 && remain > 0) {
+		random = _rand32(&seed);
+
+		switch (remain) {
+		case 1:
+			*data++ = (uint8_t)random;
+			random >>= 8;
+			len--;
+		case 2:
+			*data++ = (uint8_t)random;
+			random >>= 8;
+			len--;
+		case 3:
+			*data++ = (uint8_t)random;
+			len--;
+			break;
+		}
+	}
+
+	while (len >= 4) {
+		random = _rand32(&seed);
+
+		*(uint32_t*)data = random;
+		data += 4;
+		len -= 4;
+	}
+
+	if (len > 0) {
+		random = _rand32(&seed);
+
+		switch (len) {
+		case 3:
+			*data++ = (uint8_t)random;
+		case 2:
+			*data++ = (uint8_t)random;
+		case 1:
+			*data++ = (uint8_t)random;
+			break;
+		}
+	}
+
+	if (seedp != NULL)
+		*seedp = seed;
+
 	return BN_ERR_SUCCESS;
 }
 

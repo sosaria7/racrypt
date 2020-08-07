@@ -7,7 +7,7 @@ CC        = cc
 AR        = ar
 ARFLAGS   = r
 RANLIB    = ranlib
-CFLAGS    = -O2 -Wall
+CFLAGS    = -O2 -g -Wall
 
 RA_CFLAGS  = -Isrc/include $(CFLAGS)
 RA_LDFLAGS = $(LDFLAGS) -lrt

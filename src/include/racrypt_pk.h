@@ -19,6 +19,7 @@ int RSADecrypt(struct RSAKeyPair* key, struct BigNumber *encrypted, /*out*/struc
 int RSASign( struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure );
 int RSAVerify(struct RSAKeyPair* key, struct BigNumber *encrypted, struct BigNumber *message);
 int RSAKeyBitLength(struct RSAKeyPair* key);
+int RSAVerifyKey(struct RSAKeyPair *key);
 
 int RSACreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp);
 int RSACreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp);

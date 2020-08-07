@@ -1,10 +1,10 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-#include <stdint.h>
+#include <racrypt.h>
+
 #include <stdlib.h>
 #include <string.h>
 
-#include <racrypt.h>
 #include "asn1.h"
 
 #define ASN1_NODE_CHUNK		10

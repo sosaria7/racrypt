@@ -4,15 +4,14 @@
 #ifndef __RA_COM_H__
 #define __RA_COM_H__
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // max_bit_len = 32 * BN_WORD_LEN
 #define BN_WORD_LEN		100
-#define BN_WORD_BIT		((int)sizeof(uint32_t)*8)		// 32
+#define BN_WORD_BYTE	((int)sizeof(uint32_t))			// 4
+#define BN_WORD_BIT		(BN_WORD_BYTE*8)				// 32
 #define BN_ISZERO(bn)	((bn)->length == 1 && (bn)->data[0] == 0)
 #define BN_ISONE(bn)	((bn)->length == 1 && (bn)->sign == 0 && (bn)->data[0] == 1)
 #define BN_ISTWO(bn)	((bn)->length == 1 && (bn)->sign == 0 && (bn)->data[0] == 2)
@@ -80,6 +79,7 @@ int BnGetLength(struct BigNumber *bn);
 int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp);
 int BnGetRandomOdd(struct BigNumber *bn, int bit, uint32_t *seedp);
 int BnGetRandomRSA(struct BigNumber *bn, int bit, uint32_t *seedp);
+int BnGenRandomByteArray( uint8_t *data, int len, uint32_t *seedp );
 
 int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen);
 int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen );

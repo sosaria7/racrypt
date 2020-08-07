@@ -1,14 +1,11 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-
+#include <racrypt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <assert.h>
-
-#include <racrypt.h>
 
 /* Permutation of 0..255 constructed from the digits of pi. It gives a
 "random" nonlinear byte substitution operation.
@@ -73,7 +70,7 @@ static void RaMd2Process(struct RaMd2Ctx *ctx, const uint8_t data[16])
 	memcpy(x, ctx->state, 16);
 	memcpy(x + 16, data, 16);
 	for (i = 0; i < 16; i++) {
-		x[i + 32] = ctx->state[i] ^ data[i];
+		x[i + 32] = (uint8_t)(ctx->state[i] ^ data[i]);
 	}
 
 	/* Encrypt block (18 rounds).

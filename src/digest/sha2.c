@@ -1,16 +1,12 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-
+#include <racrypt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
-#include <racrypt.h>
-
-#define UNROLL		1
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
@@ -67,7 +63,7 @@ void RaSha224Init(struct RaSha2Ctx *ctx)
 
 #define GET_UINT32_BE(b)		(uint32_t)(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
 #define GET_UINT64_BE(b)		(((uint64_t)GET_UINT32_BE(b) << 32) | GET_UINT32_BE(b + 4))
-#define PUT_UINT32_BE(b, v)		{ (b)[0] = ((v)>>24) & 0xff; (b)[1] = ((v)>>16) & 0xff; (b)[2] = ((v)>>8) & 0xff; (b)[3] = (v) & 0xff; }
+#define PUT_UINT32_BE(b, v)		{ (b)[0] = (uint8_t)((v)>>24); (b)[1] = (uint8_t)((v)>>16); (b)[2] = (uint8_t)((v)>>8); (b)[3] = (uint8_t)(v); }
 #define PUT_UINT64_BE(b, v)		{ PUT_UINT32_BE(b, (v)>>32); PUT_UINT32_BE(b + 4, v); }
 
 #define SHA2_CH(E, F, G)		(G ^ (E & (F ^ G)))
@@ -141,7 +137,7 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 	uint32_t temp;
 	uint32_t w[16];
 	uint32_t a, b, c, d, e, f, g, h;
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	int i;
 #endif
 	a = (uint32_t)ctx->h[0];
@@ -155,7 +151,7 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 
     memcpy(w, data, 64);
 #ifndef WORDS_BIGENDIAN
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
     for (i = 0; i < 16; i++ )
         w[i] = CHANGE_ENDIAN(w[i]);
 #else
@@ -178,7 +174,7 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 #endif
 #endif
 
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 0; i < 16; i += 8) {
 		SHA2_P1_DO8(i);
 	}

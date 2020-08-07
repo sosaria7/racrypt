@@ -1,16 +1,12 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-
+#include <racrypt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
-#include <racrypt.h>
-
-#define UNROLL      1
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
@@ -48,7 +44,7 @@ void RaSha1Init(struct RaSha1Ctx *ctx)
 }
 
 #define GET_UINT32_BE(b)		(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
-#define PUT_UINT32_BE(b, v)		{ (b)[0] = (v)>>24; (b)[1] = ((v)>>16) & 0xff; (b)[2] = ((v)>>8) & 0xff; (b)[3] = (v) & 0xff; }
+#define PUT_UINT32_BE(b, v)		{ (b)[0] = (uint8_t)((v)>>24); (b)[1] = (uint8_t)((v)>>16); (b)[2] = (uint8_t)((v)>>8); (b)[3] = (uint8_t)(v); }
 
 #define SHA1_P1(A, B, C, D, E, n)		{	\
 	E = (RL(A,5) + F(B, C, D) + E + K + w[n & 15]);	\
@@ -81,7 +77,7 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 	uint32_t temp;
 	uint32_t w[16];
 	uint32_t a, b, c, d, e;
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	int i;
 #endif
 
@@ -93,7 +89,7 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 
     memcpy(w, data, 64);
 #ifndef WORDS_BIGENDIAN
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
     for (i = 0; i < 16; i++ )
         w[i] = CHANGE_ENDIAN(w[i]);
 #else
@@ -119,7 +115,7 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 //#define F(B, C, D)				((B & C) | (~B & D))
 #define F(B, C, D)				(D ^ (B & (C ^ D)))
 #define K						0x5a827999
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 0; i < 15; i += 5) {
 		SHA1_P1_DO5(i);
 	}
@@ -138,7 +134,7 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 #undef K
 #define F(B, C, D)				(B ^ C ^ D)
 #define K						0x6ed9eba1
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 20; i < 40; i += 5) {
 		SHA1_P2_DO5(i);
 	}
@@ -154,7 +150,7 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 //#define F(B, C, D)				((B & C) | (C & D) | (D & B))
 #define F(B, C, D)				((B & (C | D)) | (C & D))
 #define K						0x8f1bbcdc
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 40; i < 60; i += 5) {
 		SHA1_P2_DO5(i);
 	}
@@ -169,7 +165,7 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
 #undef K
 #define F(B, C, D)				(B ^ C ^ D)
 #define K						0xca62c1d6
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 60; i < 80; i += 5) {
 		SHA1_P2_DO5(i);
 	}

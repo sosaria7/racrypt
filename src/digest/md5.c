@@ -1,16 +1,12 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-
+#include <racrypt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
-#include <racrypt.h>
-
-#define	UNROLL						1
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
@@ -61,7 +57,7 @@ void RaMd5Init(struct RaMd5Ctx *ctx)
 }
 
 #define GET_UINT32_LE(b)		(((b)[3] << 24)|((b)[2] << 16)|((b)[1] << 8)|(b)[0])
-#define PUT_UINT32_LE(b, v)		{ (b)[3] = (v)>>24; (b)[2] = ((v)>>16) & 0xff; (b)[1] = ((v)>>8) & 0xff; (b)[0] = (v) & 0xff; }
+#define PUT_UINT32_LE(b, v)		{ (b)[3] = (uint8_t)((v)>>24); (b)[2] = (uint8_t)((v)>>16); (b)[1] = (uint8_t)((v)>>8); (b)[0] = (uint8_t)(v); }
 
 #define K(n)						(md5K[n])
 #define R(n)						(md5R[n])
@@ -82,7 +78,7 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 {
 	uint32_t w[16];
 	uint32_t a, b, c, d;
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	int i;
 #endif
 
@@ -93,7 +89,7 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 
 	memcpy(w, data, 64);
 #ifdef WORDS_BIGENDIAN
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
     for (i = 0; i < 16; i++ )
         w[i] = CHANGE_ENDIAN(w[i]);
 #else
@@ -119,7 +115,7 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 #define F(B, C, D)				(D ^ (B & (C ^ D)))
 #define W(n)					(w[n])
 
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 0; i < 16; i += 4) {
 		MD5_P_DO4(i);
 	}
@@ -135,7 +131,7 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 #define F(B, C, D)				(C ^ (D & (B ^ C)))
 #define W(n)					(w[(5 * n + 1) % 16])
 
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 16; i < 32; i += 4) {
 		MD5_P_DO4(i);
 	}
@@ -151,7 +147,7 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 #define F(B, C, D)				(B ^ C ^ D)
 #define W(n)					(w[(3 * n + 5) % 16])
 
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 32; i < 48; i += 4) {
 		MD5_P_DO4(i);
 	}
@@ -167,7 +163,7 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
 #define F(B, C, D)				(C ^ (B | (~D)))
 #define W(n)					(w[(7 * n) % 16])
 
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
 	for (i = 48; i < 64; i += 4) {
 		MD5_P_DO4(i);
 	}

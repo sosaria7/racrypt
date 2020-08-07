@@ -1,12 +1,11 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-#include <stdint.h>
+#include <racrypt.h>
+
 #include <malloc.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <racrypt.h>
 
 struct MontCtx
 {

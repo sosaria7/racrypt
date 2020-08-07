@@ -1,11 +1,11 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
+#include <racrypt.h>
+
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <racrypt.h>
 
 // r = gcd(m,n)
 // Euclidean algorithm

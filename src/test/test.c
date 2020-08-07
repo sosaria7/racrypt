@@ -1,13 +1,13 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-#include <stdint.h>
+#include <racrypt.h>
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#include <racrypt.h>
 static void printHex( char* prefix, uint8_t* data, int len );
 //static void printHexData( char* prefix, uint8_t* data, int len );
 
@@ -504,6 +504,11 @@ int test5()
 		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
+	result = RSAVerifyKey(pubkey);
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSAVerifyKey failed(%d)\n", result);
+		goto _EXIT;
+	}
 
 	// RSAPubKeyToByteArray test
 	result = RSAPubKeyToByteArray(pubkey, NULL, 0, &len);
@@ -541,6 +546,11 @@ int test5()
 	PrintElapsed(&t, "RSACreateKeyFromByteArray(priv) elapsed: ");
 	if (result != BN_ERR_SUCCESS) {
 		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+		goto _EXIT;
+	}
+	result = RSAVerifyKey(privkey);
+	if (result != BN_ERR_SUCCESS) {
+		printf("RSAVerifyKey failed(%d)\n", result);
 		goto _EXIT;
 	}
 
@@ -702,6 +712,11 @@ int test5_1()
 		result = RSACreateKeyFromByteArray(keydata, len, &pubkey);
 		if (result != BN_ERR_SUCCESS) {
 			printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+			goto _EXIT;
+		}
+		result = RSAVerifyKey(pubkey);
+		if (result != BN_ERR_SUCCESS) {
+			printf("RSAVerifyKey failed(%d)\n", result);
 			goto _EXIT;
 		}
 		free(keydata);

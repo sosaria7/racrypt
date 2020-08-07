@@ -1,13 +1,13 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
+#include <racrypt.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
 #include "asn1.h"
-#include <racrypt.h>
 
 struct RSAKeyPair {
 	struct BigNumber *mod;		// n
@@ -195,7 +195,7 @@ int RSAKeyBitLength( struct RSAKeyPair* key )
 
 #define CHECK_KEY_DATA(cond)		if (!(cond)) { result = BN_ERR_INVALID_DATA; goto _EXIT; }
 
-static int RSAVerifyKey(struct RSAKeyPair *key)
+int RSAVerifyKey(struct RSAKeyPair *key)
 {
 	int result;
 	struct BigNumber *temp = NULL;
@@ -337,8 +337,10 @@ int RSACreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPa
 	result = MontCreate(key->mod, &key->mont);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
+#ifdef RACRYPT_RSA_VERIFY_KEY
 	result = RSAVerifyKey(key);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
+#endif
 
 	*keyp = key;
 	key = NULL;
@@ -412,8 +414,10 @@ int RSACreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyP
 	result = MontCreate(key->mod, &key->mont);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
+#ifdef RACRYPT_RSA_VERIFY_KEY
 	result = RSAVerifyKey(key);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
+#endif
 
 	*keyp = key;
 	key = NULL;

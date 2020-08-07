@@ -1,16 +1,12 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-
+#include <racrypt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
-#include <racrypt.h>
-
-#define	UNROLL						1
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
@@ -55,7 +51,7 @@ void RaHas160Init(struct RaHas160Ctx *ctx)
 }
 
 #define GET_UINT32_LE(b)		(((b)[3] << 24)|((b)[2] << 16)|((b)[1] << 8)|(b)[0])
-#define PUT_UINT32_LE(b, v)		{ (b)[3] = (v)>>24; (b)[2] = ((v)>>16) & 0xff; (b)[1] = ((v)>>8) & 0xff; (b)[0] = (v) & 0xff; }
+#define PUT_UINT32_LE(b, v)		{ (b)[3] = (uint8_t)((v)>>24); (b)[2] = (uint8_t)((v)>>16); (b)[1] = (uint8_t)((v)>>8); (b)[0] = (uint8_t)(v); }
 
 #define HAS160_F1(B, C, D)			(D ^ (B & (C ^ D)))
 #define HAS160_F2(B, C, D)			(B ^ C ^ D)
@@ -104,7 +100,7 @@ static void RaHas160Process(struct RaHas160Ctx *ctx, const uint8_t data[64])
 
 	memcpy(w, data, 64);
 #ifdef WORDS_BIGENDIAN
-#ifndef UNROLL
+#ifndef RACRYPT_DIGEST_UNROLL
     for (i = 0; i < 16; i++ )
         w[i] = CHANGE_ENDIAN(w[i]);
 #else
