@@ -271,24 +271,24 @@ static const uint32_t primes[] = {
 
 // Miller-Rabin primality test
 // https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test
-static int CheckMillerRabin(struct BigNumber *bn, int count, uint32_t *seedp, /*out*/int* probable)
+static int CheckMillerRabin(struct RaBigNumber *bn, int count, uint32_t *seedp, /*out*/int* probable)
 {
 	int result;
-	struct BigNumber *n1 = NULL;
-	struct BigNumber *d = NULL;
-	struct BigNumber *a = NULL;
-	struct BigNumber *two = NULL;
-	struct BigNumber *val = NULL;
+	struct RaBigNumber *n1 = NULL;
+	struct RaBigNumber *d = NULL;
+	struct RaBigNumber *a = NULL;
+	struct RaBigNumber *two = NULL;
+	struct RaBigNumber *val = NULL;
 	int s;
 	int i;
 	int bitn1;
 	int isPrime;
 	uint32_t data;
-	struct MontCtx *ctx = NULL;
+	struct RaMontCtx *ctx = NULL;
 
 	if (BN_ISZERO(bn) || BN_ISONE(bn) || BN_ISEVEN(bn) ) {
 		*probable = BN_ISTWO(bn);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	n1 = BnClone(bn);
@@ -311,20 +311,20 @@ static int CheckMillerRabin(struct BigNumber *bn, int count, uint32_t *seedp, /*
 
 	d = BnClone(n1);
 	if (d == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	BnShiftR(d, (uint32_t)s);
 
 	bitn1 = BnGetBitLength(n1);
-	result = MontCreate(bn, &ctx);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	result = RaMontCreate(bn, &ctx);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	two = BnNewW(1);
 	a = BnNew(bitn1);
 	val = BnNewW(bn->length * 2);
 	if (two == NULL || a == NULL || val == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -334,11 +334,11 @@ static int CheckMillerRabin(struct BigNumber *bn, int count, uint32_t *seedp, /*
 	while (count-- > 0) {
 		do {
 			result = BnGenRandom(a, bitn1, seedp);
-			if (result != BN_ERR_SUCCESS) goto _EXIT;
+			if (result != RA_ERR_SUCCESS) goto _EXIT;
 		} while (BnCmp(a, n1) >= 0 || BnCmpInt(a, 1) <= 0);
 
-		result = MontExpMod(ctx, val, a, d);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		result = RaMontExpMod(ctx, val, a, d);
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		if (BnCmpInt(val, 1) == 0)
 			continue;		// probable prime
@@ -346,8 +346,8 @@ static int CheckMillerRabin(struct BigNumber *bn, int count, uint32_t *seedp, /*
 			continue;		// probable prime
 
 		for (i = 1; i < s; i++) {
-			result = MontExpMod(ctx, val, val, two);
-			if (result != BN_ERR_SUCCESS) goto _EXIT;
+			result = RaMontExpMod(ctx, val, val, two);
+			if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 			if (BnCmp(val, n1) == 0)
 				break;		// probable prime
@@ -361,10 +361,10 @@ static int CheckMillerRabin(struct BigNumber *bn, int count, uint32_t *seedp, /*
 
 	*probable = isPrime;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 
 _EXIT:
-	MontDestroy(ctx);
+	RaMontDestroy(ctx);
 	BN_SAFEFREE(n1);
 	BN_SAFEFREE(d);
 	BN_SAFEFREE(a);
@@ -374,7 +374,7 @@ _EXIT:
 	return result;
 }
 
-static int GenProbablePrimeNumber(struct BigNumber *bn, int bit, uint32_t *seedp)
+static int GenProbablePrimeNumber(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 {
 	uint32_t *mods = NULL;
 	int i;
@@ -384,7 +384,7 @@ static int GenProbablePrimeNumber(struct BigNumber *bn, int bit, uint32_t *seedp
 
 	mods = malloc(NUM_PRIME * sizeof(uint32_t));
 	if (mods == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 
 	for (;;) {
@@ -417,15 +417,15 @@ static int GenProbablePrimeNumber(struct BigNumber *bn, int bit, uint32_t *seedp
 	BnAddUInt(bn, add);
 	free(mods);
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int GenPrimeNumber(struct BigNumber *bn, int bit)
+int RaGenPrimeNumber(struct RaBigNumber *bn, int bit)
 {
-	return GenPrimeNumberEx(bn, bit, NULL, NULL, NULL);
+	return RaGenPrimeNumberEx(bn, bit, NULL, NULL, NULL);
 }
 
-int GenPrimeNumberEx(struct BigNumber *bn, int bit, int(*progress)(int count, void* userData), void* userData, uint32_t *seedp)
+int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count, void* userData), void* userData, uint32_t *seedp)
 {
 	int result;
 	int count = 0;
@@ -449,22 +449,22 @@ int GenPrimeNumberEx(struct BigNumber *bn, int bit, int(*progress)(int count, vo
 				break;
 		}
 		result = GenProbablePrimeNumber(bn, bit, seedp);
-		if (result != BN_ERR_SUCCESS) {
+		if (result != RA_ERR_SUCCESS) {
 			return result;
 		}
 
 		result = CheckMillerRabin(bn, checkCount, seedp, &isPrime);
-		if (result != BN_ERR_SUCCESS) {
+		if (result != RA_ERR_SUCCESS) {
 			return result;
 		}
 		if (isPrime) {
 			break;
 		}
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int IsPrimeNumber(struct BigNumber *bn)
+int RaIsPrimeNumber(struct RaBigNumber *bn)
 {
 	int result;
 	uint32_t seed = 0;
@@ -480,12 +480,12 @@ int IsPrimeNumber(struct BigNumber *bn)
 		checkCount = 5;
 	}
 	result = CheckMillerRabin(bn, checkCount, &seed, &isPrime);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	if (!isPrime) {
-		result = BN_ERR_INVALID_DATA;
+		result = RA_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	return result;
 }

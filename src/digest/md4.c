@@ -27,13 +27,13 @@ int RaMd4Create(struct RaMd4Ctx **ctxp)
 	struct RaMd4Ctx *ctx;
 	ctx = (struct RaMd4Ctx*)malloc(sizeof(struct RaMd4Ctx));
 	if (ctx == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 	RaMd4Init(ctx);
 
 	*ctxp = ctx;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 void RaMd4Destroy(struct RaMd4Ctx *ctx)

@@ -49,8 +49,8 @@ struct RaAesCtx {
 * @param opMode		block cipher modes of operation
 * @param ctxp		pointer for receiving AES context
 * @note The key length must be 128bit when the key type is RA_AES_128, and 192bit for RA_AES_192, 256bit for RA_AES_256
-* @retval BN_ERR_SUCCESS		success
-* @retval BN_ERR_OUT_OF_MEMORY	memory allocation failure
+* @retval RA_ERR_SUCCESS		success
+* @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
 */
 int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaAesMode opMode, struct RaAesCtx **ctxp);
 

@@ -8,21 +8,21 @@
 
 // r = gcd(m,n)
 // Euclidean algorithm
-int GetGCD(/*out*/struct BigNumber *r, struct BigNumber *m, struct BigNumber *n)
+int GetGCD(/*out*/struct RaBigNumber *r, struct RaBigNumber *m, struct RaBigNumber *n)
 {
 	int result;
-	struct BigNumber *r1;
-	struct BigNumber *r2;
+	struct RaBigNumber *r1;
+	struct RaBigNumber *r2;
 
 	if (BN_ISZERO(m) || BN_ISZERO(n)) {
 		assert(0);
-		return BN_ERR_DIVIDED_BY_ZERO;
+		return RA_ERR_DIVIDED_BY_ZERO;
 	}
 
 	r1 = BnNewW(BnGetLength(n));
 	r2 = BnNewW(BnGetLength(n));
 	if (r1 == NULL || r2 == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -30,7 +30,7 @@ int GetGCD(/*out*/struct BigNumber *r, struct BigNumber *m, struct BigNumber *n)
 	{
 		// r1 = m / n
 		result = BnMod(r1, m, n);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		m = n;
 		n = r1;
@@ -38,7 +38,7 @@ int GetGCD(/*out*/struct BigNumber *r, struct BigNumber *m, struct BigNumber *n)
 			break;
 		// r2 = m / n
 		result = BnMod(r2, m, n);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		m = n;
 		n = r2;
@@ -47,7 +47,7 @@ int GetGCD(/*out*/struct BigNumber *r, struct BigNumber *m, struct BigNumber *n)
 	}
 	BnSet(r, m);
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	BN_SAFEFREE(r1);
 	BN_SAFEFREE(r2);
@@ -58,28 +58,28 @@ _EXIT:
 // r = gcd(m,n)
 // gcd(m,n) = a*m + b*n
 // Extended Euclidean algorithm
-int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*out*/struct BigNumber *b, struct BigNumber *m, struct BigNumber *n, int isUnsigned)
+int GetGCDEx(/*out,nullable*/struct RaBigNumber *r, /*out*/struct RaBigNumber *a, /*out*/struct RaBigNumber *b, struct RaBigNumber *m, struct RaBigNumber *n, int isUnsigned)
 {
 	int result;
-	struct BigNumber *r1 = NULL;
-	struct BigNumber *r2 = NULL;
-	struct BigNumber *q = NULL;
-	struct BigNumber *m1;
-	struct BigNumber *n1;
-	struct BigNumber *st[7];
-	struct BigNumber *s_2;		// s[k-2]
-	struct BigNumber *s_1;		// s[k-1]
-	struct BigNumber *s_0;		// s[k]
-	struct BigNumber *t_2;		// t[k-2]
-	struct BigNumber *t_1;		// t[k-1]
-	struct BigNumber *t_0;		// t[k]
-	struct BigNumber *tmp;
-	struct BigNumber *swap;
+	struct RaBigNumber *r1 = NULL;
+	struct RaBigNumber *r2 = NULL;
+	struct RaBigNumber *q = NULL;
+	struct RaBigNumber *m1;
+	struct RaBigNumber *n1;
+	struct RaBigNumber *st[7];
+	struct RaBigNumber *s_2;		// s[k-2]
+	struct RaBigNumber *s_1;		// s[k-1]
+	struct RaBigNumber *s_0;		// s[k]
+	struct RaBigNumber *t_2;		// t[k-2]
+	struct RaBigNumber *t_1;		// t[k-1]
+	struct RaBigNumber *t_0;		// t[k]
+	struct RaBigNumber *tmp;
+	struct RaBigNumber *swap;
 	int i;
 
 	if (BN_ISZERO(m) || BN_ISZERO(n)) {
 		assert(0);
-		return BN_ERR_DIVIDED_BY_ZERO;
+		return RA_ERR_DIVIDED_BY_ZERO;
 	}
 	memset(st, 0, sizeof(st));
 
@@ -89,7 +89,7 @@ int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*
 	r2 = BnNewW(i);
 	q = BnNewW(i);
 	if (r1 == NULL || r2 == NULL || q == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -97,7 +97,7 @@ int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*
 	{
 		st[i] = BnNewW(q->max_length * 2);
 		if (st[i] == NULL) {
-			result = BN_ERR_OUT_OF_MEMORY;
+			result = RA_ERR_OUT_OF_MEMORY;
 			goto _EXIT;
 		}
 	}
@@ -122,7 +122,7 @@ int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*
 		////////////////////////////
 		// r1 = m / n
 		result = BnDiv(q, r1, m1, n1);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		m1 = n1;
 		n1 = r1;
@@ -148,7 +148,7 @@ int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*
 		////////////////////////////
 		// r2 = m / n
 		result = BnDiv(q, r2, m1, n1);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		m1 = n1;
 		n1 = r2;
@@ -192,7 +192,7 @@ int GetGCDEx(/*out,nullable*/struct BigNumber *r, /*out*/struct BigNumber *a, /*
 		}
 	}
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	BN_SAFEFREE(r1);
 	BN_SAFEFREE(r2);

@@ -341,13 +341,13 @@ int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaAesMode op
 	struct RaAesCtx *ctx;
 	ctx = (struct RaAesCtx*)malloc(sizeof(struct RaAesCtx));
 	if (ctx == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 	RaAesInit(ctx, key, keyType, opMode);
 
 	*ctxp = ctx;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 void RaAesDestroy(struct RaAesCtx *ctx)

@@ -40,21 +40,21 @@ static uint32_t GetRandomSeed()
 	return seed;
 }
 
-static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
-static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
-static int _BnCmp(struct BigNumber *a, struct BigNumber *b);
-//static int _BnDoubleR(struct BigNumber *r);
-static int _BnAddUInt(struct BigNumber *a, uint32_t val);
-static int _BnSubUInt(struct BigNumber *a, uint32_t val);
+static int _BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
+static int _BnSub(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
+static int _BnCmp(struct RaBigNumber *a, struct RaBigNumber *b);
+//static int _BnDoubleR(struct RaBigNumber *r);
+static int _BnAddUInt(struct RaBigNumber *a, uint32_t val);
+static int _BnSubUInt(struct RaBigNumber *a, uint32_t val);
 
-struct BigNumber * BnNewW(int length)
+struct RaBigNumber * BnNewW(int length)
 {
-	struct BigNumber * bn;
+	struct RaBigNumber * bn;
 	if (length <= 0)
 		length = BN_WORD_LEN;		// default length
 	else if (length < 2)
 		length = 2;					// minimum length is 2 (64bit)
-	bn = (struct BigNumber *)malloc(sizeof(struct BigNumber) + sizeof(uint32_t) * length);
+	bn = (struct RaBigNumber *)malloc(sizeof(struct RaBigNumber) + sizeof(uint32_t) * length);
 	if (bn == NULL)
 		return NULL;
 	bn->data = (uint32_t*)(bn + 1);
@@ -65,16 +65,16 @@ struct BigNumber * BnNewW(int length)
 	return bn;
 }
 
-struct BigNumber * BnNew(int bit)
+struct RaBigNumber * BnNew(int bit)
 {
 	int word;
 	word = (bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
 	return BnNewW(word);
 }
 
-struct BigNumber * BnClone(struct BigNumber *bn)
+struct RaBigNumber * BnClone(struct RaBigNumber *bn)
 {
-	struct BigNumber *new_bn;
+	struct RaBigNumber *new_bn;
 
 	new_bn = BnNewW(bn->max_length);
 	if (new_bn != NULL)
@@ -82,18 +82,18 @@ struct BigNumber * BnClone(struct BigNumber *bn)
 	return new_bn;
 }
 
-void BnFree(struct BigNumber * bn)
+void BnFree(struct RaBigNumber * bn)
 {
 	free(bn);
 }
 
-void BnClearFree(struct BigNumber* bn)
+void BnClearFree(struct RaBigNumber* bn)
 {
-	memset(bn, 0, sizeof(struct BigNumber) + sizeof(uint32_t) * bn->max_length);
+	memset(bn, 0, sizeof(struct RaBigNumber) + sizeof(uint32_t) * bn->max_length);
 	free(bn);
 }
 
-void BnSetInt(struct BigNumber *bn, int32_t value)
+void BnSetInt(struct RaBigNumber *bn, int32_t value)
 {
 	if (value < 0)
 	{
@@ -108,7 +108,7 @@ void BnSetInt(struct BigNumber *bn, int32_t value)
 	bn->length = 1;
 }
 
-void BnSetInt64(struct BigNumber *bn, int64_t value)
+void BnSetInt64(struct RaBigNumber *bn, int64_t value)
 {
 	if (value < 0)
 	{
@@ -124,14 +124,14 @@ void BnSetInt64(struct BigNumber *bn, int64_t value)
 	bn->length = 1 + (bn->data[1] != 0);
 }
 
-void BnSetUInt(struct BigNumber *bn, uint32_t value)
+void BnSetUInt(struct RaBigNumber *bn, uint32_t value)
 {
 	bn->data[0] = value;
 	bn->length = 1;
 	bn->sign = 0;
 }
 
-void BnSetUInt64(struct BigNumber *bn, uint64_t value)
+void BnSetUInt64(struct RaBigNumber *bn, uint64_t value)
 {
 	bn->data[0] = (uint32_t)value;
 	bn->data[1] = (uint32_t)(value >> 32);
@@ -139,18 +139,18 @@ void BnSetUInt64(struct BigNumber *bn, uint64_t value)
 	bn->sign = 0;
 }
 
-int BnSet(struct BigNumber *bn, struct BigNumber *bn2)
+int BnSet(struct RaBigNumber *bn, struct RaBigNumber *bn2)
 {
 	if (bn->max_length < bn2->length) {
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	memcpy(bn->data, bn2->data, sizeof(uint32_t) * bn2->length);
 	bn->length = bn2->length;
 	bn->sign = bn2->sign;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-static int _BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len, int isSigned)
+static int _BnSetByteArray(struct RaBigNumber *bn, const uint8_t *data, int len, int isSigned)
 {
 	int word;
 	int byte;
@@ -159,7 +159,7 @@ static int _BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len, i
 	const uint8_t *end;
 
 	if (len <= 0) {
-		return BN_ERR_INVALID_PARAM;
+		return RA_ERR_INVALID_PARAM;
 	}
 
 	d = &data[0];
@@ -186,7 +186,7 @@ static int _BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len, i
 	word = (len + sizeof(uint32_t) - 1) / sizeof(uint32_t);
 	byte = (len + sizeof(uint32_t) - 1) % sizeof(uint32_t);		// byte of highst word
 	if (bn->max_length < word) {
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	bn->length = word;
@@ -227,21 +227,21 @@ static int _BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len, i
 	if (bn->sign)
 		BnSubInt(bn, 1);
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len)
+int BnSetByteArray(struct RaBigNumber *bn, const uint8_t *data, int len)
 {
 	return _BnSetByteArray(bn, data, len, 1);
 }
 
-int BnSetUByteArray(struct BigNumber *bn, const uint8_t *data, int len)
+int BnSetUByteArray(struct RaBigNumber *bn, const uint8_t *data, int len)
 {
 	return _BnSetByteArray(bn, data, len, 0);
 }
 
 // a < b : -1, a > b : 1, a = b : 0
-int BnCmp(struct BigNumber *a, struct BigNumber *b)
+int BnCmp(struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	if (a->sign == 0)
 	{
@@ -259,7 +259,7 @@ int BnCmp(struct BigNumber *a, struct BigNumber *b)
 	}
 }
 
-int BnCmpInt(struct BigNumber *a, int32_t val)
+int BnCmpInt(struct RaBigNumber *a, int32_t val)
 {
 	if (a->sign == 0)
 	{
@@ -284,7 +284,7 @@ int BnCmpInt(struct BigNumber *a, int32_t val)
 	}
 }
 
-int BnCmpUInt(struct BigNumber *a, uint32_t val)
+int BnCmpUInt(struct RaBigNumber *a, uint32_t val)
 {
 	if (a->sign == 0)
 	{
@@ -304,7 +304,7 @@ int BnCmpUInt(struct BigNumber *a, uint32_t val)
 	}
 }
 
-int BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int ret;
 	if (a->sign ^ b->sign)
@@ -329,7 +329,7 @@ int BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 }
 
 // r = a - b
-int BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int BnSub(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int ret;
 	if (a->sign ^ b->sign)
@@ -354,7 +354,7 @@ int BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 }
 
 
-int BnDouble(struct BigNumber *r, struct BigNumber *a)
+int BnDouble(struct RaBigNumber *r, struct RaBigNumber *a)
 {
 	int i;
 	int c;
@@ -363,7 +363,7 @@ int BnDouble(struct BigNumber *r, struct BigNumber *a)
 
 	if (r->max_length < a->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	c = 0;
@@ -381,17 +381,17 @@ int BnDouble(struct BigNumber *r, struct BigNumber *a)
 	{
 		if (r->max_length <= r->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 
 		*rd = 1;
 		r->length++;
 	}
 	r->sign = a->sign;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnMul(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	uint64_t val;
 	int c;
@@ -404,13 +404,13 @@ int BnMul(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 	if (BN_ISZERO(a) || BN_ISZERO(b))
 	{
 		BnSetUInt(r, 0);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 	
 	length = (BnGetBitLength(a) + BnGetBitLength(b) + BN_WORD_BIT - 1) / BN_WORD_BIT;
 	if (r->max_length < length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	memset(r->data, 0, sizeof(uint32_t) * length);
@@ -451,10 +451,10 @@ int BnMul(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 
 	r->length = (int)(intptr_t)(rd - r->data);;
 	r->sign = a->sign ^ b->sign;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnSqr(struct BigNumber *r, struct BigNumber *a)
+int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 {
 	uint64_t val;
 	int c;
@@ -466,13 +466,13 @@ int BnSqr(struct BigNumber *r, struct BigNumber *a)
 
 	if (BN_ISZERO(a) || BN_ISONE(a)) {
 		BnSet(r, a);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	length = (BnGetBitLength(a) * 2 + BN_WORD_BIT - 1) / BN_WORD_BIT;
 	if (r->max_length < length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	memset(r->data, 0, sizeof(uint32_t) * length);
@@ -513,15 +513,15 @@ int BnSqr(struct BigNumber *r, struct BigNumber *a)
 	r->length = (int)(intptr_t)(rd - r->data);
 	r->sign = 0;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 // r = a % b
-int BnMod(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
-	struct BigNumber *aa;		// a << n
-	struct BigNumber *bb;		// b << n
-	struct BigNumber *bq;		// b * q
+	struct RaBigNumber *aa;		// a << n
+	struct RaBigNumber *bb;		// b << n
+	struct RaBigNumber *bq;		// b * q
 	int bit;
 	uint32_t qu;
 	uint64_t ru;
@@ -531,17 +531,17 @@ int BnMod(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 
 	if (r->max_length < b->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	// divide by zero
 	if (BN_ISZERO(b)) {
 		assert(0);
-		return BN_ERR_DIVIDED_BY_ZERO;
+		return RA_ERR_DIVIDED_BY_ZERO;
 	}
 	if (a->length < b->length)
 	{
 		BnSet(r, a);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	aa = BnNewW(a->length + 1);		// a << n
@@ -553,7 +553,7 @@ int BnMod(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 		BN_SAFEFREE(aa);
 		BN_SAFEFREE(bb);
 		BN_SAFEFREE(bq);
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 
 	// make (ru / bu) fit to 32bit integer (ru = highst 64bit of r, bu = highst 32bit of bb)
@@ -627,15 +627,15 @@ int BnMod(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 	BnFree(bb);
 	BnFree(bq);
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnDiv(struct BigNumber *q, struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int BnDiv(struct RaBigNumber *q, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
-	struct BigNumber *rr;
-	struct BigNumber *aa;		// a << n
-	struct BigNumber *bb;		// b << n
-	struct BigNumber *bq;		// b * q
+	struct RaBigNumber *rr;
+	struct RaBigNumber *aa;		// a << n
+	struct RaBigNumber *bb;		// b << n
+	struct RaBigNumber *bq;		// b * q
 	int bit;
 	int length;
 	uint32_t qu;
@@ -647,25 +647,25 @@ int BnDiv(struct BigNumber *q, struct BigNumber *r, struct BigNumber *a, struct 
 
 	if (r->max_length < b->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	if (q->max_length <= a->length - b->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	// divide by zero
 	if (BN_ISZERO(b)) {
 		assert(0);
-		return BN_ERR_DIVIDED_BY_ZERO;
+		return RA_ERR_DIVIDED_BY_ZERO;
 	}
 
 	if (a->length < b->length)
 	{
 		BnSet(r, a);
 		BnSetInt(q, 0);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	aa = BnNewW(a->length + 1);		// a << n
@@ -678,7 +678,7 @@ int BnDiv(struct BigNumber *q, struct BigNumber *r, struct BigNumber *a, struct 
 		BN_SAFEFREE(bb);
 		BN_SAFEFREE(bq);
 		BN_SAFEFREE(rr);
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 
 	// make (ru / bu) fit to 32bit integer (ru = highst 64bit of r, bu = highst 32bit of bb)
@@ -768,11 +768,11 @@ int BnDiv(struct BigNumber *q, struct BigNumber *r, struct BigNumber *a, struct 
 	BnFree(bq);
 	BnFree(rr);
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 
-int BnAddInt(struct BigNumber *bn, int32_t val)
+int BnAddInt(struct RaBigNumber *bn, int32_t val)
 {
 	int ret;
 	if (val > 0)
@@ -792,7 +792,7 @@ int BnAddInt(struct BigNumber *bn, int32_t val)
 	return ret;
 }
 
-int BnAddUInt(struct BigNumber *bn, uint32_t val)
+int BnAddUInt(struct RaBigNumber *bn, uint32_t val)
 {
 	int ret;
 	if (bn->sign == 0)
@@ -802,7 +802,7 @@ int BnAddUInt(struct BigNumber *bn, uint32_t val)
 	return ret;
 }
 
-int BnSubInt(struct BigNumber *bn, int32_t val)
+int BnSubInt(struct RaBigNumber *bn, int32_t val)
 {
 	int ret;
 	if (val > 0)
@@ -822,7 +822,7 @@ int BnSubInt(struct BigNumber *bn, int32_t val)
 	return ret;
 }
 
-int BnSubUInt(struct BigNumber *bn, uint32_t val)
+int BnSubUInt(struct RaBigNumber *bn, uint32_t val)
 {
 	int ret;
 	if ( bn->sign == 0 )
@@ -832,7 +832,7 @@ int BnSubUInt(struct BigNumber *bn, uint32_t val)
 	return ret;
 }
 
-int BnMulInt(struct BigNumber *bn, int32_t multiplier)
+int BnMulInt(struct RaBigNumber *bn, int32_t multiplier)
 {
 	uint64_t val;
 	int i;
@@ -853,15 +853,15 @@ int BnMulInt(struct BigNumber *bn, int32_t multiplier)
 	{
 		if (bn->max_length <= bn->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 		bn->data[bn->length] = (uint32_t)val;
 		bn->length++;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnMulUInt(struct BigNumber *bn, uint32_t multiplier)
+int BnMulUInt(struct RaBigNumber *bn, uint32_t multiplier)
 {
 	uint64_t val;
 	int i;
@@ -877,15 +877,15 @@ int BnMulUInt(struct BigNumber *bn, uint32_t multiplier)
 	{
 		if (bn->max_length <= bn->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 		bn->data[bn->length] = (uint32_t)val;
 		bn->length++;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnDivInt(struct BigNumber *bn, int32_t divisor, /*out*/uint32_t *remainder)
+int BnDivInt(struct RaBigNumber *bn, int32_t divisor, /*out*/uint32_t *remainder)
 {
 	uint64_t val;
 	int i;
@@ -893,7 +893,7 @@ int BnDivInt(struct BigNumber *bn, int32_t divisor, /*out*/uint32_t *remainder)
 
 	if (divisor == 0) {
 		assert(0);
-		return BN_ERR_DIVIDED_BY_ZERO;
+		return RA_ERR_DIVIDED_BY_ZERO;
 	}
 	if (divisor < 0)
 	{
@@ -929,10 +929,10 @@ int BnDivInt(struct BigNumber *bn, int32_t divisor, /*out*/uint32_t *remainder)
 	if (remainder != NULL)
 		*remainder = (uint32_t)val;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnDivUInt(struct BigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder)
+int BnDivUInt(struct RaBigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder)
 {
 	uint64_t val;
 	int i;
@@ -940,7 +940,7 @@ int BnDivUInt(struct BigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder
 
 	if (divisor == 0) {
 		assert(0);
-		return BN_ERR_DIVIDED_BY_ZERO;
+		return RA_ERR_DIVIDED_BY_ZERO;
 	}
 	val = 0;
 	for (i = bn->length - 1; i >= 0; i--)
@@ -971,10 +971,10 @@ int BnDivUInt(struct BigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder
 	if (remainder != NULL) {
 		*remainder = (uint32_t)val;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnModUInt(struct BigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder)
+int BnModUInt(struct RaBigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder)
 {
 	uint64_t val;
 	int i;
@@ -982,7 +982,7 @@ int BnModUInt(struct BigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder
 
 	if (divisor == 0) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	val = 0;
 	for (i = bn->length - 1; i >= 0; i--)
@@ -997,12 +997,12 @@ int BnModUInt(struct BigNumber *bn, uint32_t divisor, /*out*/uint32_t *remainder
 	}
 
 	*remainder = (uint32_t)val;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 /////////////////////////////////////////////
 
-int BnShiftL(struct BigNumber *bn, uint32_t bit)
+int BnShiftL(struct RaBigNumber *bn, uint32_t bit)
 
 {
 	int word;
@@ -1012,7 +1012,7 @@ int BnShiftL(struct BigNumber *bn, uint32_t bit)
 	uint32_t val_prev;
 
 	if (bit == 0) {
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	word = (bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
@@ -1020,7 +1020,7 @@ int BnShiftL(struct BigNumber *bn, uint32_t bit)
 
 	if (bn->max_length < bn->length + word) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	val_prev = 0;
@@ -1051,10 +1051,10 @@ int BnShiftL(struct BigNumber *bn, uint32_t bit)
 	if (bn->length > 1 && bn->data[bn->length - 1] == 0)
 		bn->length--;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnShiftR(struct BigNumber *bn, uint32_t bit)
+int BnShiftR(struct RaBigNumber *bn, uint32_t bit)
 {
 	int word;
 	uint32_t* dest;
@@ -1064,7 +1064,7 @@ int BnShiftR(struct BigNumber *bn, uint32_t bit)
 	uint32_t val_prev;
 
 	if (bit == 0) {
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	word = bit / BN_WORD_BIT;
@@ -1098,20 +1098,20 @@ int BnShiftR(struct BigNumber *bn, uint32_t bit)
 	if ( bn->length > 1 && *(--dest) == 0 )
 		bn->length--;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnGetMaxLength(struct BigNumber *bn)
+int BnGetMaxLength(struct RaBigNumber *bn)
 {
 	return bn->max_length;
 }
 
-int BnGetLength(struct BigNumber *bn)
+int BnGetLength(struct RaBigNumber *bn)
 {
 	return bn->length;
 }
 
-int BnGetBitLength(struct BigNumber *bn)
+int BnGetBitLength(struct RaBigNumber *bn)
 {
 	int bit;
 	bit = (bn->length - 1) * BN_WORD_BIT;
@@ -1130,19 +1130,19 @@ static uint32_t _rand32(uint32_t *seedp)
 	return _rand16(seedp) | ((uint32_t)_rand16(seedp) << 16);
 }
 
-int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
+int BnGenRandom(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 {
 	int word;
 
 	if (bit <= 0) {
 		BnSetInt(bn, 0);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	word = (bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
 	if (bn->max_length < word) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	BnGenRandomByteArray((uint8_t*)bn->data, word * BN_WORD_BYTE, seedp);
@@ -1156,28 +1156,28 @@ int BnGenRandom(struct BigNumber *bn, int bit, uint32_t *seedp)
 	while (bn->length > 1 && bn->data[bn->length - 1] == 0)
 		bn->length--;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnGetRandomOdd(struct BigNumber *bn, int bit, uint32_t *seedp)
+int BnGetRandomOdd(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 {
 	int ret;
 
 	ret = BnGenRandom(bn, bit, seedp);
-	if (ret != BN_ERR_SUCCESS)
+	if (ret != RA_ERR_SUCCESS)
 		return ret;
 
 	bn->data[0] |= 1;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-int BnGetRandomRSA(struct BigNumber *bn, int bit, uint32_t *seedp)
+int BnGetRandomRSA(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 {
 	int ret;
 	int word;
 
 	ret = BnGenRandom(bn, bit, seedp);
-	if (ret != BN_ERR_SUCCESS)
+	if (ret != RA_ERR_SUCCESS)
 		return ret;
 
 	bn->data[0] |= 1;
@@ -1185,7 +1185,7 @@ int BnGetRandomRSA(struct BigNumber *bn, int bit, uint32_t *seedp)
 	bit = ((bit - 1) % BN_WORD_BIT);
 	bn->data[word - 1] |= 1 << bit;
 	bn->length = word;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
@@ -1207,7 +1207,7 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 	if (len <= 0) {
 		if (seedp != NULL)
 			*seedp = seed;
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	remain = (int)((uintptr_t)data % 4);
@@ -1256,11 +1256,11 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 	if (seedp != NULL)
 		*seedp = seed;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 /////////////////////////////////////////////
-int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen)
+int BnToByteArray(struct RaBigNumber *bn, uint8_t *buffer, int bufferlen)
 {
 	int i;
 	int offset;
@@ -1270,7 +1270,7 @@ int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen)
 
 	offset = 0;
 	if (bn->sign && !BN_ISZERO(bn)) {
-		struct BigNumber *neg;
+		struct RaBigNumber *neg;
 		neg = BnClone(bn);
 		BnAddInt(neg, 1);		// neg = ~bn + 1 = ~(bn + 1)
 		word = neg->data[neg->length - 1];
@@ -1335,7 +1335,7 @@ int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen)
 	}
 }
 
-int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen )
+int BnToFixedByteArray( struct RaBigNumber *bn, uint8_t *buffer, int bufferlen )
 {
 	int i;
 	int offset;
@@ -1378,7 +1378,7 @@ int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen )
 
 //////////////////////////////////////////////
 // unsigned internal functions
-static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+static int _BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int i;
 	int c;
@@ -1391,7 +1391,7 @@ static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 
 	if (r->max_length < a->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	if (a->length > b->length)
 	{
@@ -1441,17 +1441,17 @@ static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 	{
 		if (r->max_length <= r->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 
 		*rd = 1;
 		r->length++;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 // r = a - b (a > b)
-static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+static int _BnSub(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int i;
 	int c;
@@ -1468,11 +1468,11 @@ static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 	bl = b->length;
 	if (a->length < b->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	if (r->max_length < a->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	r->length = al;
 	rd = &r->data[0];
@@ -1507,11 +1507,11 @@ static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 	{
 		r->length--;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 // a = a + b
-int _BnAddR(struct BigNumber *a, struct BigNumber *b)
+int _BnAddR(struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int i;
 	int c;
@@ -1553,17 +1553,17 @@ int _BnAddR(struct BigNumber *a, struct BigNumber *b)
 	{
 		if (a->max_length <= a->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 
 		*ad = 1;
 		a->length++;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 // a = a - b; (a > b)
-int _BnSubR(struct BigNumber *a, struct BigNumber *b)
+int _BnSubR(struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int i;
 	int c;
@@ -1604,10 +1604,10 @@ int _BnSubR(struct BigNumber *a, struct BigNumber *b)
 			a->length--;
 		}
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
-static int _BnCmp(struct BigNumber *a, struct BigNumber *b)
+static int _BnCmp(struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	uint32_t *ad;
 	uint32_t *bd;
@@ -1633,7 +1633,7 @@ static int _BnCmp(struct BigNumber *a, struct BigNumber *b)
 }
 /*
 // r = r * 2
-static int _BnDoubleR(struct BigNumber *r)
+static int _BnDoubleR(struct RaBigNumber *r)
 {
 	int i;
 	int c;
@@ -1654,18 +1654,18 @@ static int _BnDoubleR(struct BigNumber *r)
 	{
 		if (r->max_length <= r->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 
 		*rd = 1;
 		r->length++;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 */
 
 // a = a + (uint)val;
-static int _BnAddUInt(struct BigNumber *a, uint32_t val)
+static int _BnAddUInt(struct RaBigNumber *a, uint32_t val)
 {
 	int i;
 	int c;
@@ -1691,17 +1691,17 @@ static int _BnAddUInt(struct BigNumber *a, uint32_t val)
 	{
 		if (a->max_length <= a->length) {
 			assert(0);
-			return BN_ERR_NUMBER_SIZE;
+			return RA_ERR_NUMBER_SIZE;
 		}
 
 		*ad = 1;
 		a->length++;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 // a = a - (uint)val;
-static int _BnSubUInt(struct BigNumber *a, uint32_t val)
+static int _BnSubUInt(struct RaBigNumber *a, uint32_t val)
 {
 	int i;
 	int c;
@@ -1715,7 +1715,7 @@ static int _BnSubUInt(struct BigNumber *a, uint32_t val)
 	{
 		*ad = val - (*ad);
 		a->sign = -a->sign;
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 
 	c = ((*ad) < val);
@@ -1734,7 +1734,7 @@ static int _BnSubUInt(struct BigNumber *a, uint32_t val)
 	{
 		a->length--;
 	}
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 int _BnGetMSBPos(uint32_t val)
@@ -1751,12 +1751,12 @@ int _BnGetMSBPos(uint32_t val)
 	return POS[(uint32_t)(val * 0x07C4ACDDU) >> 27];
 }
 
-uint32_t _BnGetUInt32(struct BigNumber *bn)
+uint32_t _BnGetUInt32(struct RaBigNumber *bn)
 {
 	return bn->data[0];
 }
 
-uint64_t _BnGetUInt64(struct BigNumber *bn)
+uint64_t _BnGetUInt64(struct RaBigNumber *bn)
 {
 	if ( bn->length == 1 )
 		return bn->data[0];
@@ -1764,7 +1764,7 @@ uint64_t _BnGetUInt64(struct BigNumber *bn)
 		return ((uint64_t)bn->data[1] << 32) | bn->data[0];
 }
 
-void _BnInvert(struct BigNumber *bn)
+void _BnInvert(struct RaBigNumber *bn)
 {
 	bn->sign = !bn->sign;
 }

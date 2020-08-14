@@ -42,7 +42,7 @@ static int ASN1Push(struct RaAsn1Ctx *ctx)
 {
 	struct ASN1Data *stack;
 	if (ctx->dataSP >= RA_ASN1_DATA_STACK) {
-		return BN_ERR_OUT_OF_BUFFER;
+		return RA_ERR_OUT_OF_BUFFER;
 	}
 
 	stack = &ctx->dataStack[ctx->dataSP++];
@@ -59,7 +59,7 @@ static int ASN1Push(struct RaAsn1Ctx *ctx)
 	ctx->prevLink = &ctx->cur->child;
 	ctx->dataIndex = ctx->cur->dataOffset;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 static int ASN1Pop(struct RaAsn1Ctx *ctx)
@@ -68,7 +68,7 @@ static int ASN1Pop(struct RaAsn1Ctx *ctx)
 	struct RaAsn1Node *prevObj;
 
 	if (ctx->dataSP <= 0) {
-		return BN_ERR_OUT_OF_BUFFER;
+		return RA_ERR_OUT_OF_BUFFER;
 	}
 	stack = &ctx->dataStack[--ctx->dataSP];
 	prevObj = stack->prevObj;
@@ -81,7 +81,7 @@ static int ASN1Pop(struct RaAsn1Ctx *ctx)
 		prevObj->dataLength = ctx->dataIndex - prevObj->dataOffset - 2;
 	}
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 static int RaAsn1CreateNode(struct RaAsn1Ctx *ctx)
@@ -94,7 +94,7 @@ static int RaAsn1CreateNode(struct RaAsn1Ctx *ctx)
 	if (chunk->index >= RA_ASN1_NODE_CHUNK) {
 		chunk = (struct RaAsn1NodeChunk *)malloc(sizeof(struct RaAsn1NodeChunk));
 		if (chunk == NULL) {
-			result = BN_ERR_OUT_OF_MEMORY;
+			result = RA_ERR_OUT_OF_MEMORY;
 			goto _EXIT;
 		}
 		memset(chunk, 0, sizeof(struct RaAsn1NodeChunk));
@@ -110,7 +110,7 @@ static int RaAsn1CreateNode(struct RaAsn1Ctx *ctx)
 	*ctx->prevLink = node;
 	ctx->prevLink = &node->next;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 
 _EXIT:
 	return result;
@@ -122,10 +122,10 @@ static int ASN1Read(struct RaAsn1Ctx *ctx)
 	int length;
 
 	result = RaAsn1CreateNode(ctx);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	if (ctx->dataIndex + 2 > ctx->dataEnd) {	// at least two bytes are needed
-		result = BN_ERR_OUT_OF_BUFFER;
+		result = RA_ERR_OUT_OF_BUFFER;
 		goto _EXIT;
 	}
 	ctx->cur->offset = ctx->dataIndex;
@@ -138,22 +138,22 @@ static int ASN1Read(struct RaAsn1Ctx *ctx)
 		if (ctx->cur->type & RA_ASN1_OBJ_TYPE_CONST) {
 			ctx->cur->dataLength = -1;		// indefinite length
 			ctx->cur->dataOffset = ctx->dataIndex;
-			result = BN_ERR_SUCCESS;
+			result = RA_ERR_SUCCESS;
 			goto _EXIT;
 		}
 		else {
-			result = BN_ERR_INVALID_DATA;
+			result = RA_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
 	}
 	else {
 		length -= 0x80;
 		if (length > 4) {
-			result = BN_ERR_INVALID_DATA;
+			result = RA_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
 		if (ctx->dataIndex + length > ctx->dataEnd) {
-			result = BN_ERR_OUT_OF_BUFFER;
+			result = RA_ERR_OUT_OF_BUFFER;
 			goto _EXIT;
 		}
 		ctx->cur->dataLength = 0;
@@ -166,13 +166,13 @@ static int ASN1Read(struct RaAsn1Ctx *ctx)
 	ctx->cur->dataOffset = ctx->dataIndex;
 
 	if (ctx->cur->dataOffset + ctx->cur->dataLength > ctx->dataEnd) {
-		result = BN_ERR_OUT_OF_BUFFER;
+		result = RA_ERR_OUT_OF_BUFFER;
 		goto _EXIT;
 	}
 
 	ctx->dataIndex += ctx->cur->dataLength;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	return result;
 }
@@ -183,7 +183,7 @@ static int ASN1Parse(struct RaAsn1Ctx *ctx)
 
 	while (ctx->dataIndex < ctx->dataEnd) {
 		result = ASN1Read(ctx);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		if (ctx->cur->type & RA_ASN1_OBJ_TYPE_CONST) {
 			ASN1Push(ctx);
@@ -193,15 +193,15 @@ static int ASN1Parse(struct RaAsn1Ctx *ctx)
 		if (ctx->dataIndex >= ctx->dataEnd ||
 			(ctx->cur->type == 0 && ctx->cur->dataLength == 0) ) {		// end-of-content
 			result = ASN1Pop(ctx);
-			if (result == BN_ERR_OUT_OF_BUFFER) {
-				result = BN_ERR_SUCCESS;
+			if (result == RA_ERR_OUT_OF_BUFFER) {
+				result = RA_ERR_SUCCESS;
 				break;
 			}
-			if (result != BN_ERR_SUCCESS) goto _EXIT;
+			if (result != RA_ERR_SUCCESS) goto _EXIT;
 		}
 	};
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	return result;
 }
@@ -212,14 +212,14 @@ int RaAsn1CreateContext(const uint8_t *data, int dataLen, /*out*/struct RaAsn1Ct
 	struct RaAsn1Ctx *ctx;
 	ctx = (struct RaAsn1Ctx *)malloc(sizeof(struct RaAsn1Ctx));
 	if (ctx == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	memset(ctx, 0, sizeof(struct RaAsn1Ctx));
 
 	ctx->head = (struct RaAsn1NodeChunk *)malloc(sizeof(struct RaAsn1NodeChunk));
 	if (ctx->head == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	memset(ctx->head, 0, sizeof(struct RaAsn1NodeChunk));
@@ -237,11 +237,11 @@ int RaAsn1CreateContext(const uint8_t *data, int dataLen, /*out*/struct RaAsn1Ct
 	ctx->prevLink = &ctx->root;
 
 	result = ASN1Parse(ctx);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	*ctxp = ctx;
 	ctx = NULL;
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	if (ctx != NULL) {
 		RaAsn1DestroyContext(ctx);
@@ -267,5 +267,5 @@ void RaAsn1DestroyContext(struct RaAsn1Ctx *ctx)
 int RaAsn1GetRoot(struct RaAsn1Ctx *ctx, /*out*/struct RaAsn1Node **nodep)
 {
 	*nodep = ctx->root;
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }

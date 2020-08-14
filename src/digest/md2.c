@@ -36,13 +36,13 @@ int RaMd2Create(struct RaMd2Ctx **ctxp)
 	struct RaMd2Ctx *ctx;
 	ctx = (struct RaMd2Ctx*)malloc(sizeof(struct RaMd2Ctx));
 	if (ctx == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 	RaMd2Init(ctx);
 
 	*ctxp = ctx;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 void RaMd2Destroy(struct RaMd2Ctx *ctx)

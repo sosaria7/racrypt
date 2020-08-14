@@ -7,7 +7,7 @@
 #include <string.h>
 #include <assert.h>
 
-void BnPrint(struct BigNumber* bn)
+void BnPrint(struct RaBigNumber* bn)
 {
 	int i;
 
@@ -19,13 +19,13 @@ void BnPrint(struct BigNumber* bn)
 	}
 }
 
-void BnPrintLn(struct BigNumber* bn)
+void BnPrintLn(struct RaBigNumber* bn)
 {
 	BnPrint(bn);
 	printf("\n");
 }
 
-int BnSPrint(struct BigNumber* bn, char* buffer, int bufferlen)
+int BnSPrint(struct RaBigNumber* bn, char* buffer, int bufferlen)
 {
 	int i;
 	int offset;
@@ -43,7 +43,7 @@ int BnSPrint(struct BigNumber* bn, char* buffer, int bufferlen)
 	}
 
 	if (bufferlen < bn->length * 8 + offset + 1) {
-		return BN_ERR_OUT_OF_BUFFER;
+		return RA_ERR_OUT_OF_BUFFER;
 	}
 
 	for (i = bn->length - 1; i >= 0; i--)
@@ -60,9 +60,9 @@ int BnSPrint(struct BigNumber* bn, char* buffer, int bufferlen)
 // max_dec_word = max_dec_digit / 9		(needed one word for 9 digit)
 #define BN_MAX_DEC_LEN(word_len)		(int)((word_len)*8*1.204120 / 9 + 1)		// 1.204120 = log10(16)
 
-void BnPrint10(struct BigNumber* bn)
+void BnPrint10(struct RaBigNumber* bn)
 {
-	struct BigNumber* bn2;
+	struct RaBigNumber* bn2;
 	uint32_t* decimal;
 	int i;
 
@@ -94,16 +94,16 @@ _EXIT:
 		free(decimal);
 }
 
-void BnPrint10Ln(struct BigNumber* bn)
+void BnPrint10Ln(struct RaBigNumber* bn)
 {
 	BnPrint10(bn);
 	printf("\n");
 }
 
-int BnSPrint10(struct BigNumber* bn, char* buffer, int bufferlen)
+int BnSPrint10(struct RaBigNumber* bn, char* buffer, int bufferlen)
 {
 	int result;
-	struct BigNumber* bn2;
+	struct RaBigNumber* bn2;
 	uint32_t* decimal;
 	int i;
 	int offset;
@@ -112,7 +112,7 @@ int BnSPrint10(struct BigNumber* bn, char* buffer, int bufferlen)
 	decimal = malloc(sizeof(uint32_t) * BN_MAX_DEC_LEN((size_t)bn->length));
 	bn2 = BnClone(bn);
 	if (decimal == NULL || bn2 == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -134,7 +134,7 @@ int BnSPrint10(struct BigNumber* bn, char* buffer, int bufferlen)
 
 	if (bufferlen < offset + i * 9 + 1) {
 		assert(0);
-		result = BN_ERR_OUT_OF_BUFFER;
+		result = RA_ERR_OUT_OF_BUFFER;
 		goto _EXIT;
 	}
 	strncpy(buffer, temp, (size_t)offset);
@@ -145,7 +145,7 @@ int BnSPrint10(struct BigNumber* bn, char* buffer, int bufferlen)
 	}
 	buffer[offset] = '\0';
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 
 _EXIT:
 	BN_SAFEFREE(bn2);

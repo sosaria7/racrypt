@@ -10,28 +10,28 @@
 #include "asn1.h"
 
 struct RaRsaKeyPair {
-	struct BigNumber *mod;		// n
-	struct BigNumber *pub;		// e
-	struct BigNumber *priv;		// d
-	struct BigNumber *prime1;	// p
-	struct BigNumber *prime2;	// q
-	struct BigNumber *exp1;		// d mod (p-1)
-	struct BigNumber *exp2;		// d mod (q-1)
-	struct BigNumber *coeff;	// (inverse of q) mod p
-	struct MontCtx *mont;
+	struct RaBigNumber *mod;		// n
+	struct RaBigNumber *pub;		// e
+	struct RaBigNumber *priv;		// d
+	struct RaBigNumber *prime1;	// p
+	struct RaBigNumber *prime2;	// q
+	struct RaBigNumber *exp1;		// d mod (p-1)
+	struct RaBigNumber *exp2;		// d mod (q-1)
+	struct RaBigNumber *coeff;	// (inverse of q) mod p
+	struct RaMontCtx *mont;
 };
 
 int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	int result;
 	struct RaRsaKeyPair *key = NULL;
-	struct BigNumber *phi = NULL;
+	struct RaBigNumber *phi = NULL;
 	uint32_t seed;
 
 	assert((bit % 2) == 0);
 
 	key = (struct RaRsaKeyPair*)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	key->mod = BnNew(bit);
@@ -55,7 +55,7 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 		key->coeff == NULL ||
 		phi == NULL)
 	{
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -63,12 +63,12 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 
 	seed = 0;
 	do {
-		result = GenPrimeNumberEx( key->prime1, bit / 2, NULL, NULL, &seed );
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		result = RaGenPrimeNumberEx( key->prime1, bit / 2, NULL, NULL, &seed );
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		do {
-			result = GenPrimeNumberEx( key->prime2, bit / 2, NULL, NULL, &seed );
-			if (result != BN_ERR_SUCCESS) goto _EXIT;
+			result = RaGenPrimeNumberEx( key->prime2, bit / 2, NULL, NULL, &seed );
+			if (result != RA_ERR_SUCCESS) goto _EXIT;
 		} while ( BnCmp( key->prime1, key->prime2 ) == 0 );
 
 		BnMul(key->mod, key->prime1, key->prime2);
@@ -78,27 +78,27 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	BnSubInt(key->prime2, 1);
 	BnMul(phi, key->prime1, key->prime2);
 	result = GetGCDEx(NULL, key->priv, NULL, key->pub, phi, 1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	
 	//*
 	result = BnMod(key->exp1, key->priv, key->prime1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	result = BnMod(key->exp2, key->priv, key->prime2);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	BnAddInt(key->prime1, 1);
 	BnAddInt(key->prime2, 1);
 	result = GetGCDEx(NULL, key->coeff, NULL, key->prime2, key->prime1, 1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	//*/
 
-	result = MontCreate(key->mod, &key->mont);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	result = RaMontCreate(key->mod, &key->mont);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	*keyPair = key;
 	key = NULL;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 
 _EXIT:
 	BN_SAFEFREE(phi);
@@ -138,54 +138,54 @@ void RaRsaDestroyKeyPair(struct RaRsaKeyPair *key)
 		BnClearFree(key->coeff);
 	}
 	if (key->mont != NULL) {
-		MontDestroy(key->mont);
+		RaMontDestroy(key->mont);
 	}
 	memset(key, 0, sizeof(struct RaRsaKeyPair));
 	free(key);
 }
 
-int RaRsaEncrypt(struct RaRsaKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure)
+int RaRsaEncrypt(struct RaRsaKeyPair* key, struct RaBigNumber *message, /*out*/struct RaBigNumber *secure)
 {
 	int result;
-	result = MontExpMod(key->mont, secure, message, key->pub);
+	result = RaMontExpMod(key->mont, secure, message, key->pub);
 	return result;
 }
 
-int RaRsaDecrypt(struct RaRsaKeyPair* key, struct BigNumber *secure, /*out*/struct BigNumber *message)
+int RaRsaDecrypt(struct RaRsaKeyPair* key, struct RaBigNumber *secure, /*out*/struct RaBigNumber *message)
 {
 	int result;
 	if (key->priv == NULL)
-		return BN_ERR_INVALID_DATA;
-	result = MontExpMod(key->mont, message, secure, key->priv);
+		return RA_ERR_INVALID_DATA;
+	result = RaMontExpMod(key->mont, message, secure, key->priv);
 	return result;
 }
 
-int RaRsaSign( struct RaRsaKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure )
+int RaRsaSign( struct RaRsaKeyPair* key, struct RaBigNumber *message, /*out*/struct RaBigNumber *secure )
 {
 	int result;
 	if ( key->priv == NULL )
-		return BN_ERR_INVALID_DATA;
-	result = MontExpMod( key->mont, secure, message, key->priv );
+		return RA_ERR_INVALID_DATA;
+	result = RaMontExpMod( key->mont, secure, message, key->priv );
 	return result;
 }
 
-int RaRsaVerify(struct RaRsaKeyPair* key, struct BigNumber *secure, struct BigNumber *message)
+int RaRsaVerify(struct RaRsaKeyPair* key, struct RaBigNumber *secure, struct RaBigNumber *message)
 {
 	int result;
-	struct BigNumber *decrypted;
+	struct RaBigNumber *decrypted;
 
 	decrypted = BnNewW(key->mod->length);
 	if (decrypted == NULL)
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 
-	MontExpMod(key->mont, decrypted, secure, key->pub);
+	RaMontExpMod(key->mont, decrypted, secure, key->pub);
 	result = BnCmp(message, decrypted);
 
 	BnFree(decrypted);
 
 	if (result == 0)
-		return BN_ERR_SUCCESS;	// validated
-	return BN_ERR_INVALID_DATA;
+		return RA_ERR_SUCCESS;	// validated
+	return RA_ERR_INVALID_DATA;
 }
 
 int RaRsaKeyBitLength( struct RaRsaKeyPair* key )
@@ -193,21 +193,21 @@ int RaRsaKeyBitLength( struct RaRsaKeyPair* key )
 	return BnGetBitLength( key->mod );
 }
 
-#define CHECK_KEY_DATA(cond)		if (!(cond)) { result = BN_ERR_INVALID_DATA; goto _EXIT; }
+#define CHECK_KEY_DATA(cond)		if (!(cond)) { result = RA_ERR_INVALID_DATA; goto _EXIT; }
 
 int RaRsaVerifyKey(struct RaRsaKeyPair *key)
 {
 	int result;
-	struct BigNumber *temp = NULL;
-	struct BigNumber *phi = NULL;
-	struct BigNumber *prime1Sub1 = NULL;
-	struct BigNumber *prime2Sub1 = NULL;
+	struct RaBigNumber *temp = NULL;
+	struct RaBigNumber *phi = NULL;
+	struct RaBigNumber *prime1Sub1 = NULL;
+	struct RaBigNumber *prime2Sub1 = NULL;
 	int bit;
 
 	CHECK_KEY_DATA(BnCmp(key->pub, key->mod) < 0);
 
 	if (key->priv == NULL) {
-		result = BN_ERR_SUCCESS;
+		result = RA_ERR_SUCCESS;
 		goto _EXIT;
 	}
 
@@ -217,11 +217,11 @@ int RaRsaVerifyKey(struct RaRsaKeyPair *key)
 
 	CHECK_KEY_DATA(BnGetBitLength(key->prime1) + BnGetBitLength(key->prime2) == bit);
 
-	result = IsPrimeNumber(key->prime1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	result = RaIsPrimeNumber(key->prime1);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
-	result = IsPrimeNumber(key->prime2);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	result = RaIsPrimeNumber(key->prime2);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	BnMul(temp, key->prime1, key->prime2);
 	CHECK_KEY_DATA(BnCmp(temp, key->mod) == 0);
@@ -229,7 +229,7 @@ int RaRsaVerifyKey(struct RaRsaKeyPair *key)
 	prime1Sub1 = BnClone(key->prime1);
 	prime2Sub1 = BnClone(key->prime2);
 	if (prime1Sub1 == NULL || prime2Sub1 == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -239,26 +239,26 @@ int RaRsaVerifyKey(struct RaRsaKeyPair *key)
 	BnMul(phi, prime1Sub1, prime2Sub1);
 
 	result = GetGCDEx(NULL, temp, NULL, key->pub, phi, 1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	CHECK_KEY_DATA(BnCmp(temp, key->priv) == 0);
 
 	result = BnMod(temp, key->priv, prime1Sub1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	CHECK_KEY_DATA(BnCmp(temp, key->exp1) == 0);
 
 	result = BnMod(temp, key->priv, prime2Sub1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	CHECK_KEY_DATA(BnCmp(temp, key->exp2) == 0);
 
 	result = GetGCDEx(NULL, temp, NULL, key->prime2, key->prime1, 1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	CHECK_KEY_DATA(BnCmp(temp, key->coeff) == 0);
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 
 _EXIT:
 	BN_SAFEFREE(temp);
@@ -269,14 +269,14 @@ _EXIT:
 	return result;
 }
 
-static int RaRsaNewASN1Integer(const uint8_t *asn1Data, struct RaAsn1Node *node, /*out*/struct BigNumber **bnp)
+static int RaRsaNewASN1Integer(const uint8_t *asn1Data, struct RaAsn1Node *node, /*out*/struct RaBigNumber **bnp)
 {
 	int result;
-	struct BigNumber *bn = NULL;
+	struct RaBigNumber *bn = NULL;
 	int bit;
 
 	if (node->type != RA_ASN1_OBJ_INTEGER) {
-		result = BN_ERR_INVALID_DATA;
+		result = RA_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 	bit = node->dataLength * 8;
@@ -286,17 +286,17 @@ static int RaRsaNewASN1Integer(const uint8_t *asn1Data, struct RaAsn1Node *node,
 
 	bn = BnNew(bit);
 	if (bn == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
 	result = BnSetByteArray(bn, asn1Data + node->dataOffset, node->dataLength);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	*bnp = bn;
 	bn = NULL;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 
 	if (bn != NULL)
@@ -315,36 +315,36 @@ int RaRsaCreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaK
 
 	key = (struct RaRsaKeyPair *)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	memset(key, 0, sizeof(struct RaRsaKeyPair));
 
 	result = RaAsn1CreateContext(asn1Data, dataLen, &ctx);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	result = RaAsn1GetRoot(ctx, &cur);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->child;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->mod);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->pub);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
-	result = MontCreate(key->mod, &key->mont);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	result = RaMontCreate(key->mod, &key->mont);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 #ifdef RACRYPT_RSA_VERIFY_KEY
 	result = RaRsaVerifyKey(key);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 #endif
 
 	*keyp = key;
 	key = NULL;
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	if (ctx != NULL)
 		RaAsn1DestroyContext(ctx);
@@ -366,62 +366,62 @@ int RaRsaCreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsa
 
 	key = (struct RaRsaKeyPair *)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	memset(key, 0, sizeof(struct RaRsaKeyPair));
 
 	result = RaAsn1CreateContext(asn1Data, dataLen, &ctx);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	result = RaAsn1GetRoot(ctx, &cur);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->child;
 	cur = cur->next;		// skip version
 
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->mod);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->pub);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->priv);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->prime1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->prime2);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->exp1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->exp2);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
 	result = RaRsaNewASN1Integer(asn1Data, cur, &key->coeff);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
-	result = MontCreate(key->mod, &key->mont);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	result = RaMontCreate(key->mod, &key->mont);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 #ifdef RACRYPT_RSA_VERIFY_KEY
 	result = RaRsaVerifyKey(key);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 #endif
 
 	*keyp = key;
 	key = NULL;
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	if (ctx != NULL)
 		RaAsn1DestroyContext(ctx);
@@ -444,10 +444,10 @@ int RaRsaCreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/str
 	int isPrivate = 0;
 
 	result = RaAsn1CreateContext(asn1Data, dataLen, &ctx);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	result = RaAsn1GetRoot(ctx, &cur);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->child;
 	if (cur->type == RA_ASN1_OBJ_INTEGER) {	// version
@@ -455,34 +455,34 @@ int RaRsaCreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/str
 		cur = cur->next;
 	}
 	if (!IS_OID(asn1Data, cur->child, OID_RSA_Encryption)) {
-		result = BN_ERR_INVALID_DATA;
+		result = RA_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 	cur = cur->next;
 
 	if (isPrivate) {	// private key
 		if (cur->type != RA_ASN1_OBJ_OCTET_STRING) {
-			result = BN_ERR_INVALID_DATA;
+			result = RA_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
 		result = RaRsaCreateKeyPriv(asn1Data + cur->dataOffset, cur->dataLength, keyp);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 	}
 	else {		// public key
 		if (cur->type != RA_ASN1_OBJ_BIT_STRING) {
-			result = BN_ERR_INVALID_DATA;
+			result = RA_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
 		// unused bit should be 0
 		if (cur->dataLength < 2 || asn1Data[cur->dataOffset] != 0) {
-			result = BN_ERR_INVALID_DATA;
+			result = RA_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
 		result = RaRsaCreateKeyPub(asn1Data + cur->dataOffset + 1, cur->dataLength - 1, keyp);
-		if (result != BN_ERR_SUCCESS) goto _EXIT;
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 	}
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 
 	if (ctx != NULL)
@@ -558,12 +558,12 @@ int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, 
 	bytelen = bit * 8 + 1;	// max
 
 	if (key->priv == NULL) {
-		result = BN_ERR_INVALID_DATA;
+		result = RA_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
 	temp = (uint8_t*)malloc(bytelen);
 	if (temp == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -576,7 +576,7 @@ int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, 
 	bufferlen += ASN1EncodeLength(bufferlen, NULL, 0) + 1;		// sequence
 	buffer = (uint8_t*)malloc(bufferlen);
 	if (buffer == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	offset = bufferlen;
@@ -698,7 +698,7 @@ int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, 
 
 	if (asn1Data != NULL) {
 		if (dataLen < len) {
-			result = BN_ERR_OUT_OF_BUFFER;
+			result = RA_ERR_OUT_OF_BUFFER;
 			goto _EXIT;
 		}
 		memcpy(asn1Data, buffer + offset, (size_t)bufferlen - offset);
@@ -707,7 +707,7 @@ int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, 
 		*resultLen = len;
 	}
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	if (buffer != NULL)
 		free(buffer);
@@ -732,7 +732,7 @@ int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, i
 
 	temp = (uint8_t*)malloc(bytelen);
 	if (temp == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -744,7 +744,7 @@ int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, i
 	bufferlen += ASN1EncodeLength(bufferlen, NULL, 0) + 1;		// sequence
 	buffer = (uint8_t*)malloc(bufferlen);
 	if (buffer == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	offset = bufferlen;
@@ -800,7 +800,7 @@ int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, i
 
 	if (asn1Data != NULL) {
 		if (dataLen < len) {
-			result = BN_ERR_OUT_OF_BUFFER;
+			result = RA_ERR_OUT_OF_BUFFER;
 			goto _EXIT;
 		}
 		memcpy(asn1Data, buffer + offset, (size_t)bufferlen - offset);
@@ -809,7 +809,7 @@ int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, i
 		*resultLen = len;
 	}
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	if (buffer != NULL)
 		free(buffer);

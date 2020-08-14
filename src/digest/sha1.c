@@ -15,13 +15,13 @@ int RaSha1Create(struct RaSha1Ctx **ctxp)
 	struct RaSha1Ctx *ctx;
 	ctx = (struct RaSha1Ctx*)malloc(sizeof(struct RaSha1Ctx));
 	if (ctx == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 	RaSha1Init(ctx);
 
 	*ctxp = ctx;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 void RaSha1Destroy(struct RaSha1Ctx *ctx)

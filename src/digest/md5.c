@@ -29,13 +29,13 @@ int RaMd5Create(struct RaMd5Ctx **ctxp)
 	struct RaMd5Ctx *ctx;
 	ctx = (struct RaMd5Ctx*)malloc(sizeof(struct RaMd5Ctx));
 	if (ctx == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 	RaMd5Init(ctx);
 
 	*ctxp = ctx;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 void RaMd5Destroy(struct RaMd5Ctx *ctx)

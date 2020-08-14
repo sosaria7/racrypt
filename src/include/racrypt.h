@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #include "racrypt_com.h"
+#include "racrypt_bn.h"
 #include "racrypt_pk.h"
 #include "racrypt_digest.h"
 #include "racrypt_cipher.h"

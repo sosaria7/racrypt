@@ -22,13 +22,13 @@ int RaHas160Create(struct RaHas160Ctx **ctxp)
 	struct RaHas160Ctx *ctx;
 	ctx = (struct RaHas160Ctx*)malloc(sizeof(struct RaHas160Ctx));
 	if (ctx == NULL) {
-		return BN_ERR_OUT_OF_MEMORY;
+		return RA_ERR_OUT_OF_MEMORY;
 	}
 	RaHas160Init(ctx);
 
 	*ctxp = ctx;
 
-	return BN_ERR_SUCCESS;
+	return RA_ERR_SUCCESS;
 }
 
 void RaHas160Destroy(struct RaHas160Ctx *ctx)

@@ -3,12 +3,12 @@
 #ifndef __BN_BNPRINT_H__
 #define __BN_BNPRINT_H__
 
-void BnPrint(struct BigNumber* bn);
-void BnPrintLn(struct BigNumber* bn);
-int BnSPrint(struct BigNumber* bn, char* buffer, int bufferlen);
-void BnPrint10(struct BigNumber* bn);
-void BnPrint10Ln(struct BigNumber* bn);
-int BnSPrint10(struct BigNumber* bn, char* buffer, int bufferlen);
+void BnPrint(struct RaBigNumber* bn);
+void BnPrintLn(struct RaBigNumber* bn);
+int BnSPrint(struct RaBigNumber* bn, char* buffer, int bufferlen);
+void BnPrint10(struct RaBigNumber* bn);
+void BnPrint10Ln(struct RaBigNumber* bn);
+int BnSPrint10(struct RaBigNumber* bn, char* buffer, int bufferlen);
 
 
 #endif

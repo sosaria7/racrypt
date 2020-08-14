@@ -7,38 +7,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct MontCtx
+struct RaMontCtx
 {
-	struct BigNumber *N;
-	struct BigNumber *NB;		// N' where NN' = -1 mod B, B = 0x100000000
-	struct BigNumber *BB;		// B' where BB' = 1 mod N
-	struct BigNumber *tmp;
-	struct BigNumber *mul;
+	struct RaBigNumber *N;
+	struct RaBigNumber *NB;		// N' where NN' = -1 mod B, B = 0x100000000
+	struct RaBigNumber *BB;		// B' where BB' = 1 mod N
+	struct RaBigNumber *tmp;
+	struct RaBigNumber *mul;
 	uint32_t n0;				// N' % R, use this instead of N' on ((T mod R) * N') mod R 
 	int Rl;						// length of R in word
 };
 
 // N must be prime number
-int MontCreate(struct BigNumber *N, /*out*/struct MontCtx **montCtx)
+int RaMontCreate(struct RaBigNumber *N, /*out*/struct RaMontCtx **montCtx)
 {
 	int result;
-	struct MontCtx *ctx = NULL;
-	struct BigNumber *B = NULL;
+	struct RaMontCtx *ctx = NULL;
+	struct RaBigNumber *B = NULL;
 
 	if (BN_ISZERO(N)) {
 		assert(0);
-		result = BN_ERR_DIVIDED_BY_ZERO;
+		result = RA_ERR_DIVIDED_BY_ZERO;
 		goto _EXIT;
 	}
-	ctx = (struct MontCtx*)malloc(sizeof(struct MontCtx));
+	ctx = (struct RaMontCtx*)malloc(sizeof(struct RaMontCtx));
 	if (ctx == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
 	B = BnNewW(2);
 	if (B == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	BnSetUInt64(B, UINT64_C(0x100000000));
@@ -50,7 +50,7 @@ int MontCreate(struct BigNumber *N, /*out*/struct MontCtx **montCtx)
 	ctx->mul = BnNewW(N->length * 2);
 	if (ctx->N == NULL || ctx->NB == NULL || ctx->BB == NULL ||
 		ctx->tmp == NULL || ctx->mul == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 
@@ -58,7 +58,7 @@ int MontCreate(struct BigNumber *N, /*out*/struct MontCtx **montCtx)
 
 	// RR' - NN' = 1
 	result = GetGCDEx(NULL, ctx->BB, ctx->tmp, B, ctx->N, 1);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	BnSub(ctx->NB, B, ctx->tmp);
 
@@ -68,17 +68,17 @@ int MontCreate(struct BigNumber *N, /*out*/struct MontCtx **montCtx)
 	*montCtx = ctx;
 	ctx = NULL;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 
 _EXIT:
 	if (ctx != NULL)
-		MontDestroy(ctx);
+		RaMontDestroy(ctx);
 	BN_SAFEFREE(B);
 
 	return result;
 }
 
-void MontDestroy(struct MontCtx* ctx)
+void RaMontDestroy(struct RaMontCtx* ctx)
 {
 	if (ctx != NULL) {
 		BnClearFree(ctx->N);
@@ -86,27 +86,27 @@ void MontDestroy(struct MontCtx* ctx)
 		BnClearFree(ctx->BB);
 		BnClearFree(ctx->tmp);
 		BnClearFree(ctx->mul);
-		memset(ctx, 0, sizeof(struct MontCtx));
+		memset(ctx, 0, sizeof(struct RaMontCtx));
 		free(ctx);
 	}
 }
 
 // r = aR mod N
-int MontSet(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber *a)
+int MontSet(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaBigNumber *a)
 {
 	int result;
 	if (BN_ISZERO(a))
 	{
 		BnSetUInt(r, 0);
-		return BN_ERR_SUCCESS;
+		return RA_ERR_SUCCESS;
 	}
 	if (r->max_length < ctx->N->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	if (ctx->tmp->max_length < a->length + ctx->Rl) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	memcpy(ctx->tmp->data + ctx->Rl, a->data, sizeof(uint32_t) * a->length);
@@ -119,7 +119,7 @@ int MontSet(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber *a
 }
 
 // r = a(R^-1) mod N
-int MontREDC(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a)
+int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a)
 {
 	int result;
 	uint32_t m;
@@ -131,7 +131,7 @@ int MontREDC(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a)
 	uint32_t *td;
 
 	result = BnSet(ctx->tmp, a);
-	if (result != BN_ERR_SUCCESS) {
+	if (result != RA_ERR_SUCCESS) {
 		return result;
 	}
 
@@ -139,11 +139,11 @@ int MontREDC(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a)
 
 	if (ctx->tmp->max_length < ctx->tmp->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 	if (ctx->tmp->length <= a->length) {
 		assert(0);
-		return BN_ERR_NUMBER_SIZE;
+		return RA_ERR_NUMBER_SIZE;
 	}
 
 	memset(ctx->tmp->data + a->length, 0, sizeof(uint32_t) * (ctx->tmp->length - a->length));
@@ -196,21 +196,21 @@ int MontREDC(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a)
 	return result;
 }
 
-int MontSqr(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a)
+int MontSqr(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a)
 {
 	int result;
 	result = BnSqr(ctx->mul, a);
-	if (result == BN_ERR_SUCCESS)
+	if (result == RA_ERR_SUCCESS)
 		result = MontREDC(ctx, r, ctx->mul);
 
 	return result;
 }
 
-int MontMul(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int MontMul(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int result;
 	result = BnMul(ctx->mul, a, b);
-	if (result == BN_ERR_SUCCESS)
+	if (result == RA_ERR_SUCCESS)
 		result = MontREDC(ctx, r, ctx->mul);
 
 	return result;
@@ -219,10 +219,10 @@ int MontMul(struct MontCtx *ctx, struct BigNumber *r, struct BigNumber *a, struc
 #define EXP_WINDOW		8		// 2^4 / 2
 #define EXP_WINDOW_BIT	4		// 4bit
 
-int MontExpMod(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
+int RaMontExpMod(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int result;
-	struct BigNumber *val = NULL;
+	struct RaBigNumber *val = NULL;
 	int i, j;
 	uint32_t mask;
 	uint32_t *bd;
@@ -231,33 +231,33 @@ int MontExpMod(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber
 	int pendBit;
 	int oddBit;
 
-	struct BigNumber *window[EXP_WINDOW];
+	struct RaBigNumber *window[EXP_WINDOW];
 
 	memset(window, 0, sizeof(window));
 
 	if (a->length > ctx->N->length) {
 		assert(0);
-		result = BN_ERR_NUMBER_SIZE;
+		result = RA_ERR_NUMBER_SIZE;
 		goto _EXIT;
 	}
 	val = BnNewW(ctx->N->length + 1);
 	if (val == NULL) {
-		result = BN_ERR_OUT_OF_MEMORY;
+		result = RA_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
 	for (i = 0; i < EXP_WINDOW; i++) {
 		window[i] = BnNewW(ctx->N->length + 1);
 		if (window[i] == NULL) {
-			result = BN_ERR_OUT_OF_MEMORY;
+			result = RA_ERR_OUT_OF_MEMORY;
 			goto _EXIT;
 		}
 	}
 
 	result = MontSet(ctx, val, a);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	MontSqr(ctx, val, val);
 	result = MontSet(ctx, window[0], a);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	for (i = 1; i < EXP_WINDOW; i++) {
 		MontMul(ctx, window[i], window[i-1], val);		// odd
@@ -266,7 +266,7 @@ int MontExpMod(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber
 	// r = Mont(1)
 	BnSetUInt(val, 1);
 	result = MontSet(ctx, val, val);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	bd = &b->data[b->length - 1];
 	pend = 0;
@@ -309,9 +309,9 @@ int MontExpMod(struct MontCtx *ctx, /*out*/struct BigNumber *r, struct BigNumber
 	}
 
 	result = MontREDC(ctx, r, val);
-	if (result != BN_ERR_SUCCESS) goto _EXIT;
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
-	result = BN_ERR_SUCCESS;
+	result = RA_ERR_SUCCESS;
 _EXIT:
 	BN_SAFEFREE(val);
 	for (i = 0; i < EXP_WINDOW; i++) {
