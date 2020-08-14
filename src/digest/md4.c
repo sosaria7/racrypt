@@ -158,6 +158,11 @@ static void RaMd4Process(struct RaMd4Ctx *ctx, const uint8_t data[64])
     MD4_P_DO4(44);
 #endif
 
+#undef F
+#undef K
+#undef R
+#undef W
+
 	ctx->h[0] += a;
 	ctx->h[1] += b;
 	ctx->h[2] += c;

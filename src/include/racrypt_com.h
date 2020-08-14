@@ -1,6 +1,5 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-#pragma once
 #ifndef __RA_COM_H__
 #define __RA_COM_H__
 
@@ -83,13 +82,6 @@ int BnGenRandomByteArray( uint8_t *data, int len, uint32_t *seedp );
 
 int BnToByteArray(struct BigNumber *bn, uint8_t *buffer, int bufferlen);
 int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen );
-void BnPrint(struct BigNumber *bn);
-void BnPrintLn(struct BigNumber *bn);
-void BnPrint10(struct BigNumber *bn);
-void BnPrint10Ln(struct BigNumber *bn);
-int BnSPrint(struct BigNumber *bn, char *buffer, int bufferlen);
-int BnSPrint10(struct BigNumber *bn, char *buffer, int bufferlen);
-
 
 int _BnAddR(struct BigNumber *a, struct BigNumber *b);
 int _BnSubR(struct BigNumber *a, struct BigNumber *b);

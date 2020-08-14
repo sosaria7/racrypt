@@ -1,6 +1,5 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-#pragma once
 #ifndef __RA_DIGEST_H__
 #define __RA_DIGEST_H__
 

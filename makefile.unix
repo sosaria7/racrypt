@@ -30,7 +30,8 @@ OBJECTS=src/com/bignumber.o	\
 		src/digest/has160.o	\
 		src/cipher/aes.o
 
-TOBJECTS=src/test/test.o
+TOBJECTS=src/test/test.o	\
+		src/test/bnprint.o
 
 HEADERS=src/include/racrypt.h	\
 		src/include/racrypt_com.h	\

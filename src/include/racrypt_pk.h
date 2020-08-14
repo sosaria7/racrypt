@@ -1,6 +1,5 @@
 /* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
 
-#pragma once
 #ifndef __RA_PK_H__
 #define __RA_PK_H__
 
@@ -10,22 +9,22 @@
 extern "C" {
 #endif
 
-struct RSAKeyPair;
+struct RaRsaKeyPair;
 
-int RSACreateKeyPair(int bit, /*out*/struct RSAKeyPair** keyPair);
-void RSADestroyKeyPair(struct RSAKeyPair* key);
-int RSAEncrypt(struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *encrypted);
-int RSADecrypt(struct RSAKeyPair* key, struct BigNumber *encrypted, /*out*/struct BigNumber *message);
-int RSASign( struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure );
-int RSAVerify(struct RSAKeyPair* key, struct BigNumber *encrypted, struct BigNumber *message);
-int RSAKeyBitLength(struct RSAKeyPair* key);
-int RSAVerifyKey(struct RSAKeyPair *key);
+int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair);
+void RaRsaDestroyKeyPair(struct RaRsaKeyPair* key);
+int RaRsaEncrypt(struct RaRsaKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *encrypted);
+int RaRsaDecrypt(struct RaRsaKeyPair* key, struct BigNumber *encrypted, /*out*/struct BigNumber *message);
+int RaRsaSign( struct RaRsaKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure );
+int RaRsaVerify(struct RaRsaKeyPair* key, struct BigNumber *encrypted, struct BigNumber *message);
+int RaRsaKeyBitLength(struct RaRsaKeyPair* key);
+int RaRsaVerifyKey(struct RaRsaKeyPair *key);
 
-int RSACreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp);
-int RSACreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp);
-int RSACreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp);
-int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen);
-int RSAPubKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen);
+int RaRsaCreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaKeyPair** keyp);
+int RaRsaCreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaKeyPair** keyp);
+int RaRsaCreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaKeyPair** keyp);
+int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen);
+int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen);
 
 #ifdef __cplusplus
 }

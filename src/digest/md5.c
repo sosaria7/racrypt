@@ -174,6 +174,11 @@ static void RaMd5Process(struct RaMd5Ctx *ctx, const uint8_t data[64])
     MD5_P_DO4(60);
 #endif
 
+#undef F
+#undef W
+#undef K
+#undef R
+
 	ctx->h[0] += a;
 	ctx->h[1] += b;
 	ctx->h[2] += c;

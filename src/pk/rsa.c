@@ -9,7 +9,7 @@
 
 #include "asn1.h"
 
-struct RSAKeyPair {
+struct RaRsaKeyPair {
 	struct BigNumber *mod;		// n
 	struct BigNumber *pub;		// e
 	struct BigNumber *priv;		// d
@@ -21,15 +21,15 @@ struct RSAKeyPair {
 	struct MontCtx *mont;
 };
 
-int RSACreateKeyPair(int bit, /*out*/struct RSAKeyPair** keyPair) {
+int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	int result;
-	struct RSAKeyPair *key = NULL;
+	struct RaRsaKeyPair *key = NULL;
 	struct BigNumber *phi = NULL;
 	uint32_t seed;
 
 	assert((bit % 2) == 0);
 
-	key = (struct RSAKeyPair*)malloc(sizeof(struct RSAKeyPair));
+	key = (struct RaRsaKeyPair*)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
@@ -103,12 +103,12 @@ int RSACreateKeyPair(int bit, /*out*/struct RSAKeyPair** keyPair) {
 _EXIT:
 	BN_SAFEFREE(phi);
 	if (key != NULL) {
-		RSADestroyKeyPair(key);
+		RaRsaDestroyKeyPair(key);
 	}
 	return result;
 }
 
-void RSADestroyKeyPair(struct RSAKeyPair *key)
+void RaRsaDestroyKeyPair(struct RaRsaKeyPair *key)
 {
 	if (key == NULL) {
 		return;
@@ -140,18 +140,18 @@ void RSADestroyKeyPair(struct RSAKeyPair *key)
 	if (key->mont != NULL) {
 		MontDestroy(key->mont);
 	}
-	memset(key, 0, sizeof(struct RSAKeyPair));
+	memset(key, 0, sizeof(struct RaRsaKeyPair));
 	free(key);
 }
 
-int RSAEncrypt(struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure)
+int RaRsaEncrypt(struct RaRsaKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure)
 {
 	int result;
 	result = MontExpMod(key->mont, secure, message, key->pub);
 	return result;
 }
 
-int RSADecrypt(struct RSAKeyPair* key, struct BigNumber *secure, /*out*/struct BigNumber *message)
+int RaRsaDecrypt(struct RaRsaKeyPair* key, struct BigNumber *secure, /*out*/struct BigNumber *message)
 {
 	int result;
 	if (key->priv == NULL)
@@ -160,7 +160,7 @@ int RSADecrypt(struct RSAKeyPair* key, struct BigNumber *secure, /*out*/struct B
 	return result;
 }
 
-int RSASign( struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure )
+int RaRsaSign( struct RaRsaKeyPair* key, struct BigNumber *message, /*out*/struct BigNumber *secure )
 {
 	int result;
 	if ( key->priv == NULL )
@@ -169,7 +169,7 @@ int RSASign( struct RSAKeyPair* key, struct BigNumber *message, /*out*/struct Bi
 	return result;
 }
 
-int RSAVerify(struct RSAKeyPair* key, struct BigNumber *secure, struct BigNumber *message)
+int RaRsaVerify(struct RaRsaKeyPair* key, struct BigNumber *secure, struct BigNumber *message)
 {
 	int result;
 	struct BigNumber *decrypted;
@@ -188,14 +188,14 @@ int RSAVerify(struct RSAKeyPair* key, struct BigNumber *secure, struct BigNumber
 	return BN_ERR_INVALID_DATA;
 }
 
-int RSAKeyBitLength( struct RSAKeyPair* key )
+int RaRsaKeyBitLength( struct RaRsaKeyPair* key )
 {
 	return BnGetBitLength( key->mod );
 }
 
 #define CHECK_KEY_DATA(cond)		if (!(cond)) { result = BN_ERR_INVALID_DATA; goto _EXIT; }
 
-int RSAVerifyKey(struct RSAKeyPair *key)
+int RaRsaVerifyKey(struct RaRsaKeyPair *key)
 {
 	int result;
 	struct BigNumber *temp = NULL;
@@ -269,13 +269,13 @@ _EXIT:
 	return result;
 }
 
-static int RSANewASN1Integer(const uint8_t *asn1Data, struct ASN1Node *node, /*out*/struct BigNumber **bnp)
+static int RaRsaNewASN1Integer(const uint8_t *asn1Data, struct RaAsn1Node *node, /*out*/struct BigNumber **bnp)
 {
 	int result;
 	struct BigNumber *bn = NULL;
 	int bit;
 
-	if (node->type != ASN1_OBJ_INTEGER) {
+	if (node->type != RA_ASN1_OBJ_INTEGER) {
 		result = BN_ERR_INVALID_DATA;
 		goto _EXIT;
 	}
@@ -306,39 +306,39 @@ _EXIT:
 }
 
 // pkcs#1 public key
-int RSACreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
+int RaRsaCreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaKeyPair** keyp)
 {
 	int result;
-	struct RSAKeyPair *key;
-	struct ASN1Ctx *ctx = NULL;
-	struct ASN1Node *cur;
+	struct RaRsaKeyPair *key;
+	struct RaAsn1Ctx *ctx = NULL;
+	struct RaAsn1Node *cur;
 
-	key = (struct RSAKeyPair *)malloc(sizeof(struct RSAKeyPair));
+	key = (struct RaRsaKeyPair *)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
-	memset(key, 0, sizeof(struct RSAKeyPair));
+	memset(key, 0, sizeof(struct RaRsaKeyPair));
 
-	result = ASN1CreateContext(asn1Data, dataLen, &ctx);
+	result = RaAsn1CreateContext(asn1Data, dataLen, &ctx);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
-	result = ASN1GetRoot(ctx, &cur);
+	result = RaAsn1GetRoot(ctx, &cur);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->child;
-	result = RSANewASN1Integer(asn1Data, cur, &key->mod);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->mod);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->pub);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->pub);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	result = MontCreate(key->mod, &key->mont);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 #ifdef RACRYPT_RSA_VERIFY_KEY
-	result = RSAVerifyKey(key);
+	result = RaRsaVerifyKey(key);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 #endif
 
@@ -347,75 +347,75 @@ int RSACreateKeyPub(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPa
 	result = BN_ERR_SUCCESS;
 _EXIT:
 	if (ctx != NULL)
-		ASN1DestroyContext(ctx);
+		RaAsn1DestroyContext(ctx);
 	if (key != NULL)
-		RSADestroyKeyPair(key);
+		RaRsaDestroyKeyPair(key);
 
 	return result;
 }
 
 
 // pkcs#1 private key
-int RSACreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
+int RaRsaCreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaKeyPair** keyp)
 
 {
 	int result;
-	struct RSAKeyPair *key;
-	struct ASN1Ctx *ctx = NULL;
-	struct ASN1Node *cur;
+	struct RaRsaKeyPair *key;
+	struct RaAsn1Ctx *ctx = NULL;
+	struct RaAsn1Node *cur;
 
-	key = (struct RSAKeyPair *)malloc(sizeof(struct RSAKeyPair));
+	key = (struct RaRsaKeyPair *)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
 		result = BN_ERR_OUT_OF_MEMORY;
 		goto _EXIT;
 	}
-	memset(key, 0, sizeof(struct RSAKeyPair));
+	memset(key, 0, sizeof(struct RaRsaKeyPair));
 
-	result = ASN1CreateContext(asn1Data, dataLen, &ctx);
+	result = RaAsn1CreateContext(asn1Data, dataLen, &ctx);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
-	result = ASN1GetRoot(ctx, &cur);
+	result = RaAsn1GetRoot(ctx, &cur);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->child;
 	cur = cur->next;		// skip version
 
-	result = RSANewASN1Integer(asn1Data, cur, &key->mod);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->mod);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->pub);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->pub);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->priv);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->priv);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->prime1);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->prime1);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->prime2);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->prime2);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->exp1);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->exp1);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->exp2);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->exp2);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->next;
-	result = RSANewASN1Integer(asn1Data, cur, &key->coeff);
+	result = RaRsaNewASN1Integer(asn1Data, cur, &key->coeff);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	result = MontCreate(key->mod, &key->mont);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 #ifdef RACRYPT_RSA_VERIFY_KEY
-	result = RSAVerifyKey(key);
+	result = RaRsaVerifyKey(key);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 #endif
 
@@ -424,33 +424,33 @@ int RSACreateKeyPriv(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyP
 	result = BN_ERR_SUCCESS;
 _EXIT:
 	if (ctx != NULL)
-		ASN1DestroyContext(ctx);
+		RaAsn1DestroyContext(ctx);
 	if (key != NULL)
-		RSADestroyKeyPair(key);
+		RaRsaDestroyKeyPair(key);
 
 	return result;
 }
 
 #define OID_RSA_Encryption		"\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01"		// 1.2.840.113549.1.1.1
-#define IS_OID(data, node, oid)		((node)->type == ASN1_OBJ_IDENTIFIER && memcmp((uint8_t*)data+(node)->dataOffset, oid, sizeof(oid)-1) == 0)
+#define IS_OID(data, node, oid)		((node)->type == RA_ASN1_OBJ_IDENTIFIER && memcmp((uint8_t*)data+(node)->dataOffset, oid, sizeof(oid)-1) == 0)
 
 
 // pkcs#8, byte array = BER
-int RSACreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struct RSAKeyPair** keyp)
+int RaRsaCreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struct RaRsaKeyPair** keyp)
 {
 	int result;
-	struct ASN1Ctx *ctx = NULL;
-	struct ASN1Node *cur;
+	struct RaAsn1Ctx *ctx = NULL;
+	struct RaAsn1Node *cur;
 	int isPrivate = 0;
 
-	result = ASN1CreateContext(asn1Data, dataLen, &ctx);
+	result = RaAsn1CreateContext(asn1Data, dataLen, &ctx);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
-	result = ASN1GetRoot(ctx, &cur);
+	result = RaAsn1GetRoot(ctx, &cur);
 	if (result != BN_ERR_SUCCESS) goto _EXIT;
 
 	cur = cur->child;
-	if (cur->type == ASN1_OBJ_INTEGER) {	// version
+	if (cur->type == RA_ASN1_OBJ_INTEGER) {	// version
 		isPrivate = 1;
 		cur = cur->next;
 	}
@@ -461,15 +461,15 @@ int RSACreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struc
 	cur = cur->next;
 
 	if (isPrivate) {	// private key
-		if (cur->type != ASN1_OBJ_OCTET_STRING) {
+		if (cur->type != RA_ASN1_OBJ_OCTET_STRING) {
 			result = BN_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
-		result = RSACreateKeyPriv(asn1Data + cur->dataOffset, cur->dataLength, keyp);
+		result = RaRsaCreateKeyPriv(asn1Data + cur->dataOffset, cur->dataLength, keyp);
 		if (result != BN_ERR_SUCCESS) goto _EXIT;
 	}
 	else {		// public key
-		if (cur->type != ASN1_OBJ_BIT_STRING) {
+		if (cur->type != RA_ASN1_OBJ_BIT_STRING) {
 			result = BN_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
@@ -478,7 +478,7 @@ int RSACreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struc
 			result = BN_ERR_INVALID_DATA;
 			goto _EXIT;
 		}
-		result = RSACreateKeyPub(asn1Data + cur->dataOffset + 1, cur->dataLength - 1, keyp);
+		result = RaRsaCreateKeyPub(asn1Data + cur->dataOffset + 1, cur->dataLength - 1, keyp);
 		if (result != BN_ERR_SUCCESS) goto _EXIT;
 	}
 
@@ -486,7 +486,7 @@ int RSACreateKeyFromByteArray(const uint8_t *asn1Data, int dataLen, /*out*/struc
 _EXIT:
 
 	if (ctx != NULL)
-		ASN1DestroyContext(ctx);
+		RaAsn1DestroyContext(ctx);
 
 	return result;
 }
@@ -544,7 +544,7 @@ static const uint8_t rsakeyVersion[] = {
 	0x02, 0x01, 0x00
 };
 
-int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen)
+int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen)
 {
 	int result;
 	uint8_t *buffer = NULL;
@@ -589,7 +589,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// exponent2
 	len = BnToByteArray(key->exp2, temp, bytelen);
@@ -599,7 +599,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// exponent1
 	len = BnToByteArray(key->exp1, temp, bytelen);
@@ -609,7 +609,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// prime2
 	len = BnToByteArray(key->prime2, temp, bytelen);
@@ -619,7 +619,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// prime1
 	len = BnToByteArray(key->prime1, temp, bytelen);
@@ -629,7 +629,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// privateExponent
 	len = BnToByteArray(key->priv, temp, bytelen);
@@ -639,7 +639,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// publicExponent
 	len = BnToByteArray(key->pub, temp, bytelen);
@@ -649,7 +649,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// modulus
 	len = BnToByteArray(key->mod, temp, bytelen);
@@ -659,25 +659,25 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// version
 	offset -= sizeof(rsakeyVersion);
 	memcpy(buffer + offset, rsakeyVersion, sizeof(rsakeyVersion));		// version
 
 	// SEQUENCE
-	len = ASN1EncodeLength(bufferlen - offset, temp, len);
+	len = ASN1EncodeLength(bufferlen - offset, temp, bytelen);
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_SEQUENCE;
+	buffer[offset] = RA_ASN1_OBJ_SEQUENCE;
 
 	// OCTET_STRING
-	len = ASN1EncodeLength(bufferlen - offset, temp, len);
+	len = ASN1EncodeLength(bufferlen - offset, temp, bytelen);
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_OCTET_STRING;
+	buffer[offset] = RA_ASN1_OBJ_OCTET_STRING;
 
 	// header
 	offset -= sizeof(rsakeyHeader);
@@ -687,12 +687,12 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 	offset -= sizeof(rsakeyVersion);
 	memcpy(buffer + offset, rsakeyVersion, sizeof(rsakeyVersion));		// version
 
-		// SEQUENCE
-	len = ASN1EncodeLength(bufferlen - offset, temp, len);
+	// SEQUENCE
+	len = ASN1EncodeLength(bufferlen - offset, temp, bytelen);
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_SEQUENCE;
+	buffer[offset] = RA_ASN1_OBJ_SEQUENCE;
 
 	len = bufferlen - offset;
 
@@ -701,7 +701,7 @@ int RSAPrivKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int 
 			result = BN_ERR_OUT_OF_BUFFER;
 			goto _EXIT;
 		}
-		memcpy(asn1Data, buffer + offset, bufferlen - offset);
+		memcpy(asn1Data, buffer + offset, (size_t)bufferlen - offset);
 	}
 	if (resultLen != NULL) {
 		*resultLen = len;
@@ -717,7 +717,7 @@ _EXIT:
 	return result;
 }
 
-int RSAPubKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen)
+int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, int dataLen, /*out*/int *resultLen)
 {
 	int result;
 	uint8_t *buffer = NULL;
@@ -757,7 +757,7 @@ int RSAPubKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int d
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// modulus
 	len = BnToByteArray(key->mod, temp, bytelen);
@@ -767,34 +767,34 @@ int RSAPubKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int d
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_INTEGER;
+	buffer[offset] = RA_ASN1_OBJ_INTEGER;
 
 	// SEQUENCE
-	len = ASN1EncodeLength(bufferlen - offset, temp, len);
+	len = ASN1EncodeLength(bufferlen - offset, temp, bytelen);
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_SEQUENCE;
+	buffer[offset] = RA_ASN1_OBJ_SEQUENCE;
 
 	// BIT_STRING
 	offset--;
 	buffer[offset] = 0;		// unused bits = 0
-	len = ASN1EncodeLength(bufferlen - offset, temp, len);
+	len = ASN1EncodeLength(bufferlen - offset, temp, bytelen);
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_BIT_STRING;
+	buffer[offset] = RA_ASN1_OBJ_BIT_STRING;
 
 	// header
 	offset -= sizeof(rsakeyHeader);
 	memcpy(buffer + offset, rsakeyHeader, sizeof(rsakeyHeader));
 
 	// SEQUENCE
-	len = ASN1EncodeLength(bufferlen - offset, temp, len);
+	len = ASN1EncodeLength(bufferlen - offset, temp, bytelen);
 	offset -= len;
 	memcpy(buffer + offset, temp, len);		// length
 	offset--;
-	buffer[offset] = ASN1_OBJ_SEQUENCE;
+	buffer[offset] = RA_ASN1_OBJ_SEQUENCE;
 
 	len = bufferlen - offset;
 
@@ -803,7 +803,7 @@ int RSAPubKeyToByteArray(struct RSAKeyPair* key, /*out*/uint8_t *asn1Data, int d
 			result = BN_ERR_OUT_OF_BUFFER;
 			goto _EXIT;
 		}
-		memcpy(asn1Data, buffer + offset, bufferlen - offset);
+		memcpy(asn1Data, buffer + offset, (size_t)bufferlen - offset);
 	}
 	if (resultLen != NULL) {
 		*resultLen = len;

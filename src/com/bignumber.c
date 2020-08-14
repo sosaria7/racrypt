@@ -3,7 +3,6 @@
 #include <racrypt.h>
 
 #include <stdio.h>
-
 #include <limits.h>
 #include <string.h>
 #include <math.h>
@@ -12,9 +11,34 @@
 #include <time.h>
 
 #ifdef _WIN32
-#include <Windows.h>
-#define snprintf _snprintf
+#		ifndef WIN32_LEAN_AND_MEAN
+#			define WIN32_LEAN_AND_MEAN
+#		endif
+#		include <Windows.h>
+#else
+#	ifdef HAVE_TIMES
+#		include <unistd.h>
+#		include <sys/times.h>
+#	endif
 #endif
+
+static uint32_t GetRandomSeed()
+{
+	uint32_t seed;
+#ifdef _WIN32
+		seed = GetTickCount();
+#else
+#	ifdef HAVE_TIMES
+	struct tms ts;
+	seed = (uint32_t)((uint64_t)(uint32_t)times(&ts) * 1000 / sysconf(_SC_CLK_TCK));
+#	else
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	seed = (uint32_t)(((uint64_t)(uint32_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000 ));
+#	endif
+#endif
+	return seed;
+}
 
 static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
 static int _BnSub(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b);
@@ -31,6 +55,8 @@ struct BigNumber * BnNewW(int length)
 	else if (length < 2)
 		length = 2;					// minimum length is 2 (64bit)
 	bn = (struct BigNumber *)malloc(sizeof(struct BigNumber) + sizeof(uint32_t) * length);
+	if (bn == NULL)
+		return NULL;
 	bn->data = (uint32_t*)(bn + 1);
 	bn->data[0] = 0;
 	bn->length = 1;
@@ -143,7 +169,7 @@ static int _BnSetByteArray(struct BigNumber *bn, const uint8_t *data, int len, i
 		bn->sign = d[0] >> 7;
 		if ( d[0] == 0x00 || d[0] == 0xff )
 		{
-			while ( len > 1 && ( d[0] == data[0] || d[0] == data[0] ) ) {
+			while (len > 1 && (d[0] == data[0])) {
 				d++;
 				len--;
 			}
@@ -380,7 +406,8 @@ int BnMul(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 		BnSetUInt(r, 0);
 		return BN_ERR_SUCCESS;
 	}
-	length = a->length + b->length;
+	
+	length = (BnGetBitLength(a) + BnGetBitLength(b) + BN_WORD_BIT - 1) / BN_WORD_BIT;
 	if (r->max_length < length) {
 		assert(0);
 		return BN_ERR_NUMBER_SIZE;
@@ -442,7 +469,7 @@ int BnSqr(struct BigNumber *r, struct BigNumber *a)
 		return BN_ERR_SUCCESS;
 	}
 
-	length = a->length * 2;
+	length = (BnGetBitLength(a) * 2 + BN_WORD_BIT - 1) / BN_WORD_BIT;
 	if (r->max_length < length) {
 		assert(0);
 		return BN_ERR_NUMBER_SIZE;
@@ -542,7 +569,7 @@ int BnMod(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
 	BnSetInt(r, 0);
 	if (b->length > 1)
 	{
-		memcpy(r->data, aa->data + aa->length - bb->length + 1, sizeof(uint32_t) * (bb->length - 1));
+		memcpy(r->data, aa->data + aa->length - bb->length + 1, sizeof(uint32_t) * ((size_t)bb->length - 1));
 		r->data[bb->length] = 0;
 		r->length = bb->length - 1;
 	}
@@ -667,7 +694,7 @@ int BnDiv(struct BigNumber *q, struct BigNumber *r, struct BigNumber *a, struct 
 	BnSetInt(rr, 0);
 	if(b->length > 1)
 	{
-		memcpy(rr->data, aa->data + aa->length - bb->length + 1, sizeof(uint32_t) * (bb->length - 1));
+		memcpy(rr->data, aa->data + aa->length - bb->length + 1, sizeof(uint32_t) * ((size_t)bb->length - 1));
 		rr->data[bb->length] = 0;
 		rr->length = bb->length - 1;
 	}
@@ -1171,25 +1198,8 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 		seed = *seedp;
 	}
 	else {
+		seed = GetRandomSeed();
 
-#ifdef _WIN32
-		seed = GetTickCount();
-#else
-
-#	ifdef HAVE_TIMES
-		{
-			struct tms ts;
-			seed = (uint32_t)((uint64_t)(uint32_t)times(&ts) * 1000 / sysconf(_SC_CLK_TCK));
-		}
-#	else
-		{
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			seed = (uint32_t)(((uint64_t)(uint32_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000 ));
-		}
-#	endif
-
-#endif
 		_rand32(&seed);
 		_rand32(&seed);
 	}
@@ -1366,154 +1376,6 @@ int BnToFixedByteArray( struct BigNumber *bn, uint8_t *buffer, int bufferlen )
 	return offset;
 }
 
-void BnPrint(struct BigNumber *bn)
-{
-	int i;
-
-	if (bn->sign && !BN_ISZERO(bn))
-		printf("-");
-
-	for (i = bn->length - 1; i >= 0; i--) {
-		printf("%08x", bn->data[i]);
-	}
-}
-
-void BnPrintLn(struct BigNumber *bn)
-{
-	BnPrint(bn);
-	printf("\n");
-}
-
-int BnSPrint(struct BigNumber *bn, char *buffer, int bufferlen)
-{
-	int i;
-	int offset;
-	assert(bufferlen >= (bn->length * 8 + 1));
-
-	offset = 0;
-	if (bn->sign && !BN_ISZERO(bn)) {
-		assert(bufferlen >= (bn->length * 8 + 2));
-        if (buffer != NULL && bufferlen > 1)
-		    buffer[0] = '-';
-		offset++;
-	}
-    if (buffer == NULL) {
-        return bn->length * 8 + offset + 1;
-    }
-
-    if (bufferlen < bn->length * 8 + offset + 1) {
-        return BN_ERR_OUT_OF_BUFFER;
-    }
-
-	for (i = bn->length - 1; i >= 0; i--)
-	{
-		snprintf(buffer + offset, (size_t)(bufferlen - offset), "%08x", bn->data[i]);
-		offset += 8;
-	}
-	buffer[offset] = '\0';
-
-    return offset;
-}
-
-// max_dec_digit = log10(16^max_hex_digit) = max_hex_digit * log10(16)
-// max_dec_word = max_dec_digit / 9		(needed one word for 9 digit)
-#define BN_MAX_DEC_LEN(word_len)		(int)((word_len)*8*1.204120 / 9 + 1)		// 1.204120 = log10(16)
-
-void BnPrint10(struct BigNumber *bn)
-{
-	struct BigNumber * bn2;
-	uint32_t* decimal;
-	int i;
-
-	decimal = malloc(sizeof(uint32_t) * BN_MAX_DEC_LEN(bn->length));
-	bn2 = BnClone(bn);
-    if (decimal == NULL || bn2 == NULL) {
-        printf("<mem alloc error>\n");
-        goto _EXIT;
-    }
-
-	i = 0;
-	do {
-		BnDivInt(bn2, 1000000000, &decimal[i++]);
-	} while (!BN_ISZERO(bn2));
-
-	i--;
-
-	if (bn->sign && !BN_ISZERO(bn))
-		printf("-");
-
-	printf("%u", decimal[i]);
-	while (--i >= 0) {
-		printf("%09u", decimal[i]);
-	}
-
-_EXIT:
-	BN_SAFEFREE(bn2);
-    if (decimal != NULL)
-	    free(decimal);
-}
-
-void BnPrint10Ln(struct BigNumber *bn)
-{
-	BnPrint10(bn);
-	printf("\n");
-}
-
-int BnSPrint10(struct BigNumber *bn, char *buffer, int bufferlen)
-{
-    int result;
-	struct BigNumber * bn2;
-	uint32_t* decimal;
-	int i;
-	int offset;
-    char temp[11];
-
-	decimal = malloc(sizeof(uint32_t) * BN_MAX_DEC_LEN(bn->length));
-	bn2 = BnClone(bn);
-    if (decimal == NULL || bn2 == NULL) {
-        result = BN_ERR_OUT_OF_MEMORY;
-        goto _EXIT;
-    }
-
-	i = 0;
-	do {
-		BnDivInt(bn2, 1000000000, &decimal[i++]);
-	} while (!BN_ISZERO(bn2));
-
-	i--;
-
-	offset = 0;
-	if (bn->sign && !BN_ISZERO(bn)) {
-        temp[0] = '-';
-		offset++;
-	}
-
-    snprintf(temp, sizeof(temp), "%u", decimal[i]);
-	offset = (int)strlen(temp);
-
-	if (bufferlen < offset + i * 9 + 1) {
-        assert(0);
-        result = BN_ERR_OUT_OF_BUFFER;
-        goto _EXIT;
-    }
-    strncpy(buffer, temp, (size_t)offset);
-
-	while (--i >= 0) {
-		snprintf(buffer + offset, (size_t)bufferlen - offset, "%09u", decimal[i]);
-		offset += 9;
-	}
-    buffer[offset] = '\0';
-
-    result = BN_ERR_SUCCESS;
-
-_EXIT:
-  	BN_SAFEFREE(bn2);
-    if (decimal != NULL)
-        free(decimal);
-
-    return result;
-}
-
 //////////////////////////////////////////////
 // unsigned internal functions
 static int _BnAdd(struct BigNumber *r, struct BigNumber *a, struct BigNumber *b)
@@ -1666,7 +1528,7 @@ int _BnAddR(struct BigNumber *a, struct BigNumber *b)
 
 	if (a->length < b->length)
 	{
-		memset(a->data + a->length, 0, sizeof(uint32_t) * (b->length - a->length));
+		memset(a->data + a->length, 0, sizeof(uint32_t) * ((size_t)b->length - a->length));
 		a->length = b->length;
 	}
 	c = 0;

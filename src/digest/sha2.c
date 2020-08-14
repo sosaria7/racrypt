@@ -249,7 +249,7 @@ void RaSha256Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[32])
 		bufferLeft = 64;
 		bufferFilled = 0;
 	}
-	memset(ctx->buffer + bufferFilled, 0, bufferLeft - 8);
+	memset(ctx->buffer + bufferFilled, 0, (size_t)bufferLeft - 8);
 
 	val = (ctx->totalLen_h << 3) | (ctx->totalLen_l >> 29);
 	PUT_UINT32_BE(ctx->buffer + 64 - 8, val);
@@ -497,7 +497,7 @@ void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[64])
 		bufferLeft = 128;
 		bufferFilled = 0;
 	}
-	memset(ctx->buffer + bufferFilled, 0, bufferLeft - 8);
+	memset(ctx->buffer + bufferFilled, 0, (size_t)bufferLeft - 8);
 
 	val = (ctx->totalLen_h << 3) | (ctx->totalLen_l >> 29);
 	PUT_UINT32_BE(ctx->buffer + 128 - 8, val);

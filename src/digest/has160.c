@@ -170,6 +170,10 @@ static void RaHas160Process(struct RaHas160Ctx *ctx, const uint8_t data[64])
 	HAS160_P_DO5(11, 65);
 	HAS160_P_DO5( 7, 70);
 	HAS160_P_DO5( 3, 75);
+#undef	F
+#undef	K
+#undef	R
+#undef	S
 
 	ctx->h[0] += a;
 	ctx->h[1] += b;

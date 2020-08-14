@@ -43,7 +43,7 @@ void RaSha1Init(struct RaSha1Ctx *ctx)
 	ctx->h[4] = 0xc3d2e1f0;
 }
 
-#define GET_UINT32_BE(b)		(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
+#define GET_UINT32_BE(b)		(uint32_t)(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
 #define PUT_UINT32_BE(b, v)		{ (b)[0] = (uint8_t)((v)>>24); (b)[1] = (uint8_t)((v)>>16); (b)[2] = (uint8_t)((v)>>8); (b)[3] = (uint8_t)(v); }
 
 #define SHA1_P1(A, B, C, D, E, n)		{	\
@@ -175,6 +175,10 @@ static void RaSha1Process(struct RaSha1Ctx *ctx, const uint8_t data[64])
     SHA1_P2_DO5(70);
     SHA1_P2_DO5(75);
 #endif
+
+#undef F
+#undef K
+
 	ctx->h[0] += a;
 	ctx->h[1] += b;
 	ctx->h[2] += c;
