@@ -418,9 +418,9 @@ int test4()
 	printf("Creating KeyPair...\n");
 	InitTimer(&t);
 	result = RaRsaCreateKeyPair(TEST4_KEY_BIT, &key);
-	PrintElapsed(&t, "RSACreateKeyPair elapsed: ");
+	PrintElapsed(&t, "RaRsaCreateKeyPair elapsed: ");
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSACreateKeyPair failed(%d)\n", result);
+		printf("RaRsaCreateKeyPair failed(%d)\n", result);
 		goto _EXIT;
 	}
 
@@ -500,9 +500,9 @@ int test5()
 	// RaRsaCreateKeyFromByteArray test
 	InitTimer(&t);
 	result = RaRsaCreateKeyFromByteArray(pub, sizeof(pub), &pubkey);
-	PrintElapsed(&t, "RSACreateKeyFromByteArray(pub) elapsed: ");
+	PrintElapsed(&t, "RaRsaCreateKeyFromByteArray(pub) elapsed: ");
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+		printf("RaRsaCreateKeyFromByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 	result = RaRsaVerifyKey(pubkey);
@@ -514,11 +514,11 @@ int test5()
 	// RaRsaPubKeyToByteArray test
 	result = RaRsaPubKeyToByteArray(pubkey, NULL, 0, &len);
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSAPubKeyToByteArray failed(%d)\n", result);
+		printf("RaRsaPubKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 	if (len != sizeof(pub)) {
-		printf("RSAPubKeyToByteArray length error(%d != %d)\n", len, (int)sizeof(pub));
+		printf("RaRsaPubKeyToByteArray length error(%d != %d)\n", len, (int)sizeof(pub));
 		goto _EXIT;
 	}
 	keyData = malloc(len);
@@ -528,14 +528,14 @@ int test5()
 	}
 	result = RaRsaPubKeyToByteArray(pubkey, keyData, len, NULL);
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSAPubKeyToByteArray failed(%d)\n", result);
+		printf("RaRsaPubKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 	if (memcmp(keyData, pub, len) != 0) {
-		printf("RSAPubKeyToByteArray data error\n");
+		printf("RaRsaPubKeyToByteArray data error\n");
 		goto _EXIT;
 	}
-	printf("RSACreateKeyFromByteArray check ok\n");
+	printf("RaRsaCreateKeyFromByteArray check ok\n");
 	printf("\n");
 
 	free(keyData);
@@ -544,9 +544,9 @@ int test5()
 	// create private key
 	InitTimer(&t);
 	result = RaRsaCreateKeyFromByteArray(priv, sizeof(priv), &privkey);
-	PrintElapsed(&t, "RSACreateKeyFromByteArray(priv) elapsed: ");
+	PrintElapsed(&t, "RaRsaCreateKeyFromByteArray(priv) elapsed: ");
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+		printf("RaRsaCreateKeyFromByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 	result = RaRsaVerifyKey(privkey);
@@ -558,11 +558,11 @@ int test5()
 	// RaRsaPrivKeyToByteArray test
 	result = RaRsaPrivKeyToByteArray(privkey, NULL, 0, &len);
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSAPrivKeyToByteArray failed(%d)\n", result);
+		printf("RaRsaPrivKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 	if (len != sizeof(priv)) {
-		printf("RSAPrivKeyToByteArray length error(%d != %d)\n", len, (int)sizeof(priv));
+		printf("RaRsaPrivKeyToByteArray length error(%d != %d)\n", len, (int)sizeof(priv));
 		goto _EXIT;
 	}
 	keyData = malloc(len);
@@ -572,14 +572,14 @@ int test5()
 	}
 	result = RaRsaPrivKeyToByteArray(privkey, keyData, len, NULL);
 	if (result != BN_ERR_SUCCESS) {
-		printf("RSAPrivKeyToByteArray failed(%d)\n", result);
+		printf("RaRsaPrivKeyToByteArray failed(%d)\n", result);
 		goto _EXIT;
 	}
 	if (memcmp(keyData, priv, len) != 0) {
-		printf("RSAPrivKeyToByteArray data error\n");
+		printf("RaRsaPrivKeyToByteArray data error\n");
 		goto _EXIT;
 	}
-	printf("RSACreateKeyFromByteArray check ok\n");
+	printf("RaRsaCreateKeyFromByteArray check ok\n");
 	printf("\n");
 
 	free(keyData);
@@ -692,12 +692,12 @@ int test5_1()
 		// create key pair
 		result = RaRsaCreateKeyPair(TEST5_1_KEY_BIT, &privkey);
 		if (result != BN_ERR_SUCCESS) {
-			printf("RSACreateKeyPair failed(%d)\n", result);
+			printf("RaRsaCreateKeyPair failed(%d)\n", result);
 			goto _EXIT;
 		}
 		result = RaRsaPubKeyToByteArray(privkey, NULL, 0, &len);
 		if (result != BN_ERR_SUCCESS) {
-			printf("RSAPubKeyToByteArray failed(%d)\n", result);
+			printf("RaRsaPubKeyToByteArray failed(%d)\n", result);
 			goto _EXIT;
 		}
 		keydata = malloc(len);
@@ -707,12 +707,12 @@ int test5_1()
 		}
 		result = RaRsaPubKeyToByteArray(privkey, keydata, len, NULL);
 		if (result != BN_ERR_SUCCESS) {
-			printf("RSAPubKeyToByteArray failed(%d)\n", result);
+			printf("RaRsaPubKeyToByteArray failed(%d)\n", result);
 			goto _EXIT;
 		}
 		result = RaRsaCreateKeyFromByteArray(keydata, len, &pubkey);
 		if (result != BN_ERR_SUCCESS) {
-			printf("RSACreateKeyFromByteArray failed(%d)\n", result);
+			printf("RaRsaCreateKeyFromByteArray failed(%d)\n", result);
 			goto _EXIT;
 		}
 		result = RaRsaVerifyKey(pubkey);
