@@ -3,6 +3,7 @@
 #include <racrypt.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 int RaRc4Create(const uint8_t* key, int keyLen, struct RaRc4Ctx** ctxp)
 {
