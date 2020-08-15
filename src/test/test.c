@@ -1080,6 +1080,9 @@ int test7()
 	struct Timer t;
 
 	input = malloc(10240);
+	if (input == NULL)
+		return RA_ERR_OUT_OF_MEMORY;
+
 	memset(iv, 0, 16);
 
 	/* fixed data encryption/decryption test */
@@ -1146,7 +1149,7 @@ int test7()
 		goto _EXIT;
 	}
 
-	printf("random data encryption/decryption test\n");
+	printf("AES: random data encryption/decryption test\n");
 	for (ntry = 0; ntry < 20000 && result == RA_ERR_SUCCESS; ntry++)
 	{
 		/* random data encryption/decryption test */
@@ -1340,6 +1343,142 @@ _EXIT:
 	return result;
 }
 
+// rc4
+static const uint8_t message1_rc4[] = {
+	0x29, 0x39, 0x17, 0x69, 0x91, 0x5a, 0x13, 0xa4, 0xf7, 0xf7, 0x14, 0x69, 0xa0, 0x16, 0x3d, 0x1d,
+	0x9b, 0x99, 0xb6, 0x53, 0xc4, 0x6e, 0x8f, 0x87, 0xb0, 0x56, 0xb8, 0x4b, 0x47, 0xdb, 0x0a, 0xda,
+	0x94, 0x99, 0xc6, 0x2f, 0x00, 0xdb, 0x1d, 0x6a, 0xc4, 0x9b, 0x7f, 0xd8
+};
+int test8()
+{
+	int result = RA_ERR_SUCCESS;
+	struct RaRc4Ctx ctx;
+	uint8_t key[32];
+	int keyLen;
+	uint8_t* input = NULL;
+	int inputLen;
+#define TEST8_BLOCK_SIZE		4096
+	uint8_t encrypted[TEST8_BLOCK_SIZE];
+	uint8_t decrypted[TEST8_BLOCK_SIZE];
+	int readLen;
+	int writtenLen;
+	int i;
+	int leftLen;
+	int srcOffset;
+	int destOffset;
+	int ntry;
+
+	input = malloc(10240);
+	if (input == NULL)
+		return RA_ERR_OUT_OF_MEMORY;
+
+	/* fixed data encryption/decryption test */
+	memset(key, 0, sizeof(key));
+
+	memcpy(input, message1, sizeof(message1));
+	inputLen = sizeof(message1);
+	memset(decrypted, 0, sizeof(decrypted));
+
+	RaRc4Init(&ctx, key, sizeof(key));
+	writtenLen = RaRc4Encrypt(&ctx, input, inputLen, encrypted);
+	printHex("RC4 = ", encrypted, writtenLen);
+
+	if (writtenLen != sizeof(message1_rc4) || memcmp(encrypted, message1_rc4, writtenLen)) {
+		printf("RC4 encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaRc4Init(&ctx, key, sizeof(key));
+	writtenLen = RaRc4Decrypt(&ctx, encrypted, writtenLen, decrypted);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("RC4 decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	printf("RC4: random data encryption/decryption test\n");
+	for (ntry = 0; ntry < 20000 && result == RA_ERR_SUCCESS; ntry++)
+	{
+		/* random data encryption/decryption test */
+		for (i = 0; i < 32; i++) {
+			key[i] = rand() % 256;
+		}
+		keyLen = rand() % 32;
+		inputLen = (rand() % TEST8_BLOCK_SIZE - 256) + 256;	// 256~4096
+		for (i = 0; i < inputLen; i++) {
+			input[i] = rand() % 256;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaRc4Init(&ctx, key, keyLen);
+		writtenLen = RaRc4Encrypt(&ctx, input, inputLen, encrypted);
+		RaRc4Init(&ctx, key, keyLen);
+		writtenLen = RaRc4Decrypt(&ctx, encrypted, writtenLen, decrypted);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("RC4 failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		// encrypt continus data
+		//printf("encrypt continus data\n");
+		memset(decrypted, 0, sizeof(decrypted));
+		RaRc4Init(&ctx, key, keyLen);
+		leftLen = inputLen;
+		srcOffset = 0;
+		destOffset = 0;
+		while (leftLen > 0) {
+			readLen = (rand() % 100) + 1;
+			if (readLen > leftLen)
+				readLen = leftLen;
+			writtenLen = RaRc4Encrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+
+		// decrypt continus data
+		RaRc4Init(&ctx, key, keyLen);
+		leftLen = destOffset;
+		srcOffset = 0;
+		destOffset = 0;
+
+		// padding size can be up to 16 bytes.
+		while (leftLen > 0) {
+			readLen = (rand() % 50) + 1;
+			if (readLen > leftLen)
+				readLen = leftLen;
+			readLen = (rand() % readLen) + 1;
+			writtenLen = RaRc4Decrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+
+		writtenLen = destOffset;
+
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("RC4 continus crypt failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+		if ((ntry % 1000) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	if (result == RA_ERR_SUCCESS) {
+		printf(" - ok\n");
+	}
+	else {
+		printf(" - failed\n");
+		goto _EXIT;
+	}
+
+	if (result == RA_ERR_SUCCESS) {
+		printf("RC4 test ok\n");
+	}
+_EXIT:
+	if (input != NULL)
+		free(input);
+	return result;
+}
 
 int main()
 {
@@ -1408,6 +1547,13 @@ int main()
 		goto _EXIT;
 	}
 
+	printf("\n--------------------------------\n");
+	printf("test8 start\n");
+	result = test8();
+	if (result != RA_ERR_SUCCESS) {
+		printf("test1 error: %d\n", result);
+		goto _EXIT;
+	}
 
 	printf("\n");
 

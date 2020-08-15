@@ -146,6 +146,66 @@ int RaAesDecrypt(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t
 */
 int RaAesDecryptFinal(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaAesPaddingType paddingType);
 
+
+
+struct RaRc4Ctx {
+	uint8_t S[256];
+	int x;
+	int y;
+};
+
+/**
+* @brief Create RC4 stream encryption/decryption context
+*
+* @param key		symmetric key
+* @param keyLen		length of key
+* @param ctxp		pointer for receiving RC4 context
+* @retval RA_ERR_SUCCESS		success
+* @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
+*/
+int RaRc4Create(const uint8_t* key, int keyLen, struct RaRc4Ctx **ctxp);
+
+/**
+* @brief Destroy RC4 stream encryption/decryption context
+*
+* @param ctx		RC4 context to destroy
+*/
+void RaRc4Destroy(struct RaRc4Ctx* ctx);
+
+/**
+* @brief Initialize RC4 stream encryption/decryption context
+*
+* @param key		symmetric key
+* @param keyLen		length of key
+* @param ctxp		pointer for receiving RC4 context
+*/
+void RaRc4Init(struct RaRc4Ctx* ctx, const uint8_t* key, int keyLen);
+
+/**
+* @brief RC4 Encrypt given byte array
+*
+* @param ctx		RC4 context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @note Actually RC4 algorithm's encryption and decryption are same
+* @return			written length in bytes
+*/
+int RaRc4Encrypt(struct RaRc4Ctx* ctx, const uint8_t* input, int length, uint8_t* output);
+
+/**
+* @brief RC4 Decrypt given byte array
+*
+* @param ctx		RC4 context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @note Actually RC4 algorithm's encryption and decryption are same
+* @return			written length in bytes
+*/
+int RaRc4Decrypt(struct RaRc4Ctx* ctx, const uint8_t* input, int length, uint8_t* output);
+
+
 #ifdef __cplusplus
 }
 #endif
