@@ -7,6 +7,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef _WIN32
+#		ifndef WIN32_LEAN_AND_MEAN
+#			define WIN32_LEAN_AND_MEAN
+#		endif
+#		include <Windows.h>
+#else
+#	ifdef HAVE_TIMES
+#		include <unistd.h>
+#		include <sys/times.h>
+#	endif
+#endif
+
 #include "bnprint.h"
 
 static void printHex( char* prefix, uint8_t* data, int len );
@@ -145,19 +158,18 @@ static int primeProgress(int count, void* pcount)
 }
 
 #ifdef _WIN32
-#include <windows.h>
 struct Timer
 {
 	LARGE_INTEGER count;
 	LARGE_INTEGER freq;
 };
-static void InitTimer(struct Timer *t)
+void InitTimer(struct Timer *t)
 {
 	QueryPerformanceFrequency(&t->freq);
 	QueryPerformanceCounter(&t->count);
 }
 
-static long GetElapsedTimeInMillisec(struct Timer *t)
+long GetElapsedTimeInMillisec(struct Timer *t)
 {
 	LARGE_INTEGER now;
 	LONGLONG elapsed;
@@ -166,14 +178,26 @@ static long GetElapsedTimeInMillisec(struct Timer *t)
 	return (long)(elapsed * 1000 / t->freq.QuadPart);
 }
 
-static void PrintElapsed(struct Timer *t, char* prefix)
-{
-	long elapsed = GetElapsedTimeInMillisec(t);
-	printf("%s", prefix);
-	PrintTime(elapsed);
-}
-
 #else
+#	ifdef HAVE_TIMES
+struct Timer
+{
+	clock_t tv;
+};
+void InitTimer(struct Timer *t)
+{
+	struct tms ts;
+	t->tv = times(&ts);
+}
+long GetElapsedTimeInMillisec(struct Timer *t)
+{
+	struct tms ts;
+	long millisec;
+	
+	millisec = (long)( (uint64_t)(times(&ts) - t->tv) * 1000 / sysconf(_SC_CLK_TCK) );
+	return millisec;
+}
+#	else
 struct Timer
 {
 	struct timespec ts;
@@ -185,20 +209,22 @@ void InitTimer(struct Timer *t)
 long GetElapsedTimeInMillisec(struct Timer *t)
 {
 	struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
 	long millisec;
+	
+	clock_gettime(CLOCK_MONOTONIC, &ts);
 	millisec = (long)(ts.tv_sec - t->ts.tv_sec) * 1000;
 	millisec += (ts.tv_nsec - t->ts.tv_nsec) / 1000000;
 	return millisec;
 }
+#	endif
 
-void PrintElapsed(struct Timer *t, char* message)
+#endif
+void PrintElapsed(struct Timer *t, char* prefix)
 {
 	long elapsed = GetElapsedTimeInMillisec(t);
-	printf("%s", message);
+	printf("%s", prefix);
 	PrintTime(elapsed);
 }
-#endif
 
 int test1()
 {
