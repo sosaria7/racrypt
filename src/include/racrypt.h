@@ -25,6 +25,7 @@ typedef          long		int64_t;
 typedef unsigned long		uint64_t;
 typedef          long		intptr_t;
 typedef unsigned long		uintptr_t;
+//#define UINT64_C(v)			v##LL
 #define UINT64_C(v)			v##L
 #endif
 
