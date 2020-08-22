@@ -8,9 +8,9 @@
 //#define RACRYPT_PRIME_MIN_TABLE
 //#define RACRYPT_RSA_VERIFY_KEY
 //#define HAVE_TIMES
-#define HAVE_STDINT
+#define HAVE_STDINT_H
 
-#ifdef HAVE_STDINT
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
 #else
 //typedef char				int8_t;
