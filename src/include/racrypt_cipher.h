@@ -78,7 +78,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 * @param ctx		AES context
 * @param iv			initialization vector
 */
-void RaAesSetIV(struct RaAesCtx *ctx, uint8_t iv[16]);
+void RaAesSetIV(struct RaAesCtx *ctx, const uint8_t iv[16]);
 
 /**
 * @brief Get initialization vector

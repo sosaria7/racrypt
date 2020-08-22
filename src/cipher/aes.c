@@ -511,7 +511,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 	ctx->bufferFilled = 0;
 }
 
-void RaAesSetIV(struct RaAesCtx *ctx, uint8_t iv[16])
+void RaAesSetIV(struct RaAesCtx *ctx, const uint8_t iv[16])
 {
 	memcpy(ctx->iv, iv, 16);
 	ctx->bufferFilled = 0;
