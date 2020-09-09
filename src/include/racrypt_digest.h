@@ -39,6 +39,7 @@ void RaSha1(const uint8_t *data, int len, /*out*/uint8_t output[20]);
 
 struct RaSha2Ctx
 {
+	uint64_t totalLen_hh;
 	uint32_t totalLen_h;
 	uint32_t totalLen_l;
 	uint64_t h[8];

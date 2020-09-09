@@ -33,6 +33,7 @@ void RaSha2Destroy(struct RaSha2Ctx *ctx)
 
 void RaSha256Init(struct RaSha2Ctx *ctx)
 {
+	ctx->totalLen_hh = 0;
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
 	ctx->h[0] = 0x6a09e667;
@@ -48,6 +49,7 @@ void RaSha256Init(struct RaSha2Ctx *ctx)
 
 void RaSha224Init(struct RaSha2Ctx *ctx)
 {
+	ctx->totalLen_hh = 0;
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
 	ctx->h[0] = 0xc1059ed8;
@@ -149,7 +151,7 @@ static void RaSha256Process(struct RaSha2Ctx *ctx, const uint8_t data[64])
 	g = (uint32_t)ctx->h[6];
 	h = (uint32_t)ctx->h[7];
 
-    memcpy(w, data, 64);
+    memcpy((void*)w, data, 64);
 #ifndef WORDS_BIGENDIAN
 #ifndef RACRYPT_DIGEST_UNROLL
     for (i = 0; i < 16; i++ )
@@ -318,6 +320,7 @@ static const uint64_t raSha512K[80] = {
 
 void RaSha512Init(struct RaSha2Ctx *ctx)
 {
+	ctx->totalLen_hh = 0;
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
 	ctx->h[0] = U64(0x6a09e667f3bcc908);
@@ -333,6 +336,7 @@ void RaSha512Init(struct RaSha2Ctx *ctx)
 
 void RaSha384Init(struct RaSha2Ctx *ctx)
 {
+	ctx->totalLen_hh = 0;
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
 	ctx->h[0] = U64(0xcbbb9d5dc1059ed8);
@@ -359,6 +363,7 @@ void RaSha512_224Init(struct RaSha2Ctx *ctx)
 	RaSha512Final(ctx, buffer);
 	*/
 
+	ctx->totalLen_hh = 0;
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
 	ctx->h[0] = U64(0x8c3d37c819544da2);
@@ -384,6 +389,7 @@ void RaSha512_256Init(struct RaSha2Ctx *ctx)
 	RaSha512Update(ctx, "SHA-512/256", 11);
 	RaSha512Final(ctx, buffer);
 	*/
+	ctx->totalLen_hh = 0;
 	ctx->totalLen_h = 0;
 	ctx->totalLen_l = 0;
 
@@ -459,8 +465,11 @@ void RaSha512Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 	bufferLeft = 128 - bufferFilled;
 
 	ctx->totalLen_l += len;
-	if (ctx->totalLen_l < (uint32_t)len)
+	if (ctx->totalLen_l < (uint32_t)len) {
 		ctx->totalLen_h++;
+		if (ctx->totalLen_h == 0)
+			ctx->totalLen_hh++;
+	}
 
 	if (bufferLeft < 128 && bufferLeft <= len) {
 		memcpy(ctx->buffer + bufferFilled, data, bufferLeft);
@@ -486,18 +495,24 @@ void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[64])
 	int bufferLeft;
 
 	// append a single '1' bit
-	// append K '0' bits, where K is the minimum number >= 0 such that L + 1 + K + 64 is a multiple of 1024
-	// append L as a 64-bit big-endian integer, making the total post-processed length a multiple of 1024 bits
+	// append K '0' bits, where K is the minimum number >= 0 such that L + 1 + K + 128 is a multiple of 1024
+	// append L as a 128-bit big-endian integer, making the total post-processed length a multiple of 1024 bits
 	bufferFilled = ctx->totalLen_l & 0x7f;
 	ctx->buffer[bufferFilled++] = 0x80;
 	bufferLeft = 128 - bufferFilled;
-	if (bufferLeft <= 8) {
+	if (bufferLeft < 16) {
 		memset(ctx->buffer + bufferFilled, 0, bufferLeft);
 		RaSha512Process(ctx, ctx->buffer);
 		bufferLeft = 128;
 		bufferFilled = 0;
 	}
 	memset(ctx->buffer + bufferFilled, 0, (size_t)bufferLeft - 8);
+
+	val = (uint32_t)(ctx->totalLen_hh >> 29);
+	PUT_UINT32_BE(ctx->buffer + 128 - 16, val);
+
+	val = (uint32_t)(ctx->totalLen_hh << 3);
+	PUT_UINT32_BE(ctx->buffer + 128 - 12, val);
 
 	val = (ctx->totalLen_h << 3) | (ctx->totalLen_l >> 29);
 	PUT_UINT32_BE(ctx->buffer + 128 - 8, val);

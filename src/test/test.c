@@ -880,9 +880,19 @@ static uint8_t has160_2[20] = { 0x84, 0x5b, 0x19, 0x7a, 0x70, 0xef, 0x0e, 0x9e, 
 // digest
 int test6()
 {
+#define TEST6_INPUT_BUFFER_SIZE	10240
+
 	int result = RA_ERR_SUCCESS;
 	struct RaSha2Ctx ctx;
 	uint8_t digest[64];
+	uint8_t* input = NULL;
+	int inputLen;
+	struct Timer t;
+	int i;
+	
+	input = malloc(TEST6_INPUT_BUFFER_SIZE);
+	if (input == NULL)
+		return RA_ERR_OUT_OF_MEMORY;
 
 	printf("\n");
 	printf("test sha2\n");
@@ -1065,6 +1075,55 @@ int test6()
 		result = RA_ERR_INVALID_DATA;
 	}
 
+
+	// performance
+	inputLen = TEST6_INPUT_BUFFER_SIZE;
+	BnGenRandomByteArray( input, inputLen, NULL );
+	
+	{
+		InitTimer( &t );
+		struct RaSha2Ctx ctx;
+		struct RaMd5Ctx md5;
+		
+		RaMd5Init( &md5 );
+		for (i = 0; i < (1024*1024*1024/inputLen); i++) {
+			RaMd5Update(&md5, input, inputLen);
+			if ((i % 10240) == 10239) {
+				printf("."); fflush(stdout);
+			}
+		}
+		printf("\n");
+		PrintElapsed( &t, "Md5 1GB elapsed: " );
+	
+		
+		RaSha2Init( &ctx, RA_DGST_SHA2_256 );
+		for (i = 0; i < (1024*1024*1024/inputLen); i++) {
+			RaSha2Update(&ctx, input, inputLen);
+			if ((i % 10240) == 10239) {
+				printf("."); fflush(stdout);
+			}
+		}
+		printf("\n");
+		PrintElapsed( &t, "Sha256 1GB elapsed: " );
+		
+		InitTimer( &t );
+		RaSha2Init( &ctx, RA_DGST_SHA2_512 );
+		for (i = 0; i < (1024*1024*1024/inputLen); i++) {
+			RaSha2Update(&ctx, input, inputLen);
+			if ((i % 10240) == 10239) {
+				printf("."); fflush(stdout);
+			}
+		}
+		printf("\n");
+		PrintElapsed( &t, "Sha512 1GB elapsed: " );
+		
+		
+	}
+
+//_EXIT:
+	if (input != NULL)
+		free(input);
+
 	return result;
 }
 
@@ -1089,6 +1148,7 @@ int test7()
 {
 	int result = RA_ERR_SUCCESS;
 #define TEST7_BLOCK_SIZE		4096
+#define TEST7_INPUT_BUFFER_SIZE	10240
 	struct RaAesCtx ctx;
 	uint8_t key[32];
 	uint8_t* input = NULL;
@@ -1105,7 +1165,7 @@ int test7()
 	int ntry;
 	struct Timer t;
 
-	input = malloc(10240);
+	input = malloc(TEST7_INPUT_BUFFER_SIZE);
 	if (input == NULL)
 		return RA_ERR_OUT_OF_MEMORY;
 
@@ -1335,12 +1395,12 @@ int test7()
 	}
 	PrintElapsed( &t, "AES/128/CBC Init * 100k times elapsed: " );
 
-	inputLen = sizeof(input);
+	inputLen = TEST7_INPUT_BUFFER_SIZE;
 	memset( input, 0, inputLen );
 
 	RaAesSetIV( &ctx, iv );
 	InitTimer( &t );
-	for (i = 0; i < 102400; i++) {
+	for (i = 0; i < (1024*1024*1024/inputLen); i++) {
 		writtenLen = RaAesEncrypt(&ctx, input, inputLen, input);
 		if ((i % 10240) == 10239) {
 			printf("."); fflush(stdout);
@@ -1351,14 +1411,15 @@ int test7()
 
 	RaAesSetIV( &ctx, iv );
 	InitTimer( &t );
-	for (i = 0; i < 102400; i++) {
-		RaAesDecrypt(&ctx, input, writtenLen, input);
+	for (i = 0; i < (1024*1024*1024/inputLen); i++) {
+		RaAesDecrypt(&ctx, input, inputLen, input);
 		if ((i % 10240) == 0) {
 			printf("."); fflush(stdout);
 		}
 	}
 	printf("\n");
 	PrintElapsed( &t, "AES/128/CBC Decrypt 1GB elapsed: " );
+
 
 	if (result == RA_ERR_SUCCESS) {
 		printf("AES test ok\n");
@@ -1587,4 +1648,5 @@ _EXIT:
 
 	return 0;
 }
+
 
