@@ -9,36 +9,69 @@
 extern "C" {
 #endif
 
+struct RaBlockCipher;
+
+typedef void (*blockCipherEncryptBlock)(struct RaBlockCipher *ctx, const uint8_t *input, uint8_t *output);
+typedef void (*blockCipherDecryptBlock)(struct RaBlockCipher *ctx, const uint8_t *input, uint8_t *output);
+
+enum RaBlockCipherMode {
+	RA_BLOCK_MODE_ECB,
+	RA_BLOCK_MODE_CBC,
+	RA_BLOCK_MODE_CFB,
+	RA_BLOCK_MODE_OFB
+};
+
+enum RaBlockCipherPaddingType {
+	RA_BLOCK_PADDING_NONE,
+	RA_BLOCK_PADDING_ZERO,
+	RA_BLOCK_PADDING_PKCS7
+};
+struct RaBlockCipher {
+	blockCipherEncryptBlock encryptBlock;
+	blockCipherDecryptBlock decryptBlock;
+	enum RaBlockCipherMode opMode;
+	uint32_t *iv;			// block size / 4
+	uint8_t *buffer;		// block size
+	int blockSize;
+	int bufferFilled;
+};
+
+
+
+#define RA_KEY_LEN_DES			8
+#define RA_KEY_LEN_3DES_112		16
+#define RA_KEY_LEN_3DES_168		24
+
+#define RA_KEY_LEN_AES_128		16
+#define RA_KEY_LEN_AES_192		24
+#define RA_KEY_LEN_AES_256		32
+
+#define RA_BLOCK_LEN_DES		8
+#define RA_BLOCK_LEN_AES		16
+
+#define RA_BLOCK_LEN_MAX		32
+
+
+
+/*****************************************************
+ Symmetric key cipher algorithm: AES
+ *****************************************************/
+
 enum RaAesKeyType {
 	RA_AES_128,
 	RA_AES_192,
 	RA_AES_256,
 };
-#define RA_KEY_LEN_AES_128		16
-#define RA_KEY_LEN_AES_192		24
-#define RA_KEY_LEN_AES_256		32
-#define RA_BLOCK_LEN_AES		16
 
-enum RaAesMode {
-	RA_AES_MODE_ECB,
-	RA_AES_MODE_CBC,
-	RA_AES_MODE_CFB,
-	RA_AES_MODE_OFB
-};
-
-enum RaAesPaddingType {
-	RA_AES_PADDING_NONE,
-	RA_AES_PADDING_ZERO,
-	RA_AES_PADDING_PKCS7
-};
 struct RaAesCtx {
-	enum RaAesMode opMode;
+	enum RaBlockCipherMode opMode;
 	int nr;
 	uint32_t key[15][4];
 	uint32_t rev_key[15][4];
-	uint32_t iv[4];
-	uint8_t buffer[16];
-	int bufferFilled;
+	uint32_t iv[RA_BLOCK_LEN_AES / 4];
+	uint8_t buffer[RA_BLOCK_LEN_AES];
+
+	struct RaBlockCipher blockCipher;
 };
 
 /**
@@ -52,7 +85,7 @@ struct RaAesCtx {
 * @retval RA_ERR_SUCCESS		success
 * @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
 */
-int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaAesMode opMode, struct RaAesCtx **ctxp);
+int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode, struct RaAesCtx **ctxp);
 
 /**
 * @brief Destroy AES block encryption/decryption context
@@ -70,7 +103,7 @@ void RaAesDestroy(struct RaAesCtx *ctx);
 * @param opMode		block cipher modes of operation
 * @note The key length must be 128bit when the key type is RA_AES_128, and 192bit for RA_AES_192, 256bit for RA_AES_256
 */
-void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyType, enum RaAesMode opMode);
+void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode);
 
 /**
 * @brief Set initialization vector
@@ -117,7 +150,7 @@ int RaAesEncrypt(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t
 * @param paddingType	padding type
 * @return			written length in bytes
 */
-int RaAesEncryptFinal(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaAesPaddingType paddingType);
+int RaAesEncryptFinal(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
 
 /**
 * @brief AES Decrypt given byte array
@@ -144,9 +177,143 @@ int RaAesDecrypt(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t
 * @param paddingType	padding type
 * @return			written length in bytes
 */
-int RaAesDecryptFinal(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaAesPaddingType paddingType);
+int RaAesDecryptFinal(struct RaAesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
 
 
+
+/*****************************************************
+ Symmetric key cipher algorithm: DES
+ *****************************************************/
+
+enum RaDesKeyType {
+	RA_DES,
+	RA_DES_EDE2,
+	RA_DES_EDE3,
+	RA_3DES = RA_DES_EDE3
+};
+
+struct RaDesCtx {
+	enum RaDesKeyType keyType;
+	uint32_t round_key1[2][16];
+	uint32_t round_key2[2][16];
+	uint32_t round_key3[2][16];
+
+	uint32_t iv[RA_BLOCK_LEN_DES / 4];
+	uint8_t buffer[RA_BLOCK_LEN_DES];
+
+	struct RaBlockCipher blockCipher;
+};
+
+/**
+* @brief Create DES block encryption/decryption context
+*
+* @param key		symmetric key
+* @param keyType	type of key. RA_DES or RA_DES_EDE2 or RA_DES_EDE3
+* @param opMode		block cipher modes of operation
+* @param ctxp		pointer for receiving DES context
+* @note The key length must be 8byte(56bit) when the key type is RA_DES, and 16byte for RA_DES_EDE2, 32byte for RA_DES_EDE3
+* @retval RA_ERR_SUCCESS		success
+* @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
+*/
+int RaDesCreate(const uint8_t *key, enum RaDesKeyType keyType, enum RaBlockCipherMode opMode, struct RaDesCtx **ctxp);
+
+/**
+* @brief Destroy DES block encryption/decryption context
+*
+* @param ctx		DES context to destroy
+*/
+void RaDesDestroy(struct RaDesCtx *ctx);
+
+/**
+* @brief Initialize DES block encryption/decryption context
+*
+* @param ctx		DES context
+* @param key		symmetric key
+* @param keyType	type of key. RA_DES or RA_DES_EDE2 or RA_DES_EDE3
+* @param opMode		block cipher modes of operation
+* @note The key length must be 8byte(56bit) when the key type is RA_DES, and 16byte for RA_DES_EDE2, 32byte for RA_DES_EDE3
+*/
+void RaDesInit(struct RaDesCtx *ctx, enum RaDesKeyType keyType, const uint8_t *key, enum RaBlockCipherMode opMode);
+
+/**
+* @brief Set initialization vector
+*
+* @param ctx		DES context
+* @param iv			initialization vector
+*/
+void RaDesSetIV(struct RaDesCtx *ctx, const uint8_t iv[8]);
+
+/**
+* @brief Get initialization vector
+*
+* @param ctx		DES context
+* @param iv			space to get initialization vector
+*/
+void RaDesGetIV(struct RaDesCtx *ctx, /*out*/uint8_t iv[8]);
+
+/**
+* @brief DES Encrypt given byte array
+*
+* DES algorithm block size is 64bit. If input data is not aligned to 64bits, ouput length can be different from the input length.\n
+* And the rest of the data that is not encrypted in this time is combined with the following input data for encryption.\n
+* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
+* example)\n
+* - 1st: input: 30byte, output 24byte. 6bytes are remained in the internal buffer
+* - 2nd: input: 18byte, output 24byte. The Previous data is combined and encrypted together
+* @param ctx		DES context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @return			written length in bytes
+*/
+int RaDesEncrypt(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+* @brief DES Encrypt given byte array with padding
+*
+* The output data is aligned and expanded to 16 bytes.\n
+* PKCS7 padding can be up to 8 bytes long.
+* @param ctx		DES context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @param paddingType	padding type
+* @return			written length in bytes
+*/
+int RaDesEncryptFinal(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
+
+/**
+* @brief DES Decrypt given byte array
+*
+* DES algorithm block size is 64bit. If input data is not aligned to 64bits, ouput length can be different from the input length.\n
+* And the rest of the data that is not decrypted in this time is combined with the following input data for decryption.\n
+* If the input data length is various, prepair additional 16bytes of output data space than input data.\n
+* @param ctx		DES context
+* @param input		data to be decrypted
+* @param length		the length of input data
+* @param output		space in which the decrypted data will be written
+* @return			written length in bytes
+*/
+int RaDesDecrypt(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+* @brief DES Decrypt given byte array with padding
+*
+* If the input data is padded with PKCS7 padding, the return value, which is output length, is the length excluding padding
+* @param ctx		DES context
+* @param input		data to be decrypted
+* @param length		the length of input data
+* @param output		space in which the decrypted data will be written
+* @param paddingType	padding type
+* @return			written length in bytes
+*/
+int RaDesDecryptFinal(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
+
+
+
+/*****************************************************
+ Symmetric key cipher algorithm: RC4
+ *****************************************************/
 
 struct RaRc4Ctx {
 	uint8_t S[256];
@@ -163,14 +330,14 @@ struct RaRc4Ctx {
 * @retval RA_ERR_SUCCESS		success
 * @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
 */
-int RaRc4Create(const uint8_t* key, int keyLen, struct RaRc4Ctx **ctxp);
+int RaRc4Create(const uint8_t *key, int keyLen, struct RaRc4Ctx **ctxp);
 
 /**
 * @brief Destroy RC4 stream encryption/decryption context
 *
 * @param ctx		RC4 context to destroy
 */
-void RaRc4Destroy(struct RaRc4Ctx* ctx);
+void RaRc4Destroy(struct RaRc4Ctx *ctx);
 
 /**
 * @brief Initialize RC4 stream encryption/decryption context
@@ -179,7 +346,7 @@ void RaRc4Destroy(struct RaRc4Ctx* ctx);
 * @param keyLen		length of key
 * @param ctxp		pointer for receiving RC4 context
 */
-void RaRc4Init(struct RaRc4Ctx* ctx, const uint8_t* key, int keyLen);
+void RaRc4Init(struct RaRc4Ctx *ctx, const uint8_t *key, int keyLen);
 
 /**
 * @brief RC4 Encrypt given byte array
@@ -191,7 +358,7 @@ void RaRc4Init(struct RaRc4Ctx* ctx, const uint8_t* key, int keyLen);
 * @note Actually RC4 algorithm's encryption and decryption are same
 * @return			written length in bytes
 */
-int RaRc4Encrypt(struct RaRc4Ctx* ctx, const uint8_t* input, int length, uint8_t* output);
+int RaRc4Encrypt(struct RaRc4Ctx *ctx, const uint8_t *input, int length, uint8_t *output);
 
 /**
 * @brief RC4 Decrypt given byte array
@@ -203,8 +370,7 @@ int RaRc4Encrypt(struct RaRc4Ctx* ctx, const uint8_t* input, int length, uint8_t
 * @note Actually RC4 algorithm's encryption and decryption are same
 * @return			written length in bytes
 */
-int RaRc4Decrypt(struct RaRc4Ctx* ctx, const uint8_t* input, int length, uint8_t* output);
-
+int RaRc4Decrypt(struct RaRc4Ctx *ctx, const uint8_t *input, int length, uint8_t *output);
 
 #ifdef __cplusplus
 }

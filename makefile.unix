@@ -28,6 +28,8 @@ OBJECTS=src/com/bignumber.o	\
 		src/digest/sha1.o	\
 		src/digest/sha2.o	\
 		src/digest/has160.o	\
+		src/cipher/block_cipher.o	\
+		src/cipher/des.o	\
 		src/cipher/aes.o	\
 		src/cipher/rc4.o	\
 
