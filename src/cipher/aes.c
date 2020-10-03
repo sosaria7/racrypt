@@ -338,8 +338,8 @@ static const uint32_t revLookup3[256] = {
 #define B2W(a, b, c, d)	( a | ( b << 8 ) | ( c << 16 ) | ( d << 24 ) )
 #endif
 
-static void RaAesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t input[16], uint8_t output[16]);
-static void RaAesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t input[16], uint8_t output[16]);
+static void RaAesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output);
+static void RaAesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output);
 
 int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode, struct RaAesCtx **ctxp)
 {
@@ -556,7 +556,7 @@ inline static void AesRevSubByteShiftRow(uint32_t *i, uint32_t *o)
 	o[3] = B2W(rev_s[W2B(i[3], 0)], rev_s[W2B(i[2], 1)], rev_s[W2B(i[1], 2)], rev_s[W2B(i[0], 3)]);
 }
 
-static void RaAesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t input[16], uint8_t output[16])
+static void RaAesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
 {
 	int round;
 	uint32_t tmpData[4];
@@ -594,7 +594,7 @@ static void RaAesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t i
 	memcpy(output, tmpData, 16);
 }
 
-static void RaAesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t input[16], uint8_t output[16])
+static void RaAesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
 {
 	int round;
 	uint32_t tmpData[4];

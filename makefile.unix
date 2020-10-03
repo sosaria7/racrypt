@@ -32,6 +32,7 @@ OBJECTS=src/com/bignumber.o	\
 		src/cipher/des.o	\
 		src/cipher/aes.o	\
 		src/cipher/rc4.o	\
+		src/cipher/seed.o
 
 TOBJECTS=src/test/test.o	\
 		src/test/bnprint.o

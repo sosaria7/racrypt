@@ -1844,6 +1844,281 @@ _EXIT:
 	return result;
 }
 
+// seed
+static uint8_t seed_ecb1[] = {
+	0xcf, 0x73, 0x47, 0xa4, 0x89, 0xf4, 0x35, 0x72, 0x1f, 0x5f, 0x87, 0x67, 0x5a, 0x14, 0x8a, 0x18,
+	0x58, 0x09, 0x4a, 0xa8, 0x80, 0x25, 0xde, 0x60, 0x97, 0xec, 0xf9, 0xf8, 0x89, 0xf2, 0x95, 0x32,
+	0x4b, 0xac, 0x36, 0xb9, 0x5a, 0x26, 0x92, 0x65, 0xdf, 0x2c, 0x16, 0xa7, 0xe5, 0x8f, 0x2d, 0x7d };
+
+static uint8_t seed_cbc1[] = {
+	0xcf, 0x73, 0x47, 0xa4, 0x89, 0xf4, 0x35, 0x72, 0x1f, 0x5f, 0x87, 0x67, 0x5a, 0x14, 0x8a, 0x18,
+	0x89, 0xad, 0x9f, 0x9c, 0xe4, 0x98, 0x2c, 0x9d, 0xc0, 0x86, 0xf7, 0xa3, 0xfe, 0x18, 0x15, 0xd1,
+	0x71, 0x31, 0x3f, 0xd9, 0x66, 0x01, 0xc2, 0xc1, 0x5a, 0x7b, 0x4a, 0xe2, 0x48, 0x33, 0x67, 0x75 };
+static uint8_t seed_cfb1[] = {
+	0x61, 0xc1, 0x2a, 0x0b, 0x04, 0x39, 0xef, 0x67, 0x04, 0xd7, 0x5c, 0x8b, 0xc1, 0x20, 0xf4, 0xd2,
+	0xc9, 0x0f, 0x5c, 0xb1, 0x6d, 0xe8, 0x5f, 0x86, 0x34, 0x0a, 0x71, 0xb0, 0x6c, 0x3b, 0x70, 0x4e,
+	0xd2, 0x25, 0xa7, 0x42, 0xb4, 0xb5, 0xb7, 0x56, 0x80, 0x35, 0xca, 0x3e, 0x87, 0x33, 0x6f, 0xed };
+static uint8_t seed_ofb1[] = {
+	0x61, 0xc1, 0x2a, 0x0b, 0x04, 0x39, 0xef, 0x67, 0x04, 0xd7, 0x5c, 0x8b, 0xc1, 0x20, 0xf4, 0xd2,
+	0xab, 0xa3, 0xae, 0xee, 0x14, 0xdc, 0x9c, 0x86, 0xa7, 0x14, 0x89, 0x04, 0x19, 0x4e, 0x39, 0xad,
+	0x69, 0xa3, 0x47, 0xa7, 0x23, 0x10, 0xf0, 0xaf, 0x6f, 0xf6, 0x26, 0xcf, 0x7c, 0x5f, 0xc7, 0xee };
+
+int test10()
+{
+	int result = RA_ERR_SUCCESS;
+#define TEST10_BLOCK_SIZE			4096
+#define TEST10_INPUT_BUFFER_SIZE	10240
+	struct RaSeedCtx ctx;
+	uint8_t key[16] = {
+		0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
+		0xaa, 0x72, 0x3d, 0xc5, 0xfe, 0xf9, 0x34, 0xce
+	};
+	uint8_t *input = NULL;
+	int inputLen;
+	uint8_t encrypted[TEST10_BLOCK_SIZE];
+	uint8_t decrypted[TEST10_BLOCK_SIZE];
+	uint8_t iv[16];
+	int readLen;
+	int writtenLen;
+	int i;
+	int leftLen;
+	int srcOffset;
+	int destOffset;
+	int ntry;
+	struct Timer t;
+
+	input = malloc(TEST10_INPUT_BUFFER_SIZE);
+	if (input == NULL)
+		return RA_ERR_OUT_OF_MEMORY;
+
+	memset(iv, 0, sizeof(iv));
+
+	/* fixed data encryption/decryption test */
+	//memset(key, 0, sizeof(key));
+
+	memcpy(input, message1, sizeof(message1));
+	inputLen = sizeof(message1);
+	memset(decrypted, 0, sizeof(decrypted));
+	RaSeedInit(&ctx, key, RA_BLOCK_MODE_ECB);
+	writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("SEED/ECB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(seed_ecb1) || memcmp(encrypted, seed_ecb1, writtenLen)) {
+		printf("SEED/ECB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("SEED/ECB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
+	writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("SEED/CBC = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(seed_cbc1) || memcmp(encrypted, seed_cbc1, writtenLen)) {
+		printf("SEED/CBC encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("SEED/CBC decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedInit(&ctx, key, RA_BLOCK_MODE_CFB);
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("SEED/CFB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(seed_cfb1) || memcmp(encrypted, seed_cfb1, writtenLen)) {
+		printf("SEED/CFB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("SEED/CFB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedInit(&ctx, key, RA_BLOCK_MODE_OFB);
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("SEED/OFB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(seed_ofb1) || memcmp(encrypted, seed_ofb1, writtenLen)) {
+		printf("SEED/OFB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("SEED/OFB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	printf("SEED: random data encryption/decryption test\n");
+	for (ntry = 0; ntry < 2000 && result == RA_ERR_SUCCESS; ntry++)
+	{
+		/* random data encryption/decryption test */
+		for (i = 0; i < 8; i++) {
+			key[i] = rand() % 256;
+		}
+		inputLen = (rand() % TEST10_BLOCK_SIZE - 256) + 256;	// 256~4096
+		for (i = 0; i < inputLen; i++) {
+			input[i] = rand() % 256;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_ECB);
+		writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("SEED/ECB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("SEED/CBC failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_CFB);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("SEED/CFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_OFB);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("SEED/OFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+
+		// encrypt continus data
+		//printf("encrypt continus data\n");
+		memset(decrypted, 0, sizeof(decrypted));
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
+		RaSeedSetIV(&ctx, iv);
+		leftLen = inputLen;
+		srcOffset = 0;
+		destOffset = 0;
+		while (leftLen > 0) {
+			readLen = (rand() % 100) + 1;
+			if (readLen > leftLen)
+				readLen = leftLen;
+			writtenLen = RaSeedEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+		writtenLen = RaSeedEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		destOffset += writtenLen;
+
+		// decrypt continus data
+		RaSeedSetIV(&ctx, iv);
+		leftLen = destOffset;
+		srcOffset = 0;
+		destOffset = 0;
+
+		// padding size can be up to 16 bytes.
+		while (leftLen > 16) {
+			readLen = (rand() % 50) + 1;
+			if (readLen > leftLen - 16)
+				break;
+			readLen = (rand() % readLen) + 1;
+			writtenLen = RaSeedDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		destOffset += writtenLen;
+
+		writtenLen = destOffset;
+
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("SEED/CBC continus crypt failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+		if ((ntry % 1000) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	if (result == RA_ERR_SUCCESS) {
+		printf(" - ok\n");
+	}
+	else {
+		printf(" - failed\n");
+		goto _EXIT;
+	}
+
+	// performance test
+	memset(decrypted, 0, sizeof(decrypted));
+	InitTimer(&t);
+	for (i = 0; i < 100 * 1024; i++) {
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
+	}
+	PrintElapsed(&t, "SEED Init * 100k times elapsed: ");
+
+	inputLen = TEST7_INPUT_BUFFER_SIZE;
+	memset(input, 0, inputLen);
+
+	RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
+
+	RaSeedSetIV(&ctx, iv);
+	InitTimer(&t);
+	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
+		writtenLen = RaSeedEncrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 10239) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
+	PrintElapsed(&t, "SEED/CBC Encrypt 1GB elapsed: ");
+
+	RaSeedSetIV(&ctx, iv);
+	InitTimer(&t);
+	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
+		RaSeedDecrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
+	PrintElapsed(&t, "SEED/CBC Decrypt 1GB elapsed: ");
+
+	if (result == RA_ERR_SUCCESS) {
+		printf("SEED test ok\n");
+	}
+_EXIT:
+	if (input != NULL)
+		free(input);
+	return result;
+}
 
 int main()
 {
@@ -1928,6 +2203,13 @@ int main()
 		goto _EXIT;
 	}
 
+	printf("\n--------------------------------\n");
+	printf("test10 start\n");
+	result = test10();
+	if (result != RA_ERR_SUCCESS) {
+		printf("test10 error: %d\n", result);
+		goto _EXIT;
+	}
 	printf("\n");
 
 _EXIT:

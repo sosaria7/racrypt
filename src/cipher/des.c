@@ -356,7 +356,7 @@ static void RaDesProcess(struct RaDesCtx *ctx, uint32_t key[2][16], uint64_t inp
 	*output = ((uint64_t)data_l << 32) | data_r;
 }
 
-static void RaDesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t input[8], uint8_t output[8])
+static void RaDesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
 {
 	uint64_t data;
 	struct RaDesCtx *ctx;
@@ -374,7 +374,7 @@ static void RaDesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t i
 	PUT_UINT64_BE(output, data);
 }
 
-static void RaDesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t input[8], uint8_t output[8])
+static void RaDesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
 {
 	uint64_t data;
 	struct RaDesCtx *ctx;

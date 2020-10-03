@@ -42,14 +42,17 @@ struct RaBlockCipher {
 #define RA_KEY_LEN_3DES_112		16
 #define RA_KEY_LEN_3DES_168		24
 
+#define RA_KEY_LEN_SEED			16
+
 #define RA_KEY_LEN_AES_128		16
 #define RA_KEY_LEN_AES_192		24
 #define RA_KEY_LEN_AES_256		32
 
 #define RA_BLOCK_LEN_DES		8
 #define RA_BLOCK_LEN_AES		16
+#define RA_BLOCK_LEN_SEED		16
 
-#define RA_BLOCK_LEN_MAX		32
+#define RA_BLOCK_LEN_MAX		16
 
 
 
@@ -308,6 +311,125 @@ int RaDesDecrypt(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t
 * @return			written length in bytes
 */
 int RaDesDecryptFinal(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
+
+
+
+/*****************************************************
+ Symmetric key cipher algorithm: SEED
+ *****************************************************/
+
+struct RaSeedCtx {
+	uint32_t round_key0[16];
+	uint32_t round_key1[16];
+
+	uint32_t iv[RA_BLOCK_LEN_SEED / 4];
+	uint8_t buffer[RA_BLOCK_LEN_SEED];
+
+	struct RaBlockCipher blockCipher;
+};
+
+/**
+* @brief Create SEED block encryption/decryption context
+*
+* @param key		symmetric key
+* @param opMode		block cipher modes of operation
+* @param ctxp		pointer for receiving SEED context
+* @note The key length must be 16byte(128bit)
+* @retval RA_ERR_SUCCESS		success
+* @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
+*/
+int RaSeedCreate(const uint8_t *key, enum RaBlockCipherMode opMode, struct RaSeedCtx **ctxp);
+
+/**
+* @brief Destroy SEED block encryption/decryption context
+*
+* @param ctx		SEED context to destroy
+*/
+void RaSeedDestroy(struct RaSeedCtx *ctx);
+
+/**
+* @brief Initialize SEED block encryption/decryption context
+*
+* @param ctx		SEED context
+* @param key		symmetric key
+* @param opMode		block cipher modes of operation
+* @note The key length must be 16byte(128bit)
+*/
+void RaSeedInit(struct RaSeedCtx *ctx, const uint8_t *key, enum RaBlockCipherMode opMode);
+
+/**
+* @brief Set initialization vector
+*
+* @param ctx		SEED context
+* @param iv			initialization vector
+*/
+void RaSeedSetIV(struct RaSeedCtx *ctx, const uint8_t iv[16]);
+
+/**
+* @brief Get initialization vector
+*
+* @param ctx		SEED context
+* @param iv			space to get initialization vector
+*/
+void RaSeedGetIV(struct RaSeedCtx *ctx, /*out*/uint8_t iv[16]);
+
+/**
+* @brief SEED Encrypt given byte array
+*
+* SEED algorithm block size is 128bit. If input data is not aligned to 128bits, ouput length can be different from the input length.\n
+* And the rest of the data that is not encrypted in this time is combined with the following input data for encryption.\n
+* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
+* example)\n
+* - 1st: input: 30byte, output 16byte. 14bytes are remained in the internal buffer
+* - 2nd: input: 18byte, output 32byte. The Previous data is combined and encrypted together
+* @param ctx		SEED context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @return			written length in bytes
+*/
+int RaSeedEncrypt(struct RaSeedCtx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+* @brief SEED Encrypt given byte array with padding
+*
+* The output data is aligned and expanded to 16 bytes.\n
+* PKCS7 padding can be up to 8 bytes long.
+* @param ctx		SEED context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @param paddingType	padding type
+* @return			written length in bytes
+*/
+int RaSeedEncryptFinal(struct RaSeedCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
+
+/**
+* @brief SEED Decrypt given byte array
+*
+* SEED algorithm block size is 128bit. If input data is not aligned to 128bits, ouput length can be different from the input length.\n
+* And the rest of the data that is not decrypted in this time is combined with the following input data for decryption.\n
+* If the input data length is various, prepair additional 16bytes of output data space than input data.\n
+* @param ctx		SEED context
+* @param input		data to be decrypted
+* @param length		the length of input data
+* @param output		space in which the decrypted data will be written
+* @return			written length in bytes
+*/
+int RaSeedDecrypt(struct RaSeedCtx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+* @brief SEED Decrypt given byte array with padding
+*
+* If the input data is padded with PKCS7 padding, the return value, which is output length, is the length excluding padding
+* @param ctx		SEED context
+* @param input		data to be decrypted
+* @param length		the length of input data
+* @param output		space in which the decrypted data will be written
+* @param paddingType	padding type
+* @return			written length in bytes
+*/
+int RaSeedDecryptFinal(struct RaSeedCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
 
 
 
