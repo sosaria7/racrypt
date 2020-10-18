@@ -1191,10 +1191,11 @@ int test7()
 	}
 
 	RaAesInit( &ctx, key, RA_AES_128, RA_BLOCK_MODE_CBC );
+	RaAesSetIV(&ctx, iv);
 	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7 );
 	printHex( "AES/128/CBC = ", encrypted, writtenLen );
 	if ( writtenLen != sizeof( aes128_cbc1 ) || memcmp( encrypted, aes128_cbc1, writtenLen ) ) {
-		printf( "AES/128/ECB encrypt failed\n" );
+		printf( "AES/128/CBC encrypt failed\n" );
 		result = RA_ERR_INVALID_DATA;
 	}
 	RaAesSetIV( &ctx, iv );
@@ -1205,6 +1206,7 @@ int test7()
 	}
 
 	RaAesInit( &ctx, key, RA_AES_128, RA_BLOCK_MODE_CFB);
+	RaAesSetIV(&ctx, iv);
 	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7 );
 	printHex( "AES/128/CFB = ", encrypted, writtenLen );
 	if ( writtenLen != sizeof( aes128_cfb1 ) || memcmp( encrypted, aes128_cfb1, writtenLen ) ) {
@@ -1219,6 +1221,7 @@ int test7()
 	}
 
 	RaAesInit( &ctx, key, RA_AES_128, RA_BLOCK_MODE_OFB );
+	RaAesSetIV(&ctx, iv);
 	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7 );
 	printHex( "AES/128/OFB = ", encrypted, writtenLen );
 	if ( writtenLen != sizeof( aes128_ofb1 ) || memcmp( encrypted, aes128_ofb1, writtenLen ) ) {
@@ -1501,6 +1504,7 @@ int test8()
 	}
 
 	RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_CBC);
+	RaDesSetIV(&ctx, iv);
 	writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 	printHex("DES/CBC = ", encrypted, writtenLen);
 	if (writtenLen != sizeof(des_cbc1) || memcmp(encrypted, des_cbc1, writtenLen)) {
@@ -1914,6 +1918,7 @@ int test10()
 	}
 
 	RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
+	RaSeedSetIV(&ctx, iv);
 	writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 	printHex("SEED/CBC = ", encrypted, writtenLen);
 	if (writtenLen != sizeof(seed_cbc1) || memcmp(encrypted, seed_cbc1, writtenLen)) {
@@ -2088,7 +2093,6 @@ int test10()
 	memset(input, 0, inputLen);
 
 	RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
-
 	RaSeedSetIV(&ctx, iv);
 	InitTimer(&t);
 	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
@@ -2120,6 +2124,317 @@ _EXIT:
 	return result;
 }
 
+// aria
+const static uint8_t aria128_ecb1[] = {
+	0xc6, 0xec, 0xd0, 0x8e, 0x22, 0xc3, 0x0a, 0xbd, 0xb2, 0x15, 0xcf, 0x74, 0xe2, 0x07, 0x5e, 0x6e, 0x29, 0xcc, 0xaa, 0xc6, 0x34, 0x48, 0x70, 0x8d, 0x33, 0x1b, 0x2f, 0x81, 0x6c, 0x51, 0xb1, 0x7d, 0x66, 0x39, 0x74, 0x6c, 0x86, 0x8f, 0x3d, 0xe2, 0x4f, 0xf0, 0x3f, 0xf4, 0xeb, 0x0d, 0x23, 0x8f
+};
+const static uint8_t aria128_cbc1[] = {
+	0x49, 0xd6, 0x18, 0x60, 0xb1, 0x49, 0x09, 0x10, 0x9c, 0xef, 0x0d, 0x22, 0xa9, 0x26, 0x81, 0x34, 0xfa, 0xdf, 0x9f, 0xb2, 0x31, 0x51, 0xe9, 0x64, 0x5f, 0xba, 0x75, 0x01, 0x8b, 0xdb, 0x15, 0x38, 0xbd, 0x5f, 0x9b, 0x46, 0x67, 0xe7, 0xba, 0x32, 0x2e, 0xe4, 0xa1, 0xb2, 0x56, 0x22, 0x60, 0x47
+};
+const static uint8_t aria128_cfb1[] = {
+	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00, 0xc0, 0x7c, 0x21, 0xe6, 0x37, 0x0f, 0x41, 0x3a, 0x5d, 0x13, 0x25, 0x00, 0xa6, 0x82, 0x85, 0x01, 0x4e, 0x53, 0x86, 0x06, 0x7d, 0x0d, 0x70, 0x2c, 0xb7, 0x97, 0x22, 0x43, 0x2d, 0xb5, 0xe6, 0xe0
+};
+const static uint8_t aria128_ofb1[] = {
+	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00, 0x00, 0x63, 0x06, 0x3f, 0x05, 0x60, 0x08, 0x34, 0x83, 0xfa, 0xeb, 0x04, 0x1c, 0x8a, 0xde, 0xce, 0xc1, 0x3e, 0xca, 0x3e, 0x55, 0x0a, 0xb8, 0x1a, 0xe0, 0xb2, 0x47, 0xa3, 0xc3, 0x47, 0xaa, 0x70
+};
+
+int test11()
+{
+	int result = RA_ERR_SUCCESS;
+#define TEST11_BLOCK_SIZE		4096
+#define TEST11_INPUT_BUFFER_SIZE	10240
+	struct RaAriaCtx ctx;
+	uint8_t key[32] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
+	uint8_t message[] = { 0x11, 0x11, 0x11, 0x11, 0xaa, 0xaa, 0xaa, 0xaa, 0x11, 0x11, 0x11, 0x11, 0xbb, 0xbb, 0xbb, 0xbb, 0x11, 0x11, 0x11, 0x11, 0xcc, 0xcc, 0xcc, 0xcc, 0x11, 0x11, 0x11, 0x11, 0xdd, 0xdd, 0xdd, 0xdd };
+	uint8_t *input = NULL;
+	int inputLen;
+	uint8_t encrypted[TEST11_BLOCK_SIZE];
+	uint8_t decrypted[TEST11_BLOCK_SIZE];
+	uint8_t iv[16] = { 0x0f, 0x1e, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78, 0x87, 0x96, 0xa5, 0xb4, 0xc3, 0xd2, 0xe1, 0xf0 };
+	int readLen;
+	int writtenLen;
+	int i;
+	int leftLen;
+	int srcOffset;
+	int destOffset;
+	int ntry;
+	struct Timer t;
+
+	input = malloc(TEST11_INPUT_BUFFER_SIZE);
+	if (input == NULL)
+		return RA_ERR_OUT_OF_MEMORY;
+
+	//memset(iv, 0, 16);
+
+	/* fixed data encryption/decryption test */
+	//memset(key, 0, sizeof(key));
+
+	//memcpy(input, message1, sizeof(message1));
+	//inputLen = sizeof(message1);
+	memcpy(input, message, sizeof(message));
+	inputLen = sizeof(message);
+
+	memset(decrypted, 0, sizeof(decrypted));
+	RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_ECB);
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("ARIA/128/ECB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(aria128_ecb1) || memcmp(encrypted, aria128_ecb1, writtenLen)) {
+		printf("ARIA/128/ECB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("ARIA/128/ECB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CBC);
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("ARIA/128/CBC = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(aria128_cbc1) || memcmp(encrypted, aria128_cbc1, writtenLen)) {
+		printf("ARIA/128/CBC encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("ARIA/128/CBC decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CFB);
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("ARIA/128/CFB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(aria128_cfb1) || memcmp(encrypted, aria128_cfb1, writtenLen)) {
+		printf("ARIA/128/CFB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("ARIA/128/CFB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_OFB);
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("ARIA/128/OFB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(aria128_ofb1) || memcmp(encrypted, aria128_ofb1, writtenLen)) {
+		printf("ARIA/128/OFB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("ARIA/128/OFB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	printf("ARIA: random data encryption/decryption test\n");
+	for (ntry = 0; ntry < 20000 && result == RA_ERR_SUCCESS; ntry++)
+	{
+		/* random data encryption/decryption test */
+		for (i = 0; i < 32; i++) {
+			key[i] = rand() % 256;
+		}
+		inputLen = (rand() % TEST11_BLOCK_SIZE - 256) + 256;	// 256~4096
+		for (i = 0; i < inputLen; i++) {
+			input[i] = rand() % 256;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_ECB);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/128/ECB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CBC);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/128/CBC failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_192, RA_BLOCK_MODE_ECB);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/192/ECB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_192, RA_BLOCK_MODE_CBC);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/192/CBC failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_256, RA_BLOCK_MODE_ECB);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/256/ECB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_256, RA_BLOCK_MODE_CBC);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/256/CBC failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CFB);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/128/CFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_OFB);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/128/OFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		// encrypt continus data
+		//printf("encrypt continus data\n");
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CBC);
+		RaAriaSetIV(&ctx, iv);
+		leftLen = inputLen;
+		srcOffset = 0;
+		destOffset = 0;
+		while (leftLen > 0) {
+			readLen = (rand() % 100) + 1;
+			if (readLen > leftLen)
+				readLen = leftLen;
+			writtenLen = RaAriaEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+		writtenLen = RaAriaEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		destOffset += writtenLen;
+
+		// decrypt continus data
+		RaAriaSetIV(&ctx, iv);
+		leftLen = destOffset;
+		srcOffset = 0;
+		destOffset = 0;
+
+		// padding size can be up to 16 bytes.
+		while (leftLen > 16) {
+			readLen = (rand() % 50) + 1;
+			if (readLen > leftLen - 16)
+				break;
+			readLen = (rand() % readLen) + 1;
+			writtenLen = RaAriaDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			leftLen -= readLen;
+		}
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		destOffset += writtenLen;
+
+		writtenLen = destOffset;
+
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/128/CBC continus crypt failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+		if ((ntry % 1000) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	if (result == RA_ERR_SUCCESS) {
+		printf(" - ok\n");
+	}
+	else {
+		printf(" - failed\n");
+		goto _EXIT;
+	}
+
+	// performance test
+	memset(decrypted, 0, sizeof(decrypted));
+	InitTimer(&t);
+	for (i = 0; i < 102400; i++) {
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CBC);
+	}
+	PrintElapsed(&t, "ARIA/128/CBC Init * 100k times elapsed: ");
+
+	inputLen = TEST11_INPUT_BUFFER_SIZE;
+	memset(input, 0, inputLen);
+
+	RaAriaSetIV(&ctx, iv);
+	InitTimer(&t);
+	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
+		writtenLen = RaAriaEncrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 10239) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
+	PrintElapsed(&t, "ARIA/128/CBC Encrypt 1GB elapsed: ");
+
+	RaAriaSetIV(&ctx, iv);
+	InitTimer(&t);
+	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
+		RaAriaDecrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
+	PrintElapsed(&t, "ARIA/128/CBC Decrypt 1GB elapsed: ");
+
+
+	if (result == RA_ERR_SUCCESS) {
+		printf("ARIA test ok\n");
+	}
+_EXIT:
+	if (input != NULL)
+		free(input);
+	return result;
+}
 int main()
 {
 	int result;
@@ -2210,6 +2525,15 @@ int main()
 		printf("test10 error: %d\n", result);
 		goto _EXIT;
 	}
+
+	printf("\n--------------------------------\n");
+	printf("test11 start\n");
+	result = test11();
+	if (result != RA_ERR_SUCCESS) {
+		printf("test11 error: %d\n", result);
+		goto _EXIT;
+	}
+
 	printf("\n");
 
 _EXIT:

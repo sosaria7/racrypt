@@ -69,20 +69,17 @@ uint32_t mul(uint32_t m, uint32_t n)
 {
 	uint32_t p;
 	int i;
+	n &= 0xff;
 	// multiply
 	p = 0;
-	for (i = 7; i >= 0; i--)
+	for (i = 0; i < 8; i++)
 	{
-		if ((m & (1 << i)) != 0) {
-			p ^= n << i;
-		}
-	}
-	// modulate
-	for (i = 6; i >= 0; i--)
-	{
-		if ((p & (0x100 << i)) != 0) {
-			p ^= 0x163 << i;
-		}
+		p <<= 1;
+		if (p & 0x100)
+			p ^= 0x163;
+		if (m & 0x80)
+			p ^= n;
+		m <<= 1;
 	}
 	return p;
 }
@@ -91,7 +88,7 @@ int main()
 {
 	int i;
 	uint32_t x1, x2;
-	uint32_t t;
+	uint32_t p, q;
 	static const int s1[] = {
 		0, 2, 1, 5, 4, 3, 6, 7
 	};
@@ -103,49 +100,51 @@ int main()
 		A2[i] = A[s2[i]];
 	}
 
-	for (i = 0; i < 256; i++) {
-		// calculate x1 = x**247, x2 = x**251
-		// 247 = 128+64+32+16+4+3
-		t = mul(i, i);
-		x2 = mul(t, t);			// i**4
-		x1 = mul(mul(x2, t), i);// i**7
-		t = mul(x2, x2);		// i**8
-		t = mul(t, t);			// i**16
-		x1 = mul(x1, t);
-		t = mul(t, t);			// i**32
-		x1 = mul(x1, t);
-		t = mul(t, t);			// i**64
-		x1 = mul(x1, t);
-		t = mul(t, t);			// i**128
-		x1 = mul(x1, t);		// x1 = i**247
-		x2 = mul(x2, x1);		// x2 = i**251 = i**(4+247)
+	p = 1;
+	q = 1;
+	do {
+		// multiply p by 3
+		p = (uint8_t)(p ^ (p << 1) ^ (((int8_t)p >> 7) & 0x63));
+		// divide q by 3 (equals multiplication by 0xde)
+		q ^= q << 1;
+		q ^= q << 2;
+		q ^= q << 4;
+		q = (uint8_t)(q ^ (((int8_t)q >> 7) & 0x21));
 
-		S1[i] = (uint8_t)(permute8((uint8_t)x1, A1) ^ 0xa9);
-		S2[i] = (uint8_t)(permute8((uint8_t)x2, A2) ^ 0x38);
-	}
+		x2 = mul(q, q);		// (x**-2)
+		x2 = mul(x2, x2);	// (x**-4) = (x**(255-4)) = (x**251)
+		x1 = mul(x2, x2);	// (x**-8) = (x**(255-8)) = (x**247)
+
+		S1[p] = (uint8_t)(permute8((uint8_t)x1, A1) ^ 0xa9);
+		S2[p] = (uint8_t)(permute8((uint8_t)x2, A2) ^ 0x38);
+	} while (p != 1);
+
+	S1[0] = 0xa9;
+	S2[0] = 0x38;
+
 	for (i = 0; i < 256; i++) {
 		SS3[i] = ((S2[i] & 0xcf) << 24) | ((S2[i] & 0xf3) << 16) | ((S2[i] & 0xfc) << 8) | (S2[i] & 0x3f);
 		SS2[i] = ((S1[i] & 0xf3) << 24) | ((S1[i] & 0xfc) << 16) | ((S1[i] & 0x3f) << 8) | (S1[i] & 0xcf);
 		SS1[i] = ((S2[i] & 0xfc) << 24) | ((S2[i] & 0x3f) << 16) | ((S2[i] & 0xcf) << 8) | (S2[i] & 0xf3);
 		SS0[i] = ((S1[i] & 0x3f) << 24) | ((S1[i] & 0xcf) << 16) | ((S1[i] & 0xf3) << 8) | (S1[i] & 0xfc);
 	}
-	printf("static const uint32_t SS3[256] = {\n");
+	printf("static const uint32_t seedSS3[256] = {\n");
 	printData32(SS3, 256);
 	printf("};\n");
-	printf("static const uint32_t SS2[256] = {\n");
+	printf("static const uint32_t seedSS2[256] = {\n");
 	printData32(SS2, 256);
 	printf("};\n");
-	printf("static const uint32_t SS1[256] = {\n");
+	printf("static const uint32_t seedSS1[256] = {\n");
 	printData32(SS1, 256);
 	printf("};\n");
-	printf("static const uint32_t SS0[256] = {\n");
+	printf("static const uint32_t seedSS0[256] = {\n");
 	printData32(SS0, 256);
 	printf("};\n");
 
 	return 0;
 }
 */
-static const uint32_t SS3[256] = {
+static const uint32_t seedSS3[256] = {
 	0x08303838, 0xc8e0e828, 0x0d212c2d, 0x86a2a426, 0xcfc3cc0f, 0xced2dc1e, 0x83b3b033, 0x88b0b838,
 	0x8fa3ac2f, 0x40606020, 0x45515415, 0xc7c3c407, 0x44404404, 0x4f636c2f, 0x4b63682b, 0x4b53581b,
 	0xc3c3c003, 0x42626022, 0x03333033, 0x85b1b435, 0x09212829, 0x80a0a020, 0xc2e2e022, 0x87a3a427,
@@ -179,7 +178,7 @@ static const uint32_t SS3[256] = {
 	0x07333437, 0xc7e3e427, 0x04202424, 0x84a0a424, 0xcbc3c80b, 0x43535013, 0x0a02080a, 0x87838407,
 	0xc9d1d819, 0x4c404c0c, 0x83838003, 0x8f838c0f, 0xcec2cc0e, 0x0b33383b, 0x4a42480a, 0x87b3b437
 };
-static const uint32_t SS2[256] = {
+static const uint32_t seedSS2[256] = {
 	0xa1a82989, 0x81840585, 0xd2d416c6, 0xd3d013c3, 0x50541444, 0x111c1d0d, 0xa0ac2c8c, 0x21242505,
 	0x515c1d4d, 0x43400343, 0x10181808, 0x121c1e0e, 0x51501141, 0xf0fc3ccc, 0xc2c80aca, 0x63602343,
 	0x20282808, 0x40440444, 0x20202000, 0x919c1d8d, 0xe0e020c0, 0xe2e022c2, 0xc0c808c8, 0x13141707,
@@ -213,7 +212,7 @@ static const uint32_t SS2[256] = {
 	0x12141606, 0x32383a0a, 0x50581848, 0xd0d414c4, 0x62602242, 0x21282909, 0x03040707, 0x33303303,
 	0xe0e828c8, 0x13181b0b, 0x01040505, 0x71783949, 0x90901080, 0x62682a4a, 0x22282a0a, 0x92981a8a
 };
-static const uint32_t SS1[256] = {
+static const uint32_t seedSS1[256] = {
 	0x38380830, 0xe828c8e0, 0x2c2d0d21, 0xa42686a2, 0xcc0fcfc3, 0xdc1eced2, 0xb03383b3, 0xb83888b0,
 	0xac2f8fa3, 0x60204060, 0x54154551, 0xc407c7c3, 0x44044440, 0x6c2f4f63, 0x682b4b63, 0x581b4b53,
 	0xc003c3c3, 0x60224262, 0x30330333, 0xb43585b1, 0x28290921, 0xa02080a0, 0xe022c2e2, 0xa42787a3,
@@ -247,7 +246,7 @@ static const uint32_t SS1[256] = {
 	0x34370733, 0xe427c7e3, 0x24240420, 0xa42484a0, 0xc80bcbc3, 0x50134353, 0x080a0a02, 0x84078783,
 	0xd819c9d1, 0x4c0c4c40, 0x80038383, 0x8c0f8f83, 0xcc0ecec2, 0x383b0b33, 0x480a4a42, 0xb43787b3
 };
-static const uint32_t SS0[256] = {
+static const uint32_t seedSS0[256] = {
 	0x2989a1a8, 0x05858184, 0x16c6d2d4, 0x13c3d3d0, 0x14445054, 0x1d0d111c, 0x2c8ca0ac, 0x25052124,
 	0x1d4d515c, 0x03434340, 0x18081018, 0x1e0e121c, 0x11415150, 0x3cccf0fc, 0x0acac2c8, 0x23436360,
 	0x28082028, 0x04444044, 0x20002020, 0x1d8d919c, 0x20c0e0e0, 0x22c2e2e0, 0x08c8c0c8, 0x17071314,
@@ -282,10 +281,23 @@ static const uint32_t SS0[256] = {
 	0x28c8e0e8, 0x1b0b1318, 0x05050104, 0x39497178, 0x10809090, 0x2a4a6268, 0x2a0a2228, 0x1a8a9298
 };
 
+#define SS3		seedSS3
+#define SS2		seedSS2
+#define SS1		seedSS1
+#define SS0		seedSS0
+
 #define GET_UINT32_BE(b)		(uint32_t)(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
 #define PUT_UINT32_BE(b, v)		{ (b)[0] = (uint8_t)((v)>>24); (b)[1] = (uint8_t)((v)>>16); (b)[2] = (uint8_t)((v)>>8); (b)[3] = (uint8_t)(v); }
 
-#define G(X)					(SS3[X>>24] ^ SS2[(X>>16)&0xff] ^ SS1[(X>>8)&0xff] ^ SS0[X&0xff])
+#define SEED_G(X)				(SS3[(uint8_t)(X>>24)] ^ SS2[(uint8_t)(X>>16)] ^ SS1[(uint8_t)(X>>8)] ^ SS0[(uint8_t)X])
+#define SEED_P(A, B, C, D, n)		\
+	t1 = C ^ ctx->round_key0[n];	\
+	t2 = t1 ^ D ^ ctx->round_key1[n];	\
+	t2 = SEED_G(t2); t1 += t2;	\
+	t1 = SEED_G(t1); t2 += t1;	\
+	t2 = SEED_G(t2); t1 += t2;	\
+	A ^= t1;	\
+	B ^= t2
 
 static const uint32_t KC[16] = {
 	0x9e3779b9, 0x3c6ef373, 0x78dde6e6, 0xf1bbcdcc, 0xe3779b99, 0xc6ef3733, 0x8dde6e67, 0x1bbcdccf,
@@ -315,51 +327,23 @@ void RaSeedDestroy(struct RaSeedCtx *ctx)
 	}
 }
 
-static void RaSeedProcess(struct RaSeedCtx *ctx, const uint8_t *input, uint8_t *output, int is_encode)
+static void RaSeedEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
 {
 	uint32_t a, b, c, d;
 	uint32_t t1, t2;
-
 	int i;
-	int key_index;
-	int key_inc;
+
+	struct RaSeedCtx *ctx;
+	ctx = CHILD_OF(blockCipher, struct RaSeedCtx, blockCipher);
 
 	a = GET_UINT32_BE(input);
 	b = GET_UINT32_BE(input + 4);
 	c = GET_UINT32_BE(input + 8);
 	d = GET_UINT32_BE(input + 12);
 
-	if (is_encode) {
-		key_index = 0;
-		key_inc = 1;
-	}
-	else {
-		key_index = 15;
-		key_inc = -1;
-	}
-
-	for (i = 0; i < 8; i++) {
-		t1 = c ^ ctx->round_key0[key_index];		// c = (c^k0)
-		t2 = t1 ^ d ^ ctx->round_key1[key_index];	// d = (c^k0) ^ (d^k1)
-		t2 = G(t2); t1 += t2;
-		t1 = G(t1); t2 += t1;
-		t2 = G(t2); t1 += t2;
-
-		a ^= t1;
-		b ^= t2;
-
-		key_index += key_inc;
-
-		t1 = a ^ ctx->round_key0[key_index];		// a = (a^k0)
-		t2 = t1 ^ b ^ ctx->round_key1[key_index];	// b = (a^k0) ^ (b^k1)
-		t2 = G(t2); t1 += t2;
-		t1 = G(t1); t2 += t1;
-		t2 = G(t2); t1 += t2;
-
-		c ^= t1;
-		d ^= t2;
-
-		key_index += key_inc;
+	for (i = 0; i < 16; i += 2) {
+		SEED_P(a, b, c, d, i);
+		SEED_P(c, d, a, b, i + 1);
 	}
 
 	// should not be swapped on the last round but it was, so (c, d) is followed by (a, b)
@@ -369,18 +353,30 @@ static void RaSeedProcess(struct RaSeedCtx *ctx, const uint8_t *input, uint8_t *
 	PUT_UINT32_BE(output + 12, b);
 }
 
-static void RaSeedEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
-{
-	struct RaSeedCtx *ctx;
-	ctx = CHILD_OF(blockCipher, struct RaSeedCtx, blockCipher);
-	RaSeedProcess(ctx, input, output, 1);
-}
-
 static void RaSeedDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
 {
+	uint32_t a, b, c, d;
+	uint32_t t1, t2;
+	int i;
+
 	struct RaSeedCtx *ctx;
 	ctx = CHILD_OF(blockCipher, struct RaSeedCtx, blockCipher);
-	RaSeedProcess(ctx, input, output, 0);
+
+	a = GET_UINT32_BE(input);
+	b = GET_UINT32_BE(input + 4);
+	c = GET_UINT32_BE(input + 8);
+	d = GET_UINT32_BE(input + 12);
+
+	for (i = 14; i >= 0; i -= 2) {
+		SEED_P(a, b, c, d, i + 1);
+		SEED_P(c, d, a, b, i);
+	}
+
+	// should not be swapped on the last round but it was, so (c, d) is followed by (a, b)
+	PUT_UINT32_BE(output, c);
+	PUT_UINT32_BE(output + 4, d);
+	PUT_UINT32_BE(output + 8, a);
+	PUT_UINT32_BE(output + 12, b);
 }
 
 void RaSeedInit(struct RaSeedCtx *ctx, const uint8_t *key, enum RaBlockCipherMode opMode)
@@ -398,9 +394,9 @@ void RaSeedInit(struct RaSeedCtx *ctx, const uint8_t *key, enum RaBlockCipherMod
 
 	for (i = 0; i < 16; i++) {
 		t = a + c - KC[i];
-		ctx->round_key0[i] = G(t);
+		ctx->round_key0[i] = SEED_G(t);
 		t = b - d + KC[i];
-		ctx->round_key1[i] = G(t);
+		ctx->round_key1[i] = SEED_G(t);
 		// a||b = (a||b)>>8
 		t = (b & 0xff) << 24;
 		b = ((a & 0xff) << 24) | (b >> 8);
@@ -409,9 +405,9 @@ void RaSeedInit(struct RaSeedCtx *ctx, const uint8_t *key, enum RaBlockCipherMod
 		i++;
 
 		t = a + c - KC[i];
-		ctx->round_key0[i] = G(t);
+		ctx->round_key0[i] = SEED_G(t);
 		t = b - d + KC[i];
-		ctx->round_key1[i] = G(t);
+		ctx->round_key1[i] = SEED_G(t);
 		// c||d = (c||d)<<8
 		t = (d >> 24) & 0xff;
 		d = ((c >> 24) & 0xff) | (d << 8);
@@ -444,4 +440,9 @@ int RaSeedDecryptFinal(struct RaSeedCtx *ctx, const uint8_t *input, int length, 
 	return RaBlockCipherDecryptFinal(&ctx->blockCipher, input, length, output, paddingType);
 }
 
-#undef G
+#undef SEED_G
+#undef SEED_P
+#undef SS0
+#undef SS1
+#undef SS2
+#undef SS3

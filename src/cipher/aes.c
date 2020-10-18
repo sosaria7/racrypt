@@ -366,14 +366,11 @@ void RaAesDestroy(struct RaAesCtx *ctx)
 void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode)
 {
 	int i;
-	int N;
 
 	uint32_t tmpKey;
 	uint32_t *prevKey;
 	uint32_t *curKey;
 	uint8_t keyHold;
-
-	ctx->opMode = opMode;
 
 	memset(ctx->iv, 0, sizeof(ctx->iv));
 	RaBlockCipherInit(&ctx->blockCipher, RaAesEncryptBlock, RaAesDecryptBlock, opMode, RA_BLOCK_LEN_AES, ctx->iv, ctx->buffer);
@@ -384,12 +381,12 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 	{
 	default:
 	case RA_AES_128:
-		N = RA_KEY_LEN_AES_128 / sizeof(uint32_t);
+#define N		(RA_KEY_LEN_AES_128 / sizeof(uint32_t))		// 4
 		ctx->nr = 11;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
 		tmpKey = prevKey[N - 1];
-		for (i = 1; i < 11; i++)
+		for (i = 1; i < (11 * 4) / N; i++)
 		{
 			keyHold = ((uint8_t*)&tmpKey)[0];
 			((uint8_t*)&tmpKey)[0] = (uint8_t)(s[((uint8_t*)&tmpKey)[1]] ^ rcon[i - 1]);
@@ -404,17 +401,18 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 			curKey[2] = tmpKey;
 			tmpKey ^= prevKey[3];
 			curKey[3] = tmpKey;
-			curKey += 4;
-			prevKey += 4;
+			curKey += N;
+			prevKey += N;
 		}
+#undef N
 		break;
 	case RA_AES_192:
-		N = RA_KEY_LEN_AES_192 / sizeof(uint32_t);	// 6
+#define N		(RA_KEY_LEN_AES_192 / sizeof(uint32_t))		// 6
 		ctx->nr = 13;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
 		tmpKey = prevKey[N - 1];
-		for (i = 1; i < (13 * 4) / 6; i++)
+		for (i = 1; i < (13 * 4) / N; i++)
 		{
 			keyHold = ((uint8_t*)&tmpKey)[0];
 			((uint8_t*)&tmpKey)[0] = (uint8_t)(s[((uint8_t*)&tmpKey)[1]] ^ rcon[i - 1]);
@@ -433,9 +431,10 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 			curKey[4] = tmpKey;
 			tmpKey ^= prevKey[5];
 			curKey[5] = tmpKey;
-			curKey += 6;
-			prevKey += 6;
+			curKey += N;
+			prevKey += N;
 		}
+		// 13 * 4 = 6 * 8 + 4
 		keyHold = ((uint8_t*)&tmpKey)[0];
 		((uint8_t*)&tmpKey)[0] = (uint8_t)(s[((uint8_t*)&tmpKey)[1]] ^ rcon[i - 1]);
 		((uint8_t*)&tmpKey)[1] = s[((uint8_t*)&tmpKey)[2]];
@@ -449,14 +448,15 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 		curKey[2] = tmpKey;
 		tmpKey ^= prevKey[3];
 		curKey[3] = tmpKey;
+#undef N
 		break;
 	case RA_AES_256:
-		N = RA_KEY_LEN_AES_256 / sizeof(uint32_t);
+#define N		(RA_KEY_LEN_AES_256 / sizeof(uint32_t))		// 8
 		ctx->nr = 15;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
 		tmpKey = prevKey[N - 1];
-		for (i = 1; i < (15 * 4) / 8; i++)
+		for (i = 1; i < (15 * 4) / N; i++)
 		{
 			keyHold = ((uint8_t*)&tmpKey)[0];
 			((uint8_t*)&tmpKey)[0] = (uint8_t)(s[((uint8_t*)&tmpKey)[1]] ^ rcon[i - 1]);
@@ -484,9 +484,10 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 			curKey[6] = tmpKey;
 			tmpKey ^= prevKey[7];
 			curKey[7] = tmpKey;
-			curKey += 8;
-			prevKey += 8;
+			curKey += N;
+			prevKey += N;
 		}
+		// 15 * 4 = 8 * 7 + 4
 		keyHold = ((uint8_t*)&tmpKey)[0];
 		((uint8_t*)&tmpKey)[0] = (uint8_t)(s[((uint8_t*)&tmpKey)[1]] ^ rcon[i - 1]);
 		((uint8_t*)&tmpKey)[1] = s[((uint8_t*)&tmpKey)[2]];
@@ -500,6 +501,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 		curKey[2] = tmpKey;
 		tmpKey ^= prevKey[3];
 		curKey[3] = tmpKey;
+#undef N
 		break;
 	}
 	curKey = (uint32_t*)ctx->rev_key;
@@ -663,3 +665,8 @@ void RaAesGetIV(struct RaAesCtx *ctx, /*out*/uint8_t iv[16])
 {
 	RaBlockCipherGetIV(&ctx->blockCipher, iv);
 }
+
+#undef FT0
+#undef RT0
+#undef W2B
+#undef B2W
