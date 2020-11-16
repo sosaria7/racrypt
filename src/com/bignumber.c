@@ -1245,8 +1245,10 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 		switch (len) {
 		case 3:
 			*data++ = (uint8_t)random;
+			random >>= 8;
 		case 2:
 			*data++ = (uint8_t)random;
+			random >>= 8;
 		case 1:
 			*data++ = (uint8_t)random;
 			break;
