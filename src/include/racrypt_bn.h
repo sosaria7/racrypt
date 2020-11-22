@@ -4,6 +4,7 @@
 #define __RA_BN_H__
 
 #include "racrypt_com.h"
+#include "racrypt_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,10 +69,10 @@ int BnShiftR(struct RaBigNumber* bn, uint32_t bit);
 
 int BnGetMaxLength(struct RaBigNumber* bn);
 int BnGetLength(struct RaBigNumber* bn);
-int BnGenRandom(struct RaBigNumber* bn, int bit, uint32_t* seedp);
-int BnGetRandomOdd(struct RaBigNumber* bn, int bit, uint32_t* seedp);
-int BnGetRandomRSA(struct RaBigNumber* bn, int bit, uint32_t* seedp);
-int BnGenRandomByteArray(uint8_t* data, int len, uint32_t* seedp);
+int BnGenRandom(struct RaBigNumber* bn, int bit, struct RaRandom *rnd);
+int BnGetRandomOdd(struct RaBigNumber* bn, int bit, struct RaRandom *rnd);
+int BnGetRandomRSA(struct RaBigNumber* bn, int bit, struct RaRandom *rnd);
+int BnGenRandomByteArray(uint8_t* data, int len, struct RaRandom *rnd);
 
 int BnToByteArray(struct RaBigNumber* bn, uint8_t* buffer, int bufferlen);
 int BnToFixedByteArray(struct RaBigNumber* bn, uint8_t* buffer, int bufferlen);
@@ -97,7 +98,7 @@ int RaMontExpMod(struct RaMontCtx* ctx, /*out*/struct RaBigNumber* r, struct RaB
 
 /* prime */
 int RaGenPrimeNumber(struct RaBigNumber* bn, int bit);
-int RaGenPrimeNumberEx(struct RaBigNumber* bn, int bit, int(*progress)(int count, void* userData), void* userData, uint32_t* seedp);
+int RaGenPrimeNumberEx(struct RaBigNumber* bn, int bit, int(*progress)(int count, void* userData), void* userData, struct RaRandom *rnd);
 int RaIsPrimeNumber(struct RaBigNumber* bn);
 
 #ifdef __cplusplus

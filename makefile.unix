@@ -20,6 +20,7 @@ OBJECTS=src/com/bignumber.o	\
 		src/com/gcd.o	\
 		src/com/montexpmod.o	\
 		src/com/prime.o	\
+		src/com/random.o	\
 		src/pk/asn1.o	\
 		src/pk/rsa.o	\
 		src/digest/md2.o	\
@@ -43,7 +44,8 @@ HEADERS=src/include/racrypt.h	\
 		src/include/racrypt_bn.h	\
 		src/include/racrypt_digest.h	\
 		src/include/racrypt_pk.h	\
-		src/include/racrypt_cipher.h
+		src/include/racrypt_cipher.h	\
+		src/include/racrypt_random.h
 
 HEADERS_I=src/pk/asn1.h
 HEADERS_T=src/test/bnprint.h

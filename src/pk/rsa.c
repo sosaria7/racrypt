@@ -25,9 +25,11 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	int result;
 	struct RaRsaKeyPair *key = NULL;
 	struct RaBigNumber *phi = NULL;
-	uint32_t seed;
+	struct RaRandom rnd;
 
 	assert((bit % 2) == 0);
+
+	RaRandomInit(&rnd);
 
 	key = (struct RaRsaKeyPair*)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
@@ -61,13 +63,12 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 
 	BnSetUInt(key->pub, 65537);
 
-	seed = 0;
 	do {
-		result = RaGenPrimeNumberEx( key->prime1, bit / 2, NULL, NULL, &seed );
+		result = RaGenPrimeNumberEx( key->prime1, bit / 2, NULL, NULL, &rnd );
 		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		do {
-			result = RaGenPrimeNumberEx( key->prime2, bit / 2, NULL, NULL, &seed );
+			result = RaGenPrimeNumberEx( key->prime2, bit / 2, NULL, NULL, &rnd );
 			if (result != RA_ERR_SUCCESS) goto _EXIT;
 		} while ( BnCmp( key->prime1, key->prime2 ) == 0 );
 

@@ -271,7 +271,7 @@ static const uint32_t primes[] = {
 
 // Miller-Rabin primality test
 // https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test
-static int CheckMillerRabin(struct RaBigNumber *bn, int count, uint32_t *seedp, /*out*/int* probable)
+static int CheckMillerRabin(struct RaBigNumber *bn, int count, struct RaRandom *rnd, /*out*/int* probable)
 {
 	int result;
 	struct RaBigNumber *n1 = NULL;
@@ -333,7 +333,7 @@ static int CheckMillerRabin(struct RaBigNumber *bn, int count, uint32_t *seedp, 
 	isPrime = 1;
 	while (count-- > 0) {
 		do {
-			result = BnGenRandom(a, bitn1, seedp);
+			result = BnGenRandom(a, bitn1, rnd);
 			if (result != RA_ERR_SUCCESS) goto _EXIT;
 		} while (BnCmp(a, n1) >= 0 || BnCmpInt(a, 1) <= 0);
 
@@ -374,7 +374,7 @@ _EXIT:
 	return result;
 }
 
-static int GenProbablePrimeNumber(struct RaBigNumber *bn, int bit, uint32_t *seedp)
+static int GenProbablePrimeNumber(struct RaBigNumber *bn, int bit, struct RaRandom *rnd)
 {
 	uint32_t *mods = NULL;
 	int i;
@@ -388,7 +388,7 @@ static int GenProbablePrimeNumber(struct RaBigNumber *bn, int bit, uint32_t *see
 	}
 
 	for (;;) {
-		BnGetRandomRSA(bn, bit, seedp);
+		BnGetRandomRSA(bn, bit, rnd);
 
 		for (i = 0; i < NUM_PRIME; i++) {
 			BnModUInt(bn, primes[i], &mods[i]);
@@ -425,16 +425,17 @@ int RaGenPrimeNumber(struct RaBigNumber *bn, int bit)
 	return RaGenPrimeNumberEx(bn, bit, NULL, NULL, NULL);
 }
 
-int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count, void* userData), void* userData, uint32_t *seedp)
+int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count, void* userData), void* userData, struct RaRandom *rnd)
 {
 	int result;
 	int count = 0;
 	int checkCount;
 	int isPrime;
-    uint32_t seed = 0;
+    struct RaRandom tmpRnd;
 
-	if (seedp == NULL) {
-		seedp = &seed;
+	if (rnd == NULL) {
+		RaRandomInit(&tmpRnd);
+		rnd = &tmpRnd;
 	}
 	if (bit >= 1024) {
 		checkCount = 3;
@@ -448,12 +449,12 @@ int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count
 			if (progress(count, userData) != 0)
 				break;
 		}
-		result = GenProbablePrimeNumber(bn, bit, seedp);
+		result = GenProbablePrimeNumber(bn, bit, rnd);
 		if (result != RA_ERR_SUCCESS) {
 			return result;
 		}
 
-		result = CheckMillerRabin(bn, checkCount, seedp, &isPrime);
+		result = CheckMillerRabin(bn, checkCount, rnd, &isPrime);
 		if (result != RA_ERR_SUCCESS) {
 			return result;
 		}
@@ -467,10 +468,12 @@ int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count
 int RaIsPrimeNumber(struct RaBigNumber *bn)
 {
 	int result;
-	uint32_t seed = 0;
 	int isPrime;
 	int bit;
 	int checkCount;
+	struct RaRandom rnd;
+
+	RaRandomInit(&rnd);
 
 	bit = BnGetBitLength(bn);
 	if (bit >= 1024) {
@@ -479,7 +482,7 @@ int RaIsPrimeNumber(struct RaBigNumber *bn)
 	else {
 		checkCount = 5;
 	}
-	result = CheckMillerRabin(bn, checkCount, &seed, &isPrime);
+	result = CheckMillerRabin(bn, checkCount, &rnd, &isPrime);
 	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	if (!isPrime) {
 		result = RA_ERR_INVALID_DATA;

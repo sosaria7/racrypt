@@ -36,6 +36,7 @@ typedef unsigned long		uint64_t;
 #include "racrypt_pk.h"
 #include "racrypt_digest.h"
 #include "racrypt_cipher.h"
+#include "racrypt_random.h"
 
 #endif
 

@@ -8,37 +8,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <time.h>
-
-#ifdef _WIN32
-#		ifndef WIN32_LEAN_AND_MEAN
-#			define WIN32_LEAN_AND_MEAN
-#		endif
-#		include <Windows.h>
-#else
-#	ifdef HAVE_TIMES
-#		include <unistd.h>
-#		include <sys/times.h>
-#	endif
-#endif
-
-static uint32_t GetRandomSeed()
-{
-	uint32_t seed;
-#ifdef _WIN32
-		seed = GetTickCount();
-#else
-#	ifdef HAVE_TIMES
-	struct tms ts;
-	seed = (uint32_t)((uint64_t)(uint32_t)times(&ts) * 1000 / sysconf(_SC_CLK_TCK));
-#	else
-	struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	seed = (uint32_t)(((uint64_t)(uint32_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000 ));
-#	endif
-#endif
-	return seed;
-}
 
 static int _BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
 static int _BnSub(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
@@ -1120,17 +1089,7 @@ int BnGetBitLength(struct RaBigNumber *bn)
 }
 /////////////////////////////////////////////
 
-static uint16_t _rand16(uint32_t *seedp)
-{
-	*seedp = ((*seedp * 1103515245) + 12345) & 0x7fffffff;
-	return (uint16_t)(*seedp >> 15);
-}
-static uint32_t _rand32(uint32_t *seedp)
-{
-	return _rand16(seedp) | ((uint32_t)_rand16(seedp) << 16);
-}
-
-int BnGenRandom(struct RaBigNumber *bn, int bit, uint32_t *seedp)
+int BnGenRandom(struct RaBigNumber *bn, int bit, struct RaRandom *rnd)
 {
 	int word;
 
@@ -1145,7 +1104,7 @@ int BnGenRandom(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 		return RA_ERR_NUMBER_SIZE;
 	}
 
-	BnGenRandomByteArray((uint8_t*)bn->data, word * BN_WORD_BYTE, seedp);
+	BnGenRandomByteArray((uint8_t*)bn->data, word * BN_WORD_BYTE, rnd);
 
 	bit %= BN_WORD_BIT;
 
@@ -1159,11 +1118,11 @@ int BnGenRandom(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 	return RA_ERR_SUCCESS;
 }
 
-int BnGetRandomOdd(struct RaBigNumber *bn, int bit, uint32_t *seedp)
+int BnGetRandomOdd(struct RaBigNumber *bn, int bit, struct RaRandom *rnd)
 {
 	int ret;
 
-	ret = BnGenRandom(bn, bit, seedp);
+	ret = BnGenRandom(bn, bit, rnd);
 	if (ret != RA_ERR_SUCCESS)
 		return ret;
 
@@ -1171,12 +1130,12 @@ int BnGetRandomOdd(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 	return RA_ERR_SUCCESS;
 }
 
-int BnGetRandomRSA(struct RaBigNumber *bn, int bit, uint32_t *seedp)
+int BnGetRandomRSA(struct RaBigNumber *bn, int bit, struct RaRandom *rnd)
 {
 	int ret;
 	int word;
 
-	ret = BnGenRandom(bn, bit, seedp);
+	ret = BnGenRandom(bn, bit, rnd);
 	if (ret != RA_ERR_SUCCESS)
 		return ret;
 
@@ -1188,32 +1147,25 @@ int BnGetRandomRSA(struct RaBigNumber *bn, int bit, uint32_t *seedp)
 	return RA_ERR_SUCCESS;
 }
 
-int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
+int BnGenRandomByteArray(uint8_t *data, int len, struct RaRandom *rnd)
 {
-	uint32_t seed;
 	uint32_t random;
 	int remain;
+	struct RaRandom tmpRnd;
 
-	if (seedp != NULL && *seedp != 0) {
-		seed = *seedp;
-	}
-	else {
-		seed = GetRandomSeed();
-
-		_rand32(&seed);
-		_rand32(&seed);
+	if (rnd == NULL) {
+		RaRandomInit(&tmpRnd);
+		rnd = &tmpRnd;
 	}
 
 	if (len <= 0) {
-		if (seedp != NULL)
-			*seedp = seed;
 		return RA_ERR_SUCCESS;
 	}
 
 	remain = (int)((uintptr_t)data % 4);
 
-	if (len >= 3 && remain > 0) {
-		random = _rand32(&seed);
+	if (len >= 4 && remain > 0) {
+		random = RaRandomInt(rnd, 0, 0x00ffffff);
 
 		switch (remain) {
 		case 1:
@@ -1232,7 +1184,7 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 	}
 
 	while (len >= 4) {
-		random = _rand32(&seed);
+		random = (RaRandomInt(rnd, 0, 0xffff) << 16) | RaRandomInt(rnd, 0, 0xffff);
 
 		*(uint32_t*)data = random;
 		data += 4;
@@ -1240,7 +1192,7 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 	}
 
 	if (len > 0) {
-		random = _rand32(&seed);
+		random = RaRandomInt(rnd, 0, 0x00ffffff);
 
 		switch (len) {
 		case 3:
@@ -1254,9 +1206,6 @@ int BnGenRandomByteArray(uint8_t *data, int len, uint32_t *seedp)
 			break;
 		}
 	}
-
-	if (seedp != NULL)
-		*seedp = seed;
 
 	return RA_ERR_SUCCESS;
 }
