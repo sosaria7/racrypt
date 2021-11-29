@@ -2037,7 +2037,9 @@ static int _BnSubUInt(struct RaBigNumber *a, bn_uint_t val)
 #if BN_WORD_BYTE == 8
 #if defined(_MSC_VER) && defined(_M_X64)
 #   pragma intrinsic(_umul128)
+#if _MSC_VER > 1920		// Visual Studio 2019
 #   pragma intrinsic(_udiv128)
+#endif
 #endif
 
 static void _BnMul128(bn_uint128_t *r, uint64_t a, uint64_t b)
@@ -2088,7 +2090,7 @@ static uint64_t _BnDiv128(bn_uint128_t a, uint64_t b, uint64_t *remainder)
 	if (remainder != NULL)
 		*remainder = (uint64_t)(a128 % b);
 	return (uint64_t)(a128 / b);
-#elif defined(_MSC_VER) && defined(_M_X64)
+#elif _MSC_VER > 1920 && defined(_M_X64)
 	uint64_t r = 0;
 	uint64_t q;
 	if (a.high >= b) {
