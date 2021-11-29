@@ -236,6 +236,7 @@ int test1()
 	struct RaBigNumber *m = NULL;
 	struct RaBigNumber *n = NULL;
 	int count;
+	bn_uint_t remainder;
 	uint8_t buffer[2048 / 8 + 1];
 
 	bn1 = BnNewW(0);
@@ -256,80 +257,158 @@ int test1()
 	count = BnToByteArray(bn1, buffer, sizeof(buffer));
 	if (BnToByteArray(bn1, NULL, 0) != count) {
 		printf("error BnToByteArray(bn, NULL, 0) get count\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
 	}
 	BnSetByteArray(bn2, buffer, count);
 	if (BnCmp(bn1, bn2) != 0) {
 		printf("error BnToByteArray() or BnSetByteArray()\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
 	}
-	BnSetUByteArray( bn2, buffer, count );
-	printHex( "hex=", buffer, count );
-	BnToFixedByteArray( bn2, buffer, 1 );
-	printHex( "fixed_hex=", buffer, 1 );
 
+	BnSetUByteArray( bn2, buffer, count );
+	printf("BnToByteArray(BN(135))\n");
+	printHex( "    = ", buffer, count );
+	BnToFixedByteArray( bn2, buffer, 1 );
+	printf("BnToFixedByteArray(BN(135), 1)\n");
+	printHex("    = ", buffer, 1);
+
+	count = 2;
+	buffer[0] = 0;
+	buffer[1] = 0x12;
+	BnSetUByteArray(bn1, buffer, count);
+	buffer[0] = 0xff;
+	buffer[1] = 0xee;
+	BnSetByteArray(bn2, buffer, count);
+	BnAdd(bn3, bn1, bn2);
+	if (!BN_ISZERO(bn3)) {
+		printf("error: 0x12 + -0x12 is not zero\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+	
 	//BnSetInt(bn1, 0xffffffff);
 	//BnSetUInt64(bn1, 0xffffffff82345678);
-	BnSetInt64(bn1, 0x1f3456789);
-	BnSetUInt64(bn2, 0x100000000);
-	BnAdd(bn3, bn2, bn1);
-	//BnDouble(bn1);
-	//remainder = BnDivInt(bn1, 3);
-	BnPrintLn(bn3);
-	BnPrint10Ln(bn3);
-	BnMulInt(bn1, 12345);
-	BnPrintLn(bn1);
-	BnPrint10Ln(bn1);
+	BnSetUInt64(bn1, UINT64_C(0x9133a57841c5ebc8));
+	BnShiftL(bn1, 32);
+	BnAddUInt(bn1, 0x92a3674a);
+	BnShiftL(bn1, 32);
+	BnAddUInt(bn1, 0x42da131e);
+	BnSetUInt64(bn2, UINT64_C(0xb213ec2eee1d9b80));
+	BnAdd(bn3, bn1, bn2);
 
-	BnSetInt64(bn1, 0x12345678);
-	BnSetInt64(bn2, 0x12345678);
-	BnMul(bn3, bn1, bn2);
-	BnMul(bn1, bn3, bn2);
-	BnSet(bn2, bn1);
-	BnMul(bn3, bn1, bn2);
+	printf("0x"); BnPrint(bn1); printf(" + 0x"); BnPrintLn(bn2);
+	printf("    = 0x");
 	BnPrintLn(bn3);
+	printf("    = ");
 	BnPrint10Ln(bn3);
-	printf("bn3=");
-	BnAddUInt(bn3, 0xffff1234);
+	BnSet(bn2, bn3);
+
+	BnDouble(bn1, bn3);
+	BnDouble(bn3, bn1);
+	BnDivInt(bn3, 4, &remainder);
+	if (remainder != 0 || BnCmp(bn2, bn3) != 0) {
+		printf("BnDivInt #1 error\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	BnMulInt(bn3, 12345);
+	printf(" * 12345\n");
+	printf("    = 0x");
 	BnPrintLn(bn3);
-	printf("bn1=");
-	BnPrintLn(bn1);
-	BnDiv(bn2, r, bn3, bn1);
-	printf("div=");
-	BnPrintLn(bn2);
-	BnPrint10Ln(bn2);
-	printf("rem=");
-	BnPrintLn(r);
-	BnPrint10Ln(r);
+	printf("    = ");
+	BnPrint10Ln(bn3);
+
+	BnDivInt(bn3, 12345, &remainder);
+	if (remainder != 0 || BnCmp(bn2, bn3) != 0) {
+		printf("BnDivInt #2 error\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+
+	BnSetUInt64(bn1, UINT64_C(0x9133a57841c5ebc8));
+	BnShiftL(bn1, 32);
+	BnAddUInt(bn1, 0x92a3674a);
+	BnShiftL(bn1, 32);
+	BnAddUInt(bn1, 0x42da131e);
+	BnSqr(bn3, bn1);
+	printf("0x"); BnPrint(bn1); printf(" ** 2\n");
+	printf("    = 0x");
+	BnPrintLn(bn3);
+	printf("    = ");
+	BnPrint10Ln(bn3);
+
+	BnSetUInt64(bn2, UINT64_C(0x0013ec2eee1d9b80));
+	BnShiftL(bn2, 32);
+	BnAddUInt(bn2, 0x92a3674a);
+	BnShiftL(bn2, 32);
+	BnAddUInt(bn2, 0xda131e13);
+	BnDiv(bn1, r, bn3, bn2);
+
+	printf(" / 0x"); BnPrintLn(bn2);
+	printf("    = q:0x"); BnPrintLn(bn1);
+	printf("      r:0x"); BnPrintLn(r);
+
+	BnSet(n, bn3);
+	BnSub(bn3, n, r);
+	BnAddUInt(bn3, 0xffff1234);
+	BnDiv(m, r, bn3, bn2);
+	if (BnCmp(bn1, m) != 0 || BnCmpUInt(r, 0xffff1234) != 0) {
+		printf("BnDivInt #3 error\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
 
 	count = BnToByteArray(bn3, buffer, sizeof(buffer));
 	if (BnToByteArray(bn3, NULL, 0) != count) {
-		printf("error BnToByteArray(bn, NULL, 0) get count\n");
+		printf("error BnToByteArray(bn, NULL, 0) get count #2\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
 	}
 	BnSetByteArray(bn2, buffer, count);
 	if (BnCmp(bn3, bn2) != 0) {
-		printf("error BnToByteArray() or BnSetByteArray()\n");
+		printf("error BnToByteArray() or BnSetByteArray() #2\n");
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
 	}
 
 	BnSetInt64(bn1, -126);
 	BnSetInt64(bn2, 5);
 	BnDiv(bn3, r, bn1, bn2);
-	printf("div=");
-	BnPrint10Ln(bn3);
+	BnPrint10(bn1); printf(" / "); BnPrint10(bn2);
+	printf("  = q:"); BnPrint10(bn3); printf(", r:"); BnPrint10Ln(r);
+
+	BnSetInt64(bn1, 126);
+	BnSetInt64(bn2, -5);
+	BnDiv(bn3, r, bn1, bn2);
+	BnPrint10(bn1); printf(" / "); BnPrint10(bn2);
+	printf("  = q:"); BnPrint10(bn3); printf(", r:"); BnPrint10Ln(r);
+
+	BnSetInt64(bn1, -126);
+	BnSetInt64(bn2, -5);
+	BnDiv(bn3, r, bn1, bn2);
+	BnPrint10(bn1); printf(" / "); BnPrint10(bn2);
+	printf(" = q:"); BnPrint10(bn3); printf(", r:"); BnPrint10Ln(r);
 
 	BnSetInt64(bn1, 10);
 	BnSetInt64(bn2, 257);
 	GetGCDEx(bn3, m, n, bn1, bn2, 0);
-	printf("gcd=");
-	BnPrint10Ln(bn3);
-	printf("m=");
-	BnPrint10Ln(m);
-	printf("n=");
+	printf("gcd_ex(10, 257)\n");
+	printf("    = ");
+	BnPrint10(bn3);
+	printf(", m = ");
+	BnPrint10(m);
+	printf(", n = ");
 	BnPrint10Ln(n);
-
 
 	BnSetInt64(bn1, 100);
 	BnSetInt64(bn2, 17);
 	GetGCD(bn3, bn1, bn2);
-	printf("gcd=");
+	printf("gcd(100, 17)\n");
+	printf("    = ");
 	BnPrint10Ln(bn3);
 
 	result = RA_ERR_SUCCESS;
@@ -375,7 +454,7 @@ int test2()
 	BnSetInt64(bn1, 3);
 	BnSetInt64(bn2, 15);
 	RaMontExpMod(ctx, r, bn1, bn2);
-	printf("3^15=");
+	printf("3 ** 15 = ");
 	BnPrint10Ln(r);
 
 	result = RA_ERR_SUCCESS;
@@ -2435,103 +2514,46 @@ _EXIT:
 		free(input);
 	return result;
 }
+
+typedef int(*FnTest)();
+struct StTest {
+	FnTest func;
+	char *func_name;
+};
+#define TEST_FUNC(func)		{func, #func}
+
+static struct StTest test_list[] =
+{
+	TEST_FUNC(test1),
+	TEST_FUNC(test2),
+	TEST_FUNC(test3),
+	TEST_FUNC(test4),
+	TEST_FUNC(test5),
+	TEST_FUNC(test5_1),
+	TEST_FUNC(test6),
+	TEST_FUNC(test7),
+	TEST_FUNC(test8),
+	TEST_FUNC(test9),
+	TEST_FUNC(test10),
+	TEST_FUNC(test11)
+};
+
+#define TEST_LIST_COUNT		(int)(sizeof(test_list)/sizeof(test_list[0]))
+
 int main()
 {
 	int result;
+	int i;
 	srand((unsigned)time(0));
 
-	printf("\n--------------------------------\n");
-	printf("test1 start\n");
-	result = test1();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test1 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test2 start\n");
-	result = test2();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test2 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test3 start\n");
-	result = test3();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test3 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test4 start\n");
-	result = test4();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test4 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test5 start\n");
-	result = test5();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test5 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	result = test5_1();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test5_1 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test6 start\n");
-	result = test6();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test6 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test7 start\n");
-	result = test7();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test7 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test8 start\n");
-	result = test8();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test8 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test9 start\n");
-	result = test9();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test9 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test10 start\n");
-	result = test10();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test10 error: %d\n", result);
-		goto _EXIT;
-	}
-
-	printf("\n--------------------------------\n");
-	printf("test11 start\n");
-	result = test11();
-	if (result != RA_ERR_SUCCESS) {
-		printf("test11 error: %d\n", result);
-		goto _EXIT;
+	for (i = 0; i < TEST_LIST_COUNT; i++) {
+		printf("\n--------------------------------\n");
+		printf("%s start\n", test_list[i].func_name);
+		result = test_list[i].func();
+		if (result != RA_ERR_SUCCESS) {
+			printf("%s error: %d\n", test_list[i].func_name, result);
+			goto _EXIT;
+		}
 	}
 
 	printf("\n");

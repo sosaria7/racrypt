@@ -7,10 +7,17 @@
 //#define RACRYPT_AES_MIN_TABLE
 //#define RACRYPT_PRIME_MIN_TABLE
 //#define RACRYPT_RSA_VERIFY_KEY
+//#define BN_WORD_BYTE	4
+
 
 //#define WORDS_BIGENDIAN
 //#define HAVE_TIMES
 #define HAVE_STDINT_H
+#define HAVE_LIMITS_H
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>

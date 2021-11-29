@@ -15,7 +15,10 @@ void BnPrint(struct RaBigNumber* bn)
 		printf("-");
 
 	for (i = bn->length - 1; i >= 0; i--) {
-		printf("%08x", bn->data[i]);
+#if BN_WORD_BYTE == 8
+		printf("%08x", (uint32_t)(bn->data[i] >> 32));
+#endif
+		printf("%08x", (uint32_t)bn->data[i]);
 	}
 }
 
@@ -48,7 +51,11 @@ int BnSPrint(struct RaBigNumber* bn, char* buffer, int bufferlen)
 
 	for (i = bn->length - 1; i >= 0; i--)
 	{
-		snprintf(buffer + offset, (size_t)bufferlen - offset, "%08x", bn->data[i]);
+#if BN_WORD_BYTE == 8
+		snprintf(buffer + offset, (size_t)bufferlen - offset, "%08x", (uint32_t)(bn->data[i] >> 32));
+		offset += 8;
+#endif
+		snprintf(buffer + offset, (size_t)bufferlen - offset, "%08x", (uint32_t)bn->data[i]);
 		offset += 8;
 	}
 	buffer[offset] = '\0';
@@ -58,15 +65,19 @@ int BnSPrint(struct RaBigNumber* bn, char* buffer, int bufferlen)
 
 // max_dec_digit = log10(16^max_hex_digit) = max_hex_digit * log10(16)
 // max_dec_word = max_dec_digit / 9		(needed one word for 9 digit)
+#if BN_WORD_BYTE == 8
+#define BN_MAX_DEC_LEN(word_len)		(int)((word_len)*16*1.204120 / 9 + 1)		// 1.204120 = log10(16)
+#else
 #define BN_MAX_DEC_LEN(word_len)		(int)((word_len)*8*1.204120 / 9 + 1)		// 1.204120 = log10(16)
+#endif
 
 void BnPrint10(struct RaBigNumber* bn)
 {
 	struct RaBigNumber* bn2;
-	uint32_t* decimal;
+	bn_uint_t* decimal;
 	int i;
 
-	decimal = malloc(sizeof(uint32_t) * BN_MAX_DEC_LEN((size_t)bn->length));
+	decimal = malloc(sizeof(bn_uint_t) * BN_MAX_DEC_LEN((size_t)bn->length));
 	bn2 = BnClone(bn);
 	if (decimal == NULL || bn2 == NULL) {
 		printf("<mem alloc error>\n");
@@ -83,9 +94,9 @@ void BnPrint10(struct RaBigNumber* bn)
 	if (bn->sign && !BN_ISZERO(bn))
 		printf("-");
 
-	printf("%u", decimal[i]);
+	printf("%u", (uint32_t)decimal[i]);
 	while (--i >= 0) {
-		printf("%09u", decimal[i]);
+		printf("%09u", (uint32_t)decimal[i]);
 	}
 
 _EXIT:
@@ -104,12 +115,12 @@ int BnSPrint10(struct RaBigNumber* bn, char* buffer, int bufferlen)
 {
 	int result;
 	struct RaBigNumber* bn2;
-	uint32_t* decimal;
+	bn_uint_t* decimal;
 	int i;
 	int offset;
 	char temp[11];
 
-	decimal = malloc(sizeof(uint32_t) * BN_MAX_DEC_LEN((size_t)bn->length));
+	decimal = malloc(sizeof(bn_uint_t) * BN_MAX_DEC_LEN((size_t)bn->length));
 	bn2 = BnClone(bn);
 	if (decimal == NULL || bn2 == NULL) {
 		result = RA_ERR_OUT_OF_MEMORY;
@@ -129,7 +140,7 @@ int BnSPrint10(struct RaBigNumber* bn, char* buffer, int bufferlen)
 		offset++;
 	}
 
-	snprintf(temp, sizeof(temp), "%u", decimal[i]);
+	snprintf(temp, sizeof(temp), "%u", (uint32_t)decimal[i]);
 	offset = (int)strlen(temp);
 
 	if (bufferlen < offset + i * 9 + 1) {
@@ -140,7 +151,7 @@ int BnSPrint10(struct RaBigNumber* bn, char* buffer, int bufferlen)
 	strncpy(buffer, temp, (size_t)offset);
 
 	while (--i >= 0) {
-		snprintf(buffer + offset, (size_t)bufferlen - offset, "%09u", decimal[i]);
+		snprintf(buffer + offset, (size_t)bufferlen - offset, "%09u", (uint32_t)decimal[i]);
 		offset += 9;
 	}
 	buffer[offset] = '\0';

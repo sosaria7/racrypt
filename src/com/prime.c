@@ -283,7 +283,7 @@ static int CheckMillerRabin(struct RaBigNumber *bn, int count, struct RaRandom *
 	int i;
 	int bitn1;
 	int isPrime;
-	uint32_t data;
+	bn_uint_t data;
 	struct RaMontCtx *ctx = NULL;
 
 	if (BN_ISZERO(bn) || BN_ISONE(bn) || BN_ISEVEN(bn) ) {
@@ -380,7 +380,7 @@ static int GenProbablePrimeNumber(struct RaBigNumber *bn, int bit, struct RaRand
 	int i;
 	uint32_t add;
 	uint64_t val;
-	int mod;
+	bn_uint_t mod;
 
 	mods = malloc(NUM_PRIME * sizeof(uint32_t));
 	if (mods == NULL) {
@@ -391,13 +391,13 @@ static int GenProbablePrimeNumber(struct RaBigNumber *bn, int bit, struct RaRand
 		BnGetRandomRSA(bn, bit, rnd);
 
 		for (i = 0; i < NUM_PRIME; i++) {
-			BnModUInt(bn, primes[i], &mods[i]);
+			BnModUInt(bn, primes[i], &mod);
+			mods[i] = (uint32_t)mod;
 		}
 		add = 0;
 		for (;;) {
 			for (i = 0; i < NUM_PRIME; i++) {
-				mod = (mods[i] + add) % primes[i];
-				if (mod == 0) {
+				if ((mods[i] + add) % primes[i] == 0) {
 					add += 2;
 					break;
 				}

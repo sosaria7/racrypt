@@ -13,9 +13,50 @@ struct RaMontCtx
 	struct RaBigNumber *BB;		// B' where BB' = 1 mod N
 	struct RaBigNumber *tmp;
 	struct RaBigNumber *mul;
-	uint32_t n0;				// N' % R, use this instead of N' on ((T mod R) * N') mod R 
+	bn_uint_t n0;				// N' % R, use this instead of N' on ((T mod R) * N') mod R 
 	int Rl;						// length of R in word
 };
+
+#if BN_WORD_BYTE == 8
+#if defined(_MSC_VER) && defined(_M_X64)
+#   pragma intrinsic(_umul128)
+#endif
+
+static inline void _RaMontMul128(bn_uint128_t* r, uint64_t a, uint64_t b)
+{
+#if defined(__SIZEOF_INT128__)
+	__uint128_t r128 = (__uint128_t)a * b;
+	r->high = (uint64_t)(r128 >> 64);
+	r->low = (uint64_t)r128;
+#elif defined(_MSC_VER) && defined(_M_X64)
+	r->low = _umul128(a, b, &r->high);
+#else
+	uint64_t al, ah;
+	uint64_t bl, bh;
+	uint64_t t1, t2;
+	uint64_t r1, r2;
+
+	al = a & 0xffffffff;
+	ah = a >> 32;
+	bl = b & 0xffffffff;
+	bh = b >> 32;
+
+	r1 = al * bl;
+	r2 = ah * bh;
+
+	t1 = bl * ah;
+	t2 = bh * al;
+
+	t2 += r1 >> 32;
+	t2 += t1;
+	// carry
+	if (t2 < t1)
+		r2 += UINT64_C(0x100000000);
+	r->low = (r1 & 0xffffffff) + (t2 << 32);
+	r->high = r2 + (t2 >> 32);
+#endif
+};
+#endif
 
 // N must be prime number
 int RaMontCreate(struct RaBigNumber *N, /*out*/struct RaMontCtx **montCtx)
@@ -41,6 +82,9 @@ int RaMontCreate(struct RaBigNumber *N, /*out*/struct RaMontCtx **montCtx)
 		goto _EXIT;
 	}
 	BnSetUInt64(B, UINT64_C(0x100000000));
+#if BN_WORD_BYTE == 8
+	BnShiftL(B, 32);
+#endif
 
 	ctx->N = BnClone(N);
 	ctx->NB = BnNewW(B->length + 1);
@@ -61,7 +105,7 @@ int RaMontCreate(struct RaBigNumber *N, /*out*/struct RaMontCtx **montCtx)
 
 	BnSub(ctx->NB, B, ctx->tmp);
 
-	ctx->n0 = _BnGetUInt32(ctx->NB);
+	ctx->n0 = _BnGetUInt(ctx->NB);
 	ctx->Rl = N->length;
 
 	*montCtx = ctx;
@@ -108,8 +152,8 @@ int MontSet(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaBigNum
 		return RA_ERR_NUMBER_SIZE;
 	}
 
-	memcpy(ctx->tmp->data + ctx->Rl, a->data, sizeof(uint32_t) * a->length);
-	memset(ctx->tmp->data, 0, sizeof(uint32_t) * ctx->Rl);
+	memcpy(ctx->tmp->data + ctx->Rl, a->data, sizeof(bn_uint_t) * a->length);
+	memset(ctx->tmp->data, 0, sizeof(bn_uint_t) * ctx->Rl);
 	ctx->tmp->length = a->length + ctx->Rl;
 	ctx->tmp->sign = a->sign;
 	result = BnMod(r, ctx->tmp, ctx->N);
@@ -117,17 +161,17 @@ int MontSet(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaBigNum
 	return result;
 }
 
+
 // r = a(R^-1) mod N
 int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a)
 {
 	int result;
-	uint32_t m;
+	bn_uint_t m;
 	int i, j;
 
 	int c;
-	uint64_t val;
-	uint32_t *nd;
-	uint32_t *td;
+	bn_uint_t *nd;
+	bn_uint_t *td;
 
 	result = BnSet(ctx->tmp, a);
 	if (result != RA_ERR_SUCCESS) {
@@ -145,10 +189,62 @@ int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a
 		return RA_ERR_NUMBER_SIZE;
 	}
 
-	memset(ctx->tmp->data + a->length, 0, sizeof(uint32_t) * (ctx->tmp->length - a->length));
+	memset(ctx->tmp->data + a->length, 0, sizeof(bn_uint_t) * (ctx->tmp->length - a->length));
 
 	for (i = 0; i < ctx->Rl; i++)
 	{
+#if BN_WORD_BYTE == 8
+		bn_uint128_t val;
+		uint64_t cw;
+
+		// T += (m*N) << (i*32)
+		val.high = 0;
+		val.low = 0;
+		c = 0;
+
+		td = &ctx->tmp->data[i];
+		nd = &ctx->N->data[0];
+
+		m = (bn_uint_t)((*td) * ctx->n0);		// m <- T[i] * N' mod B, where B is 0x100000000
+		for (j = 0; j < ctx->N->length; j++)
+		{
+			//val = (*nd) * m + (val >> 64) + c;
+			cw = val.high;
+			_RaMontMul128(&val, *nd, m);
+			val.low += cw;
+			if (val.low < cw)
+				val.high++;
+			if (c != 0) {
+				val.low++;
+				if (val.low == 0)
+					val.high++;
+			}
+
+			*td += val.low;
+			c = ((*td) < val.low);
+
+			td++;
+			nd++;
+		}
+
+		if (val.high > 0)
+		{
+			// val = (*td) + (val >> 64) + c;
+			val.low = val.high;
+			val.high = 0;
+			if (c != 0) {
+				val.low++;
+				if (val.low == 0)
+					val.high++;
+			}
+
+			*td += val.low;
+			c = ((*td) < val.low) | (int)val.high;
+
+			td++;
+		}
+#else
+		uint64_t val;
 		// T += (m*N) << (i*32)
 		val = 0;
 		c = 0;
@@ -174,6 +270,7 @@ int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a
 			c = (int)(val >> 32);
 			td++;
 		}
+#endif
 		while (c)
 		{
 			*td += c;
@@ -223,9 +320,9 @@ int RaMontExpMod(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaB
 	int result;
 	struct RaBigNumber *val = NULL;
 	int i, j;
-	uint32_t mask;
-	uint32_t *bd;
-	uint32_t pend;
+	bn_uint_t mask;
+	bn_uint_t *bd;
+	bn_uint_t pend;
 
 	int pendBit;
 	int oddBit;
@@ -272,7 +369,7 @@ int RaMontExpMod(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaB
 	pendBit = 0;
     oddBit = 0;
 	for (i = b->length - 1; i >= 0; i--) {
-		mask = (uint32_t)(1U << (BN_WORD_BIT-1));
+		mask = ((bn_uint_t)1U << (BN_WORD_BIT-1));
 		for (j = 0; j < BN_WORD_BIT; j++) {
 
 			if ((*bd) & mask) {

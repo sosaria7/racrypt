@@ -10,13 +10,15 @@
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
-int RaSha2Create(struct RaSha2Ctx **ctxp)
+int RaSha2Create(struct RaSha2Ctx **ctxp, enum RaDigestAlgorithm algorithm)
 {
 	struct RaSha2Ctx *ctx;
 	ctx = (struct RaSha2Ctx*)malloc(sizeof(struct RaSha2Ctx));
 	if (ctx == NULL) {
 		return RA_ERR_OUT_OF_MEMORY;
 	}
+	
+	RaSha2Init(ctx, algorithm);
 
 	*ctxp = ctx;
 
