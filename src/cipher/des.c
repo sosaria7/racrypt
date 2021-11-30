@@ -286,6 +286,7 @@ static void RaDesProcess(struct RaDesCtx *ctx, uint32_t key[2][16], uint64_t inp
 	int key_inc;
 	int key_index;
 
+	(void)ctx;
 	data_l = (uint32_t)(input >> 32);
 	data_r = (uint32_t)input;
 	// Initial permutation

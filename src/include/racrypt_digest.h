@@ -57,7 +57,7 @@ struct RaSha2Ctx
 #define RA_DGST_LEN_SHA2_512_224	28
 #define RA_DGST_LEN_SHA2_512_256	32
 
-int RaSha2Create(struct RaSha2Ctx** ctxp, enum RaDigestAlgorithm algorithm);
+int RaSha2Create(enum RaDigestAlgorithm algorithm, struct RaSha2Ctx **ctxp);
 void RaSha2Destroy(struct RaSha2Ctx *ctx);
 
 void RaSha2Init(struct RaSha2Ctx *ctx, enum RaDigestAlgorithm algorithm);
