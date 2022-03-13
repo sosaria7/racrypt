@@ -148,7 +148,7 @@ int BnSPrint10(struct RaBigNumber* bn, char* buffer, int bufferlen)
 		result = RA_ERR_OUT_OF_BUFFER;
 		goto _EXIT;
 	}
-	strncpy(buffer, temp, (size_t)offset);
+	memcpy(buffer, temp, (size_t)offset);
 
 	while (--i >= 0) {
 		snprintf(buffer + offset, (size_t)bufferlen - offset, "%09u", (uint32_t)decimal[i]);
