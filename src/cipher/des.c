@@ -518,7 +518,7 @@ static void RaDesInitKey(const uint8_t *key, /*out*/uint32_t round_key[2][16])
 	}
 }
 
-void RaDesInit(struct RaDesCtx *ctx, enum RaDesKeyType keyType, const uint8_t *key, enum RaBlockCipherMode opMode)
+void RaDesInit(struct RaDesCtx *ctx, const uint8_t *key, enum RaDesKeyType keyType, enum RaBlockCipherMode opMode)
 {
 	memset(ctx->iv, 0, RA_BLOCK_LEN_DES);
 	RaBlockCipherInit(&ctx->blockCipher, RaDesEncryptBlock, RaDesDecryptBlock, opMode, RA_BLOCK_LEN_DES, ctx->iv, ctx->buffer);
@@ -550,7 +550,7 @@ int RaDesCreate(const uint8_t *key, enum RaDesKeyType keyType, enum RaBlockCiphe
 	if (ctx == NULL) {
 		return RA_ERR_OUT_OF_MEMORY;
 	}
-	RaDesInit(ctx, keyType, key, opMode);
+	RaDesInit(ctx, key, keyType, opMode);
 
 	*ctxp = ctx;
 

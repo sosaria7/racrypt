@@ -1568,7 +1568,7 @@ int test8()
 	memcpy(input, message1, sizeof(message1));
 	inputLen = sizeof(message1);
 	memset(decrypted, 0, sizeof(decrypted));
-	RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_ECB);
+	RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_ECB);
 	writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 	printHex("DES/ECB = ", encrypted, writtenLen);
 	if (writtenLen != sizeof(des_ecb1) || memcmp(encrypted, des_ecb1, writtenLen)) {
@@ -1582,7 +1582,7 @@ int test8()
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_CBC);
+	RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_CBC);
 	RaDesSetIV(&ctx, iv);
 	writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 	printHex("DES/CBC = ", encrypted, writtenLen);
@@ -1598,7 +1598,7 @@ int test8()
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_CFB);
+	RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_CFB);
 	RaDesSetIV(&ctx, iv);
 	writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 	printHex("DES/CFB = ", encrypted, writtenLen);
@@ -1614,7 +1614,7 @@ int test8()
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_OFB);
+	RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_OFB);
 	RaDesSetIV(&ctx, iv);
 	writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 	printHex("DES/OFB = ", encrypted, writtenLen);
@@ -1646,7 +1646,7 @@ int test8()
 		}
 
 		memset(decrypted, 0, sizeof(decrypted));
-		RaDesInit(&ctx, RA_3DES, key, RA_BLOCK_MODE_ECB);
+		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_ECB);
 		writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 		writtenLen = RaDesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
 		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
@@ -1655,7 +1655,7 @@ int test8()
 		}
 
 		memset(decrypted, 0, sizeof(decrypted));
-		RaDesInit(&ctx, RA_3DES, key, RA_BLOCK_MODE_CBC);
+		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_CBC);
 		RaDesSetIV(&ctx, iv);
 		writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 		RaDesSetIV(&ctx, iv);
@@ -1666,7 +1666,7 @@ int test8()
 		}
 
 		memset(decrypted, 0, sizeof(decrypted));
-		RaDesInit(&ctx, RA_3DES, key, RA_BLOCK_MODE_CFB);
+		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_CFB);
 		RaDesSetIV(&ctx, iv);
 		writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 		RaDesSetIV(&ctx, iv);
@@ -1677,7 +1677,7 @@ int test8()
 		}
 
 		memset(decrypted, 0, sizeof(decrypted));
-		RaDesInit(&ctx, RA_3DES, key, RA_BLOCK_MODE_OFB);
+		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_OFB);
 		RaDesSetIV(&ctx, iv);
 		writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
 		RaDesSetIV(&ctx, iv);
@@ -1691,7 +1691,7 @@ int test8()
 		// encrypt continus data
 		//printf("encrypt continus data\n");
 		memset(decrypted, 0, sizeof(decrypted));
-		RaDesInit(&ctx, RA_3DES, key, RA_BLOCK_MODE_CBC);
+		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_CBC);
 		RaDesSetIV(&ctx, iv);
 		leftLen = inputLen;
 		srcOffset = 0;
@@ -1750,14 +1750,14 @@ int test8()
 	memset(decrypted, 0, sizeof(decrypted));
 	InitTimer(&t);
 	for (i = 0; i < 100 * 1024; i++) {
-		RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_CBC);
+		RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_CBC);
 	}
 	PrintElapsed(&t, "DES Init * 100k times elapsed: ");
 
 	inputLen = TEST7_INPUT_BUFFER_SIZE;
 	memset(input, 0, inputLen);
 
-	RaDesInit(&ctx, RA_DES, key, RA_BLOCK_MODE_CBC);
+	RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_CBC);
 
 	RaDesSetIV(&ctx, iv);
 	InitTimer(&t);

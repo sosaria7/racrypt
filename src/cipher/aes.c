@@ -280,6 +280,8 @@ static const uint32_t fwdLookup3[256] = {
 static const uint32_t revLookup3[256] = {
 	AES_REV_LOOKUP
 };
+#undef V
+
 #define FT1(v)		fwdLookup1[v]
 #define FT2(v)		fwdLookup2[v]
 #define FT3(v)		fwdLookup3[v]
@@ -321,6 +323,8 @@ static const uint32_t fwdLookup3[256] = {
 static const uint32_t revLookup3[256] = {
 	AES_REV_LOOKUP
 };
+#undef V
+
 #define FT1(v)		fwdLookup1[v]
 #define FT2(v)		fwdLookup2[v]
 #define FT3(v)		fwdLookup3[v]

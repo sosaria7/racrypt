@@ -17,7 +17,7 @@ int RaSha2Create(enum RaDigestAlgorithm algorithm, struct RaSha2Ctx **ctxp)
 	if (ctx == NULL) {
 		return RA_ERR_OUT_OF_MEMORY;
 	}
-	
+
 	RaSha2Init(ctx, algorithm);
 
 	*ctxp = ctx;
@@ -489,7 +489,7 @@ void RaSha512Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 		memcpy(ctx->buffer + bufferFilled, data, len);
 }
 
-void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t output[64])
+void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t *output)
 {
 	uint32_t val;
 

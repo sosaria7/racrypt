@@ -71,7 +71,7 @@ void RaSha256(const uint8_t *data, int len, /*out*/uint8_t output[32]);
 
 void RaSha512Init(struct RaSha2Ctx *ctx);
 void RaSha512Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len);
-void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t data[64]);
+void RaSha512Final(struct RaSha2Ctx *ctx, /*out*/uint8_t *output);
 void RaSha512(const uint8_t *data, int len, /*out*/uint8_t output[64]);
 
 struct RaMd5Ctx

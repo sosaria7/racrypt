@@ -240,7 +240,7 @@ void RaDesDestroy(struct RaDesCtx *ctx);
 * @param opMode		block cipher modes of operation
 * @note The key length must be 8byte(56bit) when the key type is RA_DES, and 16byte for RA_DES_EDE2, 32byte for RA_DES_EDE3
 */
-void RaDesInit(struct RaDesCtx *ctx, enum RaDesKeyType keyType, const uint8_t *key, enum RaBlockCipherMode opMode);
+void RaDesInit(struct RaDesCtx *ctx, const uint8_t *key, enum RaDesKeyType keyType, enum RaBlockCipherMode opMode);
 
 /**
 * @brief Set initialization vector

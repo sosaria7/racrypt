@@ -375,7 +375,7 @@ int BnDouble(struct RaBigNumber *r, struct RaBigNumber *a)
 	r->length = a->length;
 	for (i = 0; i < a->length; i++) {
 		*rd = ((*ad) << 1) + c;
-		c = ((*ad) >> (BN_WORD_BIT-1)) & 1;
+		c = (int)(((*ad) >> (BN_WORD_BIT - 1)) & 1);
 		ad++;
 		rd++;
 	}
@@ -2122,7 +2122,7 @@ static uint64_t _BnDiv128(bn_uint128_t a, uint64_t b, uint64_t *remainder)
 		a.high |= a.low >> (BN_WORD_BIT - bit);
 	a.low <<= bit;
 
-	bu = b >> 32;
+	bu = (uint32_t)(b >> 32);
 
 	r.high = a.high >> 32;
 	r.low = (a.high << 32) | (a.low >> 32);
