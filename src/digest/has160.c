@@ -186,19 +186,19 @@ static void RaHas160Process(struct RaHas160Ctx *ctx, const uint8_t data[64])
 void RaHas160Update(struct RaHas160Ctx *ctx, const uint8_t *data, int len)
 {
 	int bufferFilled;
-	int bufferLeft;
+	int bufferRemain;
 	bufferFilled = ctx->totalLen_l & 0x3f;
-	bufferLeft = 64 - bufferFilled;
+	bufferRemain = 64 - bufferFilled;
 
 	ctx->totalLen_l += len;
 	if (ctx->totalLen_l < (uint32_t)len)
 		ctx->totalLen_h++;
 
-	if (bufferLeft < 64 && bufferLeft <= len) {
-		memcpy(ctx->buffer + bufferFilled, data, bufferLeft);
+	if (bufferRemain < 64 && bufferRemain <= len) {
+		memcpy(ctx->buffer + bufferFilled, data, bufferRemain);
 		RaHas160Process(ctx, ctx->buffer);
-		data += bufferLeft;
-		len -= bufferLeft;
+		data += bufferRemain;
+		len -= bufferRemain;
 		bufferFilled = 0;
 	}
 	while (len >= 64) {
@@ -215,18 +215,18 @@ void RaHas160Final(struct RaHas160Ctx *ctx, /*out*/uint8_t output[20])
 	uint32_t val;
 
 	int bufferFilled;
-	int bufferLeft;
+	int bufferRemain;
 
 	bufferFilled = ctx->totalLen_l & 0x3f;
 	ctx->buffer[bufferFilled++] = 0x80;
-	bufferLeft = 64 - bufferFilled;
-	if (bufferLeft < 8) {
-		memset(ctx->buffer + bufferFilled, 0, bufferLeft);
+	bufferRemain = 64 - bufferFilled;
+	if (bufferRemain < 8) {
+		memset(ctx->buffer + bufferFilled, 0, bufferRemain);
 		RaHas160Process(ctx, ctx->buffer);
-		bufferLeft = 64;
+		bufferRemain = 64;
 		bufferFilled = 0;
 	}
-	memset(ctx->buffer + bufferFilled, 0, bufferLeft - 8);
+	memset(ctx->buffer + bufferFilled, 0, bufferRemain - 8);
 
 	val = (ctx->totalLen_l << 3);
 	PUT_UINT32_LE(ctx->buffer + 64 - 8, val);

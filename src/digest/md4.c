@@ -172,19 +172,19 @@ static void RaMd4Process(struct RaMd4Ctx *ctx, const uint8_t data[64])
 void RaMd4Update(struct RaMd4Ctx *ctx, const uint8_t *data, int len)
 {
 	int bufferFilled;
-	int bufferLeft;
+	int bufferRemain;
 	bufferFilled = ctx->totalLen_l & 0x3f;
-	bufferLeft = 64 - bufferFilled;
+	bufferRemain = 64 - bufferFilled;
 
 	ctx->totalLen_l += len;
 	if (ctx->totalLen_l < (uint32_t)len)
 		ctx->totalLen_h++;
 
-	if (bufferLeft < 64 && bufferLeft <= len) {
-		memcpy(ctx->buffer + bufferFilled, data, bufferLeft);
+	if (bufferRemain < 64 && bufferRemain <= len) {
+		memcpy(ctx->buffer + bufferFilled, data, bufferRemain);
 		RaMd4Process(ctx, ctx->buffer);
-		data += bufferLeft;
-		len -= bufferLeft;
+		data += bufferRemain;
+		len -= bufferRemain;
 		bufferFilled = 0;
 	}
 	while (len >= 64) {
@@ -201,7 +201,7 @@ void RaMd4Final(struct RaMd4Ctx *ctx, /*out*/uint8_t output[16])
 	uint32_t val;
 
 	int bufferFilled;
-	int bufferLeft;
+	int bufferRemain;
 
 	// append the bit '1' to the message e.g. by adding 0x80 if message length is a multiple of 8 bits.
 	// append 0 <= k < 512 bits '0', such that the resulting message length in bits
@@ -209,14 +209,14 @@ void RaMd4Final(struct RaMd4Ctx *ctx, /*out*/uint8_t output[16])
 	// append ml, the original message length, as a 64-bit big-endian integer. Thus, the total length is a multiple of 512 bits.
 	bufferFilled = ctx->totalLen_l & 0x3f;
 	ctx->buffer[bufferFilled++] = 0x80;
-	bufferLeft = 64 - bufferFilled;
-	if (bufferLeft < 8) {
-		memset(ctx->buffer + bufferFilled, 0, bufferLeft);
+	bufferRemain = 64 - bufferFilled;
+	if (bufferRemain < 8) {
+		memset(ctx->buffer + bufferFilled, 0, bufferRemain);
 		RaMd4Process(ctx, ctx->buffer);
-		bufferLeft = 64;
+		bufferRemain = 64;
 		bufferFilled = 0;
 	}
-	memset(ctx->buffer + bufferFilled, 0, bufferLeft - 8);
+	memset(ctx->buffer + bufferFilled, 0, bufferRemain - 8);
 
 	val = (ctx->totalLen_l << 3);
 	PUT_UINT32_LE(ctx->buffer + 64 - 8, val);

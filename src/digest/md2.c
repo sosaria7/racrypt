@@ -96,17 +96,17 @@ static void RaMd2Process(struct RaMd2Ctx *ctx, const uint8_t data[16])
 void RaMd2Update(struct RaMd2Ctx *ctx, const uint8_t *data, int len)
 {
 	int bufferFilled;
-	int bufferLeft;
+	int bufferRemain;
 	bufferFilled = ctx->totalLen & 0x0f;
-	bufferLeft = 16 - bufferFilled;
+	bufferRemain = 16 - bufferFilled;
 
 	ctx->totalLen += len;
 
-	if (bufferLeft < 16 && bufferLeft <= len) {
-		memcpy(ctx->buffer + bufferFilled, data, bufferLeft);
+	if (bufferRemain < 16 && bufferRemain <= len) {
+		memcpy(ctx->buffer + bufferFilled, data, bufferRemain);
 		RaMd2Process(ctx, ctx->buffer);
-		data += bufferLeft;
-		len -= bufferLeft;
+		data += bufferRemain;
+		len -= bufferRemain;
 		bufferFilled = 0;
 	}
 	while (len >= 16) {
@@ -121,12 +121,12 @@ void RaMd2Update(struct RaMd2Ctx *ctx, const uint8_t *data, int len)
 void RaMd2Final(struct RaMd2Ctx *ctx, /*out*/uint8_t output[16])
 {
 	int bufferFilled;
-	int bufferLeft;
+	int bufferRemain;
 
 	bufferFilled = ctx->totalLen & 0x0f;
-	bufferLeft = 16 - bufferFilled;
+	bufferRemain = 16 - bufferFilled;
 	
-	memset(ctx->buffer + bufferFilled, bufferLeft, bufferLeft);
+	memset(ctx->buffer + bufferFilled, bufferRemain, bufferRemain);
 	RaMd2Process(ctx, ctx->buffer);
 
 	RaMd2Process(ctx, ctx->checksum);

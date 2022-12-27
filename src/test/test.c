@@ -1238,7 +1238,7 @@ int test7()
 	int readLen;
 	int writtenLen;
 	int i;
-	int leftLen;
+	int remainLen;
 	int srcOffset;
 	int destOffset;
 	int ntry;
@@ -1416,39 +1416,39 @@ int test7()
 		memset(decrypted, 0, sizeof(decrypted));
 		RaAesInit(&ctx, key, RA_AES_128, RA_BLOCK_MODE_CBC);
 		RaAesSetIV(&ctx, iv);
-		leftLen = inputLen;
+		remainLen = inputLen;
 		srcOffset = 0;
 		destOffset = 0;
-		while (leftLen > 0) {
+		while (remainLen > 0) {
 			readLen = (rand() % 100) + 1;
-			if (readLen > leftLen)
-				readLen = leftLen;
+			if (readLen > remainLen)
+				readLen = remainLen;
 			writtenLen = RaAesEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
 		writtenLen = RaAesEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		// decrypt continus data
 		RaAesSetIV(&ctx, iv);
-		leftLen = destOffset;
+		remainLen = destOffset;
 		srcOffset = 0;
 		destOffset = 0;
 
 		// padding size can be up to 16 bytes.
-		while (leftLen > 16) {
+		while (remainLen > 16) {
 			readLen = (rand() % 50) + 1;
-			if (readLen > leftLen - 16)
+			if (readLen > remainLen - 16)
 				break;
 			readLen = (rand() % readLen) + 1;
 			writtenLen = RaAesDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
-		writtenLen = RaAesDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted + srcOffset, remainLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		writtenLen = destOffset;
@@ -1550,7 +1550,7 @@ int test8()
 	int readLen;
 	int writtenLen;
 	int i;
-	int leftLen;
+	int remainLen;
 	int srcOffset;
 	int destOffset;
 	int ntry;
@@ -1693,39 +1693,39 @@ int test8()
 		memset(decrypted, 0, sizeof(decrypted));
 		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_CBC);
 		RaDesSetIV(&ctx, iv);
-		leftLen = inputLen;
+		remainLen = inputLen;
 		srcOffset = 0;
 		destOffset = 0;
-		while (leftLen > 0) {
+		while (remainLen > 0) {
 			readLen = (rand() % 100) + 1;
-			if (readLen > leftLen)
-				readLen = leftLen;
+			if (readLen > remainLen)
+				readLen = remainLen;
 			writtenLen = RaDesEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
 		writtenLen = RaDesEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		// decrypt continus data
 		RaDesSetIV(&ctx, iv);
-		leftLen = destOffset;
+		remainLen = destOffset;
 		srcOffset = 0;
 		destOffset = 0;
 
 		// padding size can be up to 16 bytes.
-		while (leftLen > 16) {
+		while (remainLen > 16) {
 			readLen = (rand() % 50) + 1;
-			if (readLen > leftLen - 16)
+			if (readLen > remainLen - 16)
 				break;
 			readLen = (rand() % readLen) + 1;
 			writtenLen = RaDesDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
-		writtenLen = RaDesDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaDesDecryptFinal(&ctx, encrypted + srcOffset, remainLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		writtenLen = destOffset;
@@ -1810,7 +1810,7 @@ int test9()
 	int readLen;
 	int writtenLen;
 	int i;
-	int leftLen;
+	int remainLen;
 	int srcOffset;
 	int destOffset;
 	int ntry;
@@ -1869,35 +1869,35 @@ int test9()
 		//printf("encrypt continus data\n");
 		memset(decrypted, 0, sizeof(decrypted));
 		RaRc4Init(&ctx, key, keyLen);
-		leftLen = inputLen;
+		remainLen = inputLen;
 		srcOffset = 0;
 		destOffset = 0;
-		while (leftLen > 0) {
+		while (remainLen > 0) {
 			readLen = (rand() % 100) + 1;
-			if (readLen > leftLen)
-				readLen = leftLen;
+			if (readLen > remainLen)
+				readLen = remainLen;
 			writtenLen = RaRc4Encrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
 
 		// decrypt continus data
 		RaRc4Init(&ctx, key, keyLen);
-		leftLen = destOffset;
+		remainLen = destOffset;
 		srcOffset = 0;
 		destOffset = 0;
 
 		// padding size can be up to 16 bytes.
-		while (leftLen > 0) {
+		while (remainLen > 0) {
 			readLen = (rand() % 50) + 1;
-			if (readLen > leftLen)
-				readLen = leftLen;
+			if (readLen > remainLen)
+				readLen = remainLen;
 			readLen = (rand() % readLen) + 1;
 			writtenLen = RaRc4Decrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
 
 		writtenLen = destOffset;
@@ -1964,7 +1964,7 @@ int test10()
 	int readLen;
 	int writtenLen;
 	int i;
-	int leftLen;
+	int remainLen;
 	int srcOffset;
 	int destOffset;
 	int ntry;
@@ -2107,39 +2107,39 @@ int test10()
 		memset(decrypted, 0, sizeof(decrypted));
 		RaSeedInit(&ctx, key, RA_BLOCK_MODE_CBC);
 		RaSeedSetIV(&ctx, iv);
-		leftLen = inputLen;
+		remainLen = inputLen;
 		srcOffset = 0;
 		destOffset = 0;
-		while (leftLen > 0) {
+		while (remainLen > 0) {
 			readLen = (rand() % 100) + 1;
-			if (readLen > leftLen)
-				readLen = leftLen;
+			if (readLen > remainLen)
+				readLen = remainLen;
 			writtenLen = RaSeedEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
 		writtenLen = RaSeedEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		// decrypt continus data
 		RaSeedSetIV(&ctx, iv);
-		leftLen = destOffset;
+		remainLen = destOffset;
 		srcOffset = 0;
 		destOffset = 0;
 
 		// padding size can be up to 16 bytes.
-		while (leftLen > 16) {
+		while (remainLen > 16) {
 			readLen = (rand() % 50) + 1;
-			if (readLen > leftLen - 16)
+			if (readLen > remainLen - 16)
 				break;
 			readLen = (rand() % readLen) + 1;
 			writtenLen = RaSeedDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
-		writtenLen = RaSeedDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted + srcOffset, remainLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		writtenLen = destOffset;
@@ -2233,7 +2233,7 @@ int test11()
 	int readLen;
 	int writtenLen;
 	int i;
-	int leftLen;
+	int remainLen;
 	int srcOffset;
 	int destOffset;
 	int ntry;
@@ -2419,39 +2419,39 @@ int test11()
 		memset(decrypted, 0, sizeof(decrypted));
 		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CBC);
 		RaAriaSetIV(&ctx, iv);
-		leftLen = inputLen;
+		remainLen = inputLen;
 		srcOffset = 0;
 		destOffset = 0;
-		while (leftLen > 0) {
+		while (remainLen > 0) {
 			readLen = (rand() % 100) + 1;
-			if (readLen > leftLen)
-				readLen = leftLen;
+			if (readLen > remainLen)
+				readLen = remainLen;
 			writtenLen = RaAriaEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
 		writtenLen = RaAriaEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		// decrypt continus data
 		RaAriaSetIV(&ctx, iv);
-		leftLen = destOffset;
+		remainLen = destOffset;
 		srcOffset = 0;
 		destOffset = 0;
 
 		// padding size can be up to 16 bytes.
-		while (leftLen > 16) {
+		while (remainLen > 16) {
 			readLen = (rand() % 50) + 1;
-			if (readLen > leftLen - 16)
+			if (readLen > remainLen - 16)
 				break;
 			readLen = (rand() % readLen) + 1;
 			writtenLen = RaAriaDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
 			srcOffset += readLen;
 			destOffset += writtenLen;
-			leftLen -= readLen;
+			remainLen -= readLen;
 		}
-		writtenLen = RaAriaDecryptFinal(&ctx, encrypted + srcOffset, leftLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted + srcOffset, remainLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
 		destOffset += writtenLen;
 
 		writtenLen = destOffset;
