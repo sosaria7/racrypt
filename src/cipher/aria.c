@@ -575,3 +575,5 @@ int RaAriaDecryptFinal(struct RaAriaCtx *ctx, const uint8_t *input, int length, 
 #undef ARIA_FF
 #undef ARIA_GSRK
 #undef ARIA_MW
+#undef GET_UINT32_BE
+#undef PUT_UINT32_BE

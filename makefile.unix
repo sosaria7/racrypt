@@ -34,7 +34,8 @@ OBJECTS=src/com/bignumber.o	\
 		src/cipher/aes.o	\
 		src/cipher/rc4.o	\
 		src/cipher/seed.o	\
-		src/cipher/aria.o
+		src/cipher/aria.o	\
+		src/cipher/blowfish.o
 
 TOBJECTS=src/test/test.o	\
 		src/test/bnprint.o

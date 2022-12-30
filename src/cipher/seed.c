@@ -446,3 +446,5 @@ int RaSeedDecryptFinal(struct RaSeedCtx *ctx, const uint8_t *input, int length, 
 #undef SS1
 #undef SS2
 #undef SS3
+#undef GET_UINT32_BE
+#undef PUT_UINT32_BE

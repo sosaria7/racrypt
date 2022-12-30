@@ -56,6 +56,7 @@ struct RaBlockCipher {
 #define RA_BLOCK_LEN_AES		16
 #define RA_BLOCK_LEN_SEED		16
 #define RA_BLOCK_LEN_ARIA		16
+#define RA_BLOCK_LEN_BLOWFISH	8
 
 #define RA_BLOCK_LEN_MAX		16
 
@@ -278,7 +279,7 @@ int RaDesEncrypt(struct RaDesCtx *ctx, const uint8_t *input, int length, uint8_t
 /**
 * @brief DES Encrypt given byte array with padding
 *
-* The output data is aligned and expanded to 16 bytes.\n
+* The output data is aligned and expanded to 8 bytes.\n
 * PKCS7 padding can be up to 8 bytes long.
 * @param ctx		DES context
 * @param input		data to be encrypted
@@ -294,7 +295,7 @@ int RaDesEncryptFinal(struct RaDesCtx *ctx, const uint8_t *input, int length, ui
 *
 * DES algorithm block size is 64bit. If input data is not aligned to 64bits, ouput length can be different from the input length.\n
 * And the rest of the data that is not decrypted in this time is combined with the following input data for decryption.\n
-* If the input data length is various, prepair additional 16bytes of output data space than input data.\n
+* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
 * @param ctx		DES context
 * @param input		data to be decrypted
 * @param length		the length of input data
@@ -382,7 +383,7 @@ void RaSeedGetIV(struct RaSeedCtx *ctx, /*out*/uint8_t iv[16]);
 *
 * SEED algorithm block size is 128bit. If input data is not aligned to 128bits, ouput length can be different from the input length.\n
 * And the rest of the data that is not encrypted in this time is combined with the following input data for encryption.\n
-* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
+* If the input data length is various, prepair additional 16bytes of output data space than input data.\n
 * example)\n
 * - 1st: input: 30byte, output 16byte. 14bytes are remained in the internal buffer
 * - 2nd: input: 18byte, output 32byte. The Previous data is combined and encrypted together
@@ -398,7 +399,7 @@ int RaSeedEncrypt(struct RaSeedCtx *ctx, const uint8_t *input, int length, uint8
 * @brief SEED Encrypt given byte array with padding
 *
 * The output data is aligned and expanded to 16 bytes.\n
-* PKCS7 padding can be up to 8 bytes long.
+* PKCS7 padding can be up to 16 bytes long.
 * @param ctx		SEED context
 * @param input		data to be encrypted
 * @param length		the length of input data
@@ -507,7 +508,7 @@ void RaAriaGetIV(struct RaAriaCtx *ctx, /*out*/uint8_t iv[16]);
 *
 * ARIA algorithm block size is 128bit. If input data is not aligned to 128bits, ouput length can be different from the input length.\n
 * And the rest of the data that is not encrypted in this time is combined with the following input data for encryption.\n
-* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
+* If the input data length is various, prepair additional 16bytes of output data space than input data.\n
 * example)\n
 * - 1st: input: 30byte, output 16byte. 14bytes are remained in the internal buffer
 * - 2nd: input: 18byte, output 32byte. The Previous data is combined and encrypted together
@@ -523,7 +524,7 @@ int RaAriaEncrypt(struct RaAriaCtx *ctx, const uint8_t *input, int length, uint8
 * @brief ARIA Encrypt given byte array with padding
 *
 * The output data is aligned and expanded to 16 bytes.\n
-* PKCS7 padding can be up to 8 bytes long.
+* PKCS7 padding can be up to 16 bytes long.
 * @param ctx		ARIA context
 * @param input		data to be encrypted
 * @param length		the length of input data
@@ -559,6 +560,126 @@ int RaAriaDecrypt(struct RaAriaCtx *ctx, const uint8_t *input, int length, uint8
 * @return			written length in bytes
 */
 int RaAriaDecryptFinal(struct RaAriaCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
+
+
+/*****************************************************
+ Symmetric key cipher algorithm: Blowfish
+ *****************************************************/
+
+struct RaBlowfishCtx {
+	uint32_t p_array[18];
+	uint32_t sbox[4][256];
+
+	uint32_t iv[RA_BLOCK_LEN_BLOWFISH / 4];
+	uint8_t buffer[RA_BLOCK_LEN_BLOWFISH];
+
+	struct RaBlockCipher blockCipher;
+};
+
+/**
+* @brief Create Blowfish block encryption/decryption context
+*
+* @param key		symmetric key
+* @param keyLen		symmetric key length
+* @param opMode		block cipher modes of operation
+* @param ctxp		pointer for receiving Blowfish context
+* @note The key length can be from 1 to 72. Key data beyond 72 bytes is not used.
+* @retval RA_ERR_SUCCESS		success
+* @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
+*/
+int RaBlowfishCreate(const uint8_t *key, int keyLen, enum RaBlockCipherMode opMode, struct RaBlowfishCtx **ctxp);
+
+/**
+* @brief Destroy Blowfish block encryption/decryption context
+*
+* @param ctx		Blowfish context to destroy
+*/
+void RaBlowfishDestroy(struct RaBlowfishCtx* ctx);
+
+/**
+* @brief Initialize Blowfish block encryption/decryption context
+*
+* @param ctx		Blowfish context
+* @param key		symmetric key
+* @param keyLen		symmetric key length
+* @param opMode		block cipher modes of operation
+* @note The key length can be from 1 to 72. Key data beyond 72 bytes is not used.
+*/
+void RaBlowfishInit(struct RaBlowfishCtx *ctx, const uint8_t *key, int keyLen, enum RaBlockCipherMode opMode);
+
+/**
+* @brief Set initialization vector
+*
+* @param ctx		Blowfish context
+* @param iv			initialization vector
+*/
+void RaBlowfishSetIV(struct RaBlowfishCtx *ctx, const uint8_t iv[8]);
+
+/**
+* @brief Get initialization vector
+*
+* @param ctx		Blowfish context
+* @param iv			space to get initialization vector
+*/
+void RaBlowfishGetIV(struct RaBlowfishCtx *ctx, /*out*/uint8_t iv[8]);
+
+/**
+* @brief Blowfish Encrypt given byte array
+*
+* Blowfish algorithm block size is 64bit. If input data is not aligned to 64bits, ouput length can be different from the input length.\n
+* And the rest of the data that is not encrypted in this time is combined with the following input data for encryption.\n
+* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
+* example)\n
+* - 1st: input: 30byte, output 24byte. 6bytes are remained in the internal buffer
+* - 2nd: input: 18byte, output 24byte. The Previous data is combined and encrypted together
+* @param ctx		Blowfish context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @return			written length in bytes
+*/
+int RaBlowfishEncrypt(struct RaBlowfishCtx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+* @brief Blowfish Encrypt given byte array with padding
+*
+* The output data is aligned and expanded to 8 bytes.\n
+* PKCS7 padding can be up to 8 bytes long.
+* @param ctx		Blowfish context
+* @param input		data to be encrypted
+* @param length		the length of input data
+* @param output		space in which the encrypted data will be written
+* @param paddingType	padding type
+* @return			written length in bytes
+*/
+int RaBlowfishEncryptFinal(struct RaBlowfishCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
+
+/**
+* @brief Blowfish Decrypt given byte array
+*
+* Blowfish algorithm block size is 64bit. If input data is not aligned to 64bits, ouput length can be different from the input length.\n
+* And the rest of the data that is not decrypted in this time is combined with the following input data for decryption.\n
+* If the input data length is various, prepair additional 8bytes of output data space than input data.\n
+* @param ctx		Blowfish context
+* @param input		data to be decrypted
+* @param length		the length of input data
+* @param output		space in which the decrypted data will be written
+* @return			written length in bytesd
+*/
+int RaBlowfishDecrypt(struct RaBlowfishCtx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+* @brief Blowfish Decrypt given byte array with padding
+*
+* If the input data is padded with PKCS7 padding, the return value, which is output length, is the length excluding padding
+* @param ctx		Blowfish context
+* @param input		data to be decrypted
+* @param length		the length of input data
+* @param output		space in which the decrypted data will be written
+* @param paddingType	padding type
+* @return			written length in bytes
+*/
+int RaBlowfishDecryptFinal(struct RaBlowfishCtx *ctx, const uint8_t *input, int length, uint8_t *output, enum RaBlockCipherPaddingType paddingType);
 
 /*****************************************************
  Symmetric key cipher algorithm: RC4

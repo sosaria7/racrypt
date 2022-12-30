@@ -32,17 +32,19 @@ int BnSPrint(struct RaBigNumber* bn, char* buffer, int bufferlen)
 {
 	int i;
 	int offset;
-	assert(bufferlen >= (bn->length * 8 + 1));
+
+	assert(buffer == NULL || bufferlen >= (bn->length * sizeof(bn_uint_t) * 2 + 1));
 
 	offset = 0;
 	if (bn->sign && !BN_ISZERO(bn)) {
-		assert(bufferlen >= (bn->length * 8 + 2));
+		assert(buffer == NULL || bufferlen >= (bn->length * sizeof(bn_uint_t) * 2 + 2));
 		if (buffer != NULL && bufferlen > 1)
 			buffer[0] = '-';
 		offset++;
 	}
+
 	if (buffer == NULL) {
-		return bn->length * 8 + offset + 1;
+		return bn->length * sizeof(bn_uint_t) * 2 + offset + 1;
 	}
 
 	if (bufferlen < bn->length * 8 + offset + 1) {

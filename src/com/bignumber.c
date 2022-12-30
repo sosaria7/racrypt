@@ -1309,16 +1309,26 @@ int BnShiftL(struct RaBigNumber *bn, uint32_t bit)
 	}
 
 	word = (bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
-	bit %= BN_WORD_BIT;
 
 	if (bn->max_length < bn->length + word) {
-		assert(0);
-		return RA_ERR_NUMBER_SIZE;
+		// calculate the accurate required word length
+		word = (BnGetBitLength(bn) + bit + BN_WORD_BIT - 1) / BN_WORD_BIT;
+		if (bn->max_length < word) {
+			assert(0);
+			return RA_ERR_NUMBER_SIZE;
+		}
+		word -= bn->length;
+		val_prev = bn->data[bn->length - 1];
+		dest = &bn->data[bn->length - 1 + word];
+		src = &bn->data[bn->length - 2];
+	}
+	else {
+		val_prev = 0;
+		dest = &bn->data[bn->length - 1 + word];
+		src = &bn->data[bn->length - 1];
 	}
 
-	val_prev = 0;
-	dest = &bn->data[bn->length - 1 + word];
-	src = &bn->data[bn->length - 1];
+	bit %= BN_WORD_BIT;
 	if (bit > 0) {
 		while (src >= bn->data) {
 			val = *src;

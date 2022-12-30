@@ -2515,6 +2515,287 @@ _EXIT:
 	return result;
 }
 
+// blowfish
+static uint8_t blowfish_ecb1[] = {
+	0x8c, 0xaf, 0x21, 0xd3, 0x7b, 0x19, 0x7e, 0xb2, 0x2f, 0xa9, 0x5e, 0x1c, 0x68, 0xa8, 0xe7, 0x70,
+	0xad, 0xc2, 0xe0, 0xe0, 0x71, 0x24, 0x29, 0xa0, 0xa1, 0x73, 0x85, 0xae, 0x33, 0x83, 0x89, 0x8a,
+	0xa2, 0xd5, 0x60, 0x08, 0xc5, 0x33, 0x52, 0x17, 0x79, 0x3c, 0x11, 0x0e, 0x17, 0x24, 0xe0, 0x14 };
+static uint8_t blowfish_cbc1[] = {
+	0x8c, 0xaf, 0x21, 0xd3, 0x7b, 0x19, 0x7e, 0xb2, 0x81, 0x3d, 0x36, 0xff, 0xb4, 0x34, 0x4a, 0x0b,
+	0xcd, 0x23, 0xaf, 0x95, 0x76, 0x20, 0x3f, 0x91, 0xc8, 0x6d, 0x5d, 0x6b, 0x2c, 0xc0, 0x50, 0xdb,
+	0x09, 0x55, 0x03, 0xe7, 0xd9, 0xd5, 0x30, 0xe1, 0x46, 0x77, 0x26, 0x03, 0x2b, 0x78, 0x5d, 0xac };
+static uint8_t blowfish_cfb1[] = {
+	0x34, 0xe7, 0xd0, 0x8b, 0xf2, 0x8f, 0x18, 0xfe, 0x66, 0x11, 0x97, 0x68, 0x1e, 0x70, 0xe1, 0x40,
+	0x34, 0xac, 0x4b, 0xd2, 0xed, 0x18, 0xf4, 0xa0, 0xad, 0x2f, 0x5a, 0x20, 0xb1, 0x4f, 0xae, 0x38,
+	0xed, 0xe6, 0xd6, 0x5d, 0xd4, 0x2a, 0xf3, 0xc6, 0xb4, 0x9a, 0x21, 0xaf, 0xc7, 0xe9, 0xaf, 0xc5 };
+static uint8_t blowfish_ofb1[] = {
+	0x34, 0xe7, 0xd0, 0x8b, 0xf2, 0x8f, 0x18, 0xfe, 0xc6, 0xed, 0x4b, 0x50, 0x6e, 0xa0, 0x65, 0x80,
+	0xbb, 0xd4, 0x44, 0x8d, 0x65, 0x72, 0x44, 0x35, 0xd7, 0xe7, 0x2a, 0x44, 0x29, 0x14, 0xa1, 0x69,
+	0x62, 0x2d, 0xda, 0xaf, 0x67, 0x87, 0x2d, 0x6d, 0xcf, 0x96, 0x40, 0x1d, 0xcb, 0x9e, 0x5c, 0x74 };
+
+int test12()
+{
+	int result = RA_ERR_SUCCESS;
+#define TEST12_BLOCK_SIZE		4096
+#define TEST12_INPUT_BUFFER_SIZE	10240
+#define TEST12_KEY_MAX_SIZE		72
+	struct RaBlowfishCtx ctx;
+	uint8_t key[TEST12_KEY_MAX_SIZE] = {
+		0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
+		0xaa, 0x72, 0x3d, 0xc5, 0xfe, 0xf9, 0x34, 0xce,
+		0xc5, 0xfa, 0x0e, 0x33, 0x82, 0x3e, 0xe4, 0xd9
+	};
+	uint8_t *input = NULL;
+	int inputLen;
+	uint8_t encrypted[TEST12_BLOCK_SIZE];
+	uint8_t decrypted[TEST12_BLOCK_SIZE];
+	uint8_t iv[8];
+	int readLen;
+	int writtenLen;
+	int i;
+	int remainLen;
+	int srcOffset;
+	int destOffset;
+	int ntry;
+	struct Timer t;
+	int keyLen;
+
+	input = malloc(TEST12_INPUT_BUFFER_SIZE);
+	if (input == NULL)
+		return RA_ERR_OUT_OF_MEMORY;
+
+	memset(iv, 0, sizeof(iv));
+
+	/* fixed data encryption/decryption test */
+	//memset(key, 0, sizeof(key));
+	keyLen = 24;
+
+	memcpy(input, message1, sizeof(message1));
+	inputLen = sizeof(message1);
+	memset(decrypted, 0, sizeof(decrypted));
+	RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_ECB);
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("BLOWFISH/ECB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(blowfish_ecb1) || memcmp(encrypted, blowfish_ecb1, writtenLen)) {
+		printf("BLOWFISH/ECB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("BLOWFISH/ECB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CBC);
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("BLOWFISH/CBC = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(blowfish_cbc1) || memcmp(encrypted, blowfish_cbc1, writtenLen)) {
+		printf("BLOWFISH/CBC encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("BLOWFISH/CBC decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CFB);
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("BLOWFISH/CFB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(blowfish_cfb1) || memcmp(encrypted, blowfish_cfb1, writtenLen)) {
+		printf("BLOWFISH/CFB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("BLOWFISH/CFB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_OFB);
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("BLOWFISH/OFB = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(blowfish_ofb1) || memcmp(encrypted, blowfish_ofb1, writtenLen)) {
+		printf("BLOWFISH/OFB encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("BLOWFISH/OFB decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	printf("BLOWFISH: random data encryption/decryption test\n");
+	for (ntry = 0; ntry < 20000 && result == RA_ERR_SUCCESS; ntry++)
+	{
+		keyLen = rand() % (TEST12_KEY_MAX_SIZE - 1) + 1;
+		/* random data encryption/decryption test */
+		for (i = 0; i < keyLen; i++) {
+			key[i] = rand() % 256;
+		}
+		inputLen = (rand() % TEST11_BLOCK_SIZE - 256) + 256;	// 256~4096
+		for (i = 0; i < inputLen; i++) {
+			input[i] = rand() % 256;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_ECB);
+		writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("BLOWFISH/ECB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CBC);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("BLOWFISH/CBC failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CFB);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("BLOWFISH/CFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_OFB);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("BLOWFISH/OFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		// encrypt continus data
+		//printf("encrypt continus data\n");
+		memset(decrypted, 0, sizeof(decrypted));
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CBC);
+		RaBlowfishSetIV(&ctx, iv);
+		remainLen = inputLen;
+		srcOffset = 0;
+		destOffset = 0;
+		while (remainLen > 0) {
+			readLen = (rand() % 100) + 1;
+			if (readLen > remainLen)
+				readLen = remainLen;
+			writtenLen = RaBlowfishEncrypt(&ctx, input + srcOffset, readLen, encrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			remainLen -= readLen;
+		}
+		writtenLen = RaBlowfishEncryptFinal(&ctx, NULL, 0, encrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		destOffset += writtenLen;
+
+		// decrypt continus data
+		RaBlowfishSetIV(&ctx, iv);
+		remainLen = destOffset;
+		srcOffset = 0;
+		destOffset = 0;
+
+		// padding size can be up to 16 bytes.
+		while (remainLen > 16) {
+			readLen = (rand() % 50) + 1;
+			if (readLen > remainLen - 16)
+				break;
+			readLen = (rand() % readLen) + 1;
+			writtenLen = RaBlowfishDecrypt(&ctx, encrypted + srcOffset, readLen, decrypted + destOffset);
+			srcOffset += readLen;
+			destOffset += writtenLen;
+			remainLen -= readLen;
+		}
+		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted + srcOffset, remainLen, decrypted + destOffset, RA_BLOCK_PADDING_PKCS7);
+		destOffset += writtenLen;
+
+		writtenLen = destOffset;
+
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("BLOWFISH/CBC continus crypt failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+		if ((ntry % 1000) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	if (result == RA_ERR_SUCCESS) {
+		printf(" - ok\n");
+	}
+	else {
+		printf(" - failed\n");
+		goto _EXIT;
+	}
+
+	// performance test
+	keyLen = 24;
+	memset(decrypted, 0, sizeof(decrypted));
+	InitTimer(&t);
+	for (i = 0; i < 102400; i++) {
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CBC);
+	}
+	PrintElapsed(&t, "BLOWFISH/CBC Init * 100k times elapsed: ");
+
+	inputLen = TEST11_INPUT_BUFFER_SIZE;
+	memset(input, 0, inputLen);
+
+	RaBlowfishSetIV(&ctx, iv);
+	InitTimer(&t);
+	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
+		writtenLen = RaBlowfishEncrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 10239) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
+	PrintElapsed(&t, "BLOWFISH/CBC Encrypt 1GB elapsed: ");
+
+	RaBlowfishSetIV(&ctx, iv);
+	InitTimer(&t);
+	for (i = 0; i < (1024 * 1024 * 1024 / inputLen); i++) {
+		RaBlowfishDecrypt(&ctx, input, inputLen, input);
+		if ((i % 10240) == 0) {
+			printf("."); fflush(stdout);
+		}
+	}
+	printf("\n");
+	PrintElapsed(&t, "BLOWFISH/CBC Decrypt 1GB elapsed: ");
+
+
+	if (result == RA_ERR_SUCCESS) {
+		printf("BLOWFISH test ok\n");
+	}
+_EXIT:
+	if (input != NULL)
+		free(input);
+	return result;
+}
+
 typedef int(*FnTest)();
 struct StTest {
 	FnTest func;
@@ -2535,7 +2816,8 @@ static struct StTest test_list[] =
 	TEST_FUNC(test8),
 	TEST_FUNC(test9),
 	TEST_FUNC(test10),
-	TEST_FUNC(test11)
+	TEST_FUNC(test11),
+	TEST_FUNC(test12)
 };
 
 #define TEST_LIST_COUNT		(int)(sizeof(test_list)/sizeof(test_list[0]))

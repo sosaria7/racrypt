@@ -376,7 +376,6 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 	uint32_t *curKey;
 	uint8_t keyHold;
 
-	memset(ctx->iv, 0, sizeof(ctx->iv));
 	RaBlockCipherInit(&ctx->blockCipher, RaAesEncryptBlock, RaAesDecryptBlock, opMode, RA_BLOCK_LEN_AES, ctx->iv, ctx->buffer);
 
 	prevKey = (uint32_t*)ctx->key;
