@@ -338,8 +338,7 @@ void RaBlowfishInit(struct RaBlowfishCtx *ctx, const uint8_t *key, int keyLen, e
 		p = (p + 4) % keyLen;
 		ctx->p_array[i] = bf_P[i] ^ k;
 	}
-	for (i = 0; i < 4; i++)
-	{
+	for (i = 0; i < 4; i++) {
 		for (j = 0; j < 256; j++)
 			ctx->sbox[i][j] = bf_S[i][j];
 	}
