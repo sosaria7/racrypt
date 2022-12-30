@@ -52,7 +52,6 @@ int main(int argc, char **argv)
 	BnShiftL(base5, PI_LEN);
 	BnSetInt(base239, 4);
 	BnShiftL(base239, PI_LEN);
-	//BnMulUInt(base, 1000000);
 	BnSetUInt(power5, 5);
 	BnSetUInt(power239, 239);
 
