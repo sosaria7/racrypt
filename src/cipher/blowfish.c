@@ -369,7 +369,6 @@ static void RaBlowfishEncryptProcess(struct RaBlowfishCtx *ctx, uint32_t *data_l
 {
 	uint32_t data_l;
 	uint32_t data_r;
-	uint32_t data_tmp;
 	int i;
 
 	data_l = *data_ll;
@@ -384,19 +383,15 @@ static void RaBlowfishEncryptProcess(struct RaBlowfishCtx *ctx, uint32_t *data_l
 	}
 	data_l = data_l ^ ctx->p_array[16];
 	data_r = data_r ^ ctx->p_array[17];
-	data_tmp = data_l;
-	data_l = data_r;
-	data_r = data_tmp;
 
-	*data_ll = data_l;
-	*data_rr = data_r;
+	*data_ll = data_r;
+	*data_rr = data_l;
 }
 
 static void RaBlowfishDecryptProcess(struct RaBlowfishCtx *ctx, uint32_t *data_ll, uint32_t *data_rr)
 {
 	uint32_t data_l;
 	uint32_t data_r;
-	uint32_t data_tmp;
 	int i;
 
 	data_l = *data_ll;
@@ -411,12 +406,9 @@ static void RaBlowfishDecryptProcess(struct RaBlowfishCtx *ctx, uint32_t *data_l
 	}
 	data_l = data_l ^ ctx->p_array[1];
 	data_r = data_r ^ ctx->p_array[0];
-	data_tmp = data_l;
-	data_l = data_r;
-	data_r = data_tmp;
 
-	*data_ll = data_l;
-	*data_rr = data_r;
+	*data_ll = data_r;
+	*data_rr = data_l;
 }
 
 static void RaBlowfishEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output)
