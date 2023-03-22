@@ -25,11 +25,14 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	int result;
 	struct RaRsaKeyPair *key = NULL;
 	struct RaBigNumber *phi = NULL;
-	struct RaRandom rnd;
+	struct RaRandom *rnd = NULL;
 
 	assert((bit % 2) == 0);
 
-	RaRandomInit(&rnd);
+	result = RaRandomCreate(RA_RAND_SHA160, NULL, 0, &rnd);
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
 
 	key = (struct RaRsaKeyPair*)malloc(sizeof(struct RaRsaKeyPair));
 	if (key == NULL) {
@@ -64,11 +67,11 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	BnSetUInt(key->pub, 65537);
 
 	do {
-		result = RaGenPrimeNumberEx( key->prime1, bit / 2, NULL, NULL, &rnd );
+		result = RaGenPrimeNumberEx(key->prime1, bit / 2, NULL, NULL, rnd);
 		if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 		do {
-			result = RaGenPrimeNumberEx( key->prime2, bit / 2, NULL, NULL, &rnd );
+			result = RaGenPrimeNumberEx(key->prime2, bit / 2, NULL, NULL, rnd);
 			if (result != RA_ERR_SUCCESS) goto _EXIT;
 		} while ( BnCmp( key->prime1, key->prime2 ) == 0 );
 
@@ -105,6 +108,9 @@ _EXIT:
 	BN_SAFEFREE(phi);
 	if (key != NULL) {
 		RaRsaDestroyKeyPair(key);
+	}
+	if (rnd != NULL) {
+		RaRandomDestroy(rnd);
 	}
 	return result;
 }

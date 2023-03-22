@@ -1483,63 +1483,20 @@ int BnGetRandomRSA(struct RaBigNumber *bn, int bit, struct RaRandom *rnd)
 
 int BnGenRandomByteArray(uint8_t *data, int len, struct RaRandom *rnd)
 {
-	uint32_t random;
-	int remain;
-	struct RaRandom tmpRnd;
+	int result;
+	struct RaRandom *tmpRnd = NULL;
 
 	if (rnd == NULL) {
-		RaRandomInit(&tmpRnd);
-		rnd = &tmpRnd;
+		result = RaRandomCreate(RA_RAND_SHA160, NULL, 0, &tmpRnd);
+		if (result != RA_ERR_SUCCESS)
+			return result;
+		rnd = tmpRnd;
 	}
 
-	if (len <= 0) {
-		return RA_ERR_SUCCESS;
-	}
+	RaRandomBytes(rnd, len, data);
 
-	remain = (int)((uintptr_t)data % 4);
-
-	if (len >= 4 && remain > 0) {
-		random = RaRandomInt(rnd, 0, 0x00ffffff);
-
-		switch (remain) {
-		case 1:
-			*data++ = (uint8_t)random;
-			random >>= 8;
-			len--;
-		case 2:
-			*data++ = (uint8_t)random;
-			random >>= 8;
-			len--;
-		case 3:
-			*data++ = (uint8_t)random;
-			len--;
-			break;
-		}
-	}
-
-	while (len >= 4) {
-		random = (RaRandomInt(rnd, 0, 0xffff) << 16) | RaRandomInt(rnd, 0, 0xffff);
-
-		*(uint32_t*)data = random;
-		data += 4;
-		len -= 4;
-	}
-
-	if (len > 0) {
-		random = RaRandomInt(rnd, 0, 0x00ffffff);
-
-		switch (len) {
-		case 3:
-			*data++ = (uint8_t)random;
-			random >>= 8;
-		case 2:
-			*data++ = (uint8_t)random;
-			random >>= 8;
-		case 1:
-			*data++ = (uint8_t)random;
-			break;
-		}
-	}
+	if (tmpRnd != NULL) 
+		RaRandomDestroy(tmpRnd);
 
 	return RA_ERR_SUCCESS;
 }

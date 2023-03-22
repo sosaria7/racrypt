@@ -11,9 +11,21 @@ extern "C" {
 * RaRandom is a pseudo random number generator based on Lehmer random number generator
 */
 
+enum RaRandomAlgorithm {
+	RA_RAND_SHA160,
+	RA_RAND_SHA256,
+	RA_RAND_SHA512,
+	RA_RAND_MD5
+};
+
+#define RA_RAND_BUFFER_SIZE		64				// RA_DGST_LEN_SHA2_512
 struct RaRandom {
-	uint32_t seed;
+	void *alg_ctx;
+	enum RaRandomAlgorithm algorithm;
+	int buffer_len;
+	int buffer_offset;
 	int count;
+	uint8_t buffer[RA_RAND_BUFFER_SIZE];
 };
 
 /**
@@ -21,7 +33,7 @@ struct RaRandom {
 *
 * @param ctx		random context
 */
-int RaRandomCreate(struct RaRandom **ctxp);
+int RaRandomCreate(enum RaRandomAlgorithm algorithm, uint8_t *seed, int seed_len, struct RaRandom **ctxp);
 
 /**
 * @brief Destroy random context
@@ -31,11 +43,13 @@ int RaRandomCreate(struct RaRandom **ctxp);
 void RaRandomDestroy(struct RaRandom *ctx);
 
 /**
-* @brief Initialize random context
+* @brief Get random bytes
 *
 * @param ctx		random context
+* @param len		number of bytes to get
+* @param buffer		buffer to get random bytes
 */
-void RaRandomInit(struct RaRandom *ctx);
+void RaRandomBytes(struct RaRandom *ctx, int len, /*out*/uint8_t *buffer);
 
 /**
 * @brief Get random real number between 0 to 1

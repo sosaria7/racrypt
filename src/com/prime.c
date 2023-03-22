@@ -431,11 +431,13 @@ int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count
 	int count = 0;
 	int checkCount;
 	int isPrime;
-    struct RaRandom tmpRnd;
+    struct RaRandom *tmpRnd = NULL;
 
 	if (rnd == NULL) {
-		RaRandomInit(&tmpRnd);
-		rnd = &tmpRnd;
+		result = RaRandomCreate(RA_RAND_SHA160, NULL, 0, &tmpRnd);
+		if (result != RA_ERR_SUCCESS)
+			return result;
+		rnd = tmpRnd;
 	}
 	if (bit >= 1024) {
 		checkCount = 3;
@@ -462,6 +464,9 @@ int RaGenPrimeNumberEx(struct RaBigNumber *bn, int bit, int(*progress)(int count
 			break;
 		}
 	}
+	if (tmpRnd != NULL)
+		RaRandomDestroy(tmpRnd);
+
 	return RA_ERR_SUCCESS;
 }
 
@@ -471,9 +476,12 @@ int RaIsPrimeNumber(struct RaBigNumber *bn)
 	int isPrime;
 	int bit;
 	int checkCount;
-	struct RaRandom rnd;
+	struct RaRandom *rnd = NULL;
 
-	RaRandomInit(&rnd);
+	result = RaRandomCreate(RA_RAND_SHA160, NULL, 0, &rnd);
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
 
 	bit = BnGetBitLength(bn);
 	if (bit >= 1024) {
@@ -482,7 +490,7 @@ int RaIsPrimeNumber(struct RaBigNumber *bn)
 	else {
 		checkCount = 5;
 	}
-	result = CheckMillerRabin(bn, checkCount, &rnd, &isPrime);
+	result = CheckMillerRabin(bn, checkCount, rnd, &isPrime);
 	if (result != RA_ERR_SUCCESS) goto _EXIT;
 	if (!isPrime) {
 		result = RA_ERR_INVALID_DATA;
@@ -490,5 +498,8 @@ int RaIsPrimeNumber(struct RaBigNumber *bn)
 	}
 	result = RA_ERR_SUCCESS;
 _EXIT:
+	if (rnd != NULL)
+		RaRandomDestroy(rnd);
+
 	return result;
 }
