@@ -13,14 +13,20 @@
 #			define WIN32_LEAN_AND_MEAN
 #		endif
 #		include <Windows.h>
+#		include <wincrypt.h>
 #else
+#	include <fcntl.h>
+#	include <unistd.h>
 #	ifdef HAVE_TIMES
-#		include <unistd.h>
 #		include <sys/times.h>
 #	endif
 #endif
 
+#define RA_RAND_SEED_LEN		(32 + 4)
+
 static uint32_t RaRandomGetRandomSeed();
+static void RaRandomGetRandomSeedBytes(/*out*/uint8_t seedBytes[RA_RAND_SEED_LEN]);
+
 static int RaRandomInit(struct RaRandom *ctx, enum RaRandomAlgorithm algorithm, uint8_t *seed, int seed_len);
 static void RaRandomUpdate(struct RaRandom *ctx, uint8_t *buffer, int buffer_len);
 
@@ -69,21 +75,16 @@ void RaRandomDestroy(struct RaRandom *ctx)
 
 static int RaRandomInit(struct RaRandom *ctx, enum RaRandomAlgorithm algorithm, uint8_t *seed, int seed_len)
 {
-	uint8_t default_seed[4];
-	uint32_t tmp_seed;
+	uint8_t default_seed[RA_RAND_SEED_LEN];
 	int result;
 
 	memset(ctx, 0, sizeof(struct RaRandom));
 	ctx->algorithm = algorithm;
 
 	if (seed == NULL) {
-		tmp_seed = RaRandomGetRandomSeed();
-		default_seed[0] = (uint8_t)(tmp_seed >> 24);
-		default_seed[1] = (uint8_t)(tmp_seed >> 16);
-		default_seed[2] = (uint8_t)(tmp_seed >> 8);
-		default_seed[3] = (uint8_t)tmp_seed;
+		RaRandomGetRandomSeedBytes(default_seed);
 		seed = default_seed;
-		seed_len = 4;
+		seed_len = RA_RAND_SEED_LEN;
 	}
 	switch (ctx->algorithm) {
 	case RA_RAND_MD5:
@@ -110,6 +111,8 @@ static int RaRandomInit(struct RaRandom *ctx, enum RaRandomAlgorithm algorithm, 
 	}
 
 	RaRandomUpdate(ctx, seed, seed_len);
+	memset(default_seed, 0, RA_RAND_SEED_LEN);
+
 	return RA_ERR_SUCCESS;
 }
 
@@ -132,6 +135,43 @@ static uint32_t RaRandomGetRandomSeed()
 #	endif
 #endif
 	return seed * 1103515245 + 12345;
+}
+
+static void RaRandomGetRandomSeedBytes(/*out*/uint8_t seedBytes[RA_RAND_SEED_LEN])
+{
+	int result;
+	uint32_t seed;
+#ifdef _WIN32
+	HCRYPTPROV cryptProv;
+	result = CryptAcquireContext(&cryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT);
+	if (result) {
+		result = CryptGenRandom(cryptProv, RA_RAND_SEED_LEN - 4, seedBytes);
+		CryptReleaseContext(cryptProv, 0);
+	}
+	if (!result) {
+		memset(seedBytes, 0, RA_RAND_SEED_LEN - 4);
+	}
+#else
+	int fd;
+	int size;
+	result = RA_ERR_INVALID_DATA;
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd > 0) {
+		size = read(fd, seedBytes, RA_RAND_SEED_LEN - 4);
+		if (size == RA_RAND_SEED_LEN - 4) {
+			result = RA_ERR_SUCCESS;
+		}
+		close(fd);
+	}
+	if (result != RA_ERR_SUCCESS) {
+		memset(seedBytes, 0, RA_RAND_SEED_LEN - 4);
+	}
+#endif
+	seed = RaRandomGetRandomSeed();
+	seedBytes[RA_RAND_SEED_LEN - 4] = (uint8_t)(seed >> 24);
+	seedBytes[RA_RAND_SEED_LEN - 3] = (uint8_t)(seed >> 16);
+	seedBytes[RA_RAND_SEED_LEN - 2] = (uint8_t)(seed >> 8);
+	seedBytes[RA_RAND_SEED_LEN - 1] = (uint8_t)(seed);
 }
 
 static void RaRandomUpdate(struct RaRandom *ctx, uint8_t *buffer, int buffer_len)
