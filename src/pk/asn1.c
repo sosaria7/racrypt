@@ -165,7 +165,8 @@ static int ASN1Read(struct RaAsn1Ctx *ctx)
 
 	ctx->cur->dataOffset = ctx->dataIndex;
 
-	if (ctx->cur->dataOffset + ctx->cur->dataLength > ctx->dataEnd) {
+	if (ctx->cur->dataLength < 0 ||
+		(unsigned)ctx->cur->dataOffset + ctx->cur->dataLength > (unsigned)ctx->dataEnd) {
 		result = RA_ERR_OUT_OF_BUFFER;
 		goto _EXIT;
 	}
