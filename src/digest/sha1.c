@@ -10,6 +10,9 @@
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
+void RaSha1CheckForIntelShaExtensions( struct RaSha1Ctx *ctx );
+static void RaSha1Process( struct RaSha1Ctx *ctx, const uint8_t data[64] );
+
 int RaSha1Create(struct RaSha1Ctx **ctxp)
 {
 	struct RaSha1Ctx *ctx;
@@ -41,6 +44,10 @@ void RaSha1Init(struct RaSha1Ctx *ctx)
 	ctx->h[2] = 0x98badcfe;
 	ctx->h[3] = 0x10325476;
 	ctx->h[4] = 0xc3d2e1f0;
+	ctx->fnRaSha1Process = RaSha1Process;
+#ifdef RACRYPT_USE_ASM_SHA1_X86
+	RaSha1CheckForIntelShaExtensions( ctx );
+#endif
 }
 
 #define GET_UINT32_BE(b)		(uint32_t)(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
@@ -200,13 +207,13 @@ void RaSha1Update(struct RaSha1Ctx *ctx, const uint8_t *data, int len)
 
 	if (bufferRemain < 64 && bufferRemain <= len) {
 		memcpy(ctx->buffer + bufferFilled, data, bufferRemain);
-		RaSha1Process(ctx, ctx->buffer);
+		ctx->fnRaSha1Process(ctx, ctx->buffer);
 		data += bufferRemain;
 		len -= bufferRemain;
 		bufferFilled = 0;
 	}
 	while (len >= 64) {
-		RaSha1Process(ctx, data);
+		ctx->fnRaSha1Process(ctx, data);
 		data += 64;
 		len -= 64;
 	}
@@ -230,7 +237,7 @@ void RaSha1Final(struct RaSha1Ctx *ctx, /*out*/uint8_t output[20])
 	bufferRemain = 64 - bufferFilled;
 	if (bufferRemain < 8) {
 		memset(ctx->buffer + bufferFilled, 0, bufferRemain);
-		RaSha1Process(ctx, ctx->buffer);
+		ctx->fnRaSha1Process(ctx, ctx->buffer);
 		bufferRemain = 64;
 		bufferFilled = 0;
 	}
@@ -242,7 +249,7 @@ void RaSha1Final(struct RaSha1Ctx *ctx, /*out*/uint8_t output[20])
 	val = (ctx->totalLen_l << 3);
 	PUT_UINT32_BE(ctx->buffer + 64 - 4, val);
 
-	RaSha1Process(ctx, ctx->buffer);
+	ctx->fnRaSha1Process(ctx, ctx->buffer);
 
 	PUT_UINT32_BE(output, ctx->h[0]);
 	PUT_UINT32_BE(output + 4, ctx->h[1]);

@@ -962,7 +962,9 @@ int test6()
 #define TEST6_INPUT_BUFFER_SIZE	10240
 
 	int result = RA_ERR_SUCCESS;
-	struct RaSha2Ctx ctx;
+	struct RaSha1Ctx sha1;
+	struct RaSha2Ctx sha2;
+	struct RaMd5Ctx md5;
 	uint8_t digest[64];
 	uint8_t* input = NULL;
 	int inputLen;
@@ -1012,45 +1014,45 @@ int test6()
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_512);
-	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_512);
+	RaSha2Update(&sha2, message1, sizeof(message1) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-512(message1) = ", digest, sizeof(sha512_1));
 	if (memcmp(digest, sha512_1, sizeof(sha512_1)) != 0) {
 		printf("sha-512(message1) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_224);
-	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_224);
+	RaSha2Update(&sha2, message1, sizeof(message1) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-224(message1) = ", digest, sizeof(sha224_1));
 	if (memcmp(digest, sha224_1, sizeof(sha224_1)) != 0) {
 		printf("sha-224(message1) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_384);
-	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_384);
+	RaSha2Update(&sha2, message1, sizeof(message1) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-384(message1) = ", digest, sizeof(sha384_1));
 	if (memcmp(digest, sha384_1, sizeof(sha384_1)) != 0) {
 		printf("sha-384(message1) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_512_224);
-	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_512_224);
+	RaSha2Update(&sha2, message1, sizeof(message1) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-512/224(message1) = ", digest, sizeof(sha512_224_1));
 	if (memcmp(digest, sha512_224_1, sizeof(sha512_224_1)) != 0) {
 		printf("sha-512/224(message1) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_512_256);
-	RaSha2Update(&ctx, message1, sizeof(message1) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_512_256);
+	RaSha2Update(&sha2, message1, sizeof(message1) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-512/256(message1) = ", digest, sizeof(sha512_256_1));
 	if (memcmp(digest, sha512_256_1, sizeof(sha512_256_1)) != 0) {
 		printf("sha-512/256(message1) failed\n");
@@ -1102,45 +1104,45 @@ int test6()
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_512);
-	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_512);
+	RaSha2Update(&sha2, message2, sizeof(message2) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-512(message2) = ", digest, sizeof(sha512_2));
 	if (memcmp(digest, sha512_2, sizeof(sha512_2)) != 0) {
 		printf("sha-512(message2) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_224);
-	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_224);
+	RaSha2Update(&sha2, message2, sizeof(message2) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-224(message2) = ", digest, sizeof(sha224_2));
 	if (memcmp(digest, sha224_2, sizeof(sha224_2)) != 0) {
 		printf("sha-224(message2) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_384);
-	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_384);
+	RaSha2Update(&sha2, message2, sizeof(message2) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-384(message2) = ", digest, sizeof(sha384_2));
 	if (memcmp(digest, sha384_2, sizeof(sha384_2)) != 0) {
 		printf("sha-384(message2) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_512_224);
-	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_512_224);
+	RaSha2Update(&sha2, message2, sizeof(message2) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-512/224(message2) = ", digest, sizeof(sha512_224_2));
 	if (memcmp(digest, sha512_224_2, sizeof(sha512_224_2)) != 0) {
 		printf("sha-512/224(message2) failed\n");
 		result = RA_ERR_INVALID_DATA;
 	}
 
-	RaSha2Init(&ctx, RA_DGST_SHA2_512_256);
-	RaSha2Update(&ctx, message2, sizeof(message2) - 1);
-	RaSha2Final(&ctx, digest);
+	RaSha2Init(&sha2, RA_DGST_SHA2_512_256);
+	RaSha2Update(&sha2, message2, sizeof(message2) - 1);
+	RaSha2Final(&sha2, digest);
 	printHex("sha-512/256(message2) = ", digest, sizeof(sha512_256_2));
 	if (memcmp(digest, sha512_256_2, sizeof(sha512_256_2)) != 0) {
 		printf("sha-512/256(message2) failed\n");
@@ -1161,8 +1163,6 @@ int test6()
 	
 	{
 		InitTimer( &t );
-		struct RaSha2Ctx ctx;
-		struct RaMd5Ctx md5;
 		
 		RaMd5Init( &md5 );
 		for (i = 0; i < (1024*1024*1024/inputLen); i++) {
@@ -1174,10 +1174,21 @@ int test6()
 		printf("\n");
 		PrintElapsed( &t, "Md5 1GB elapsed: " );
 	
-		
-		RaSha2Init( &ctx, RA_DGST_SHA2_256 );
+		InitTimer(&t);
+		RaSha1Init( &sha1 );
+		for ( i = 0; i < ( 1024 * 1024 * 1024 / inputLen ); i++ ) {
+			RaSha1Update( &sha1, input, inputLen );
+			if ( ( i % 10240 ) == 10239 ) {
+				printf( "." ); fflush( stdout );
+			}
+		}
+		printf( "\n" );
+		PrintElapsed( &t, "Sha1 1GB elapsed: " );
+
+		InitTimer(&t);
+		RaSha2Init( &sha2, RA_DGST_SHA2_256 );
 		for (i = 0; i < (1024*1024*1024/inputLen); i++) {
-			RaSha2Update(&ctx, input, inputLen);
+			RaSha2Update(&sha2, input, inputLen);
 			if ((i % 10240) == 10239) {
 				printf("."); fflush(stdout);
 			}
@@ -1186,9 +1197,9 @@ int test6()
 		PrintElapsed( &t, "Sha256 1GB elapsed: " );
 		
 		InitTimer( &t );
-		RaSha2Init( &ctx, RA_DGST_SHA2_512 );
+		RaSha2Init( &sha2, RA_DGST_SHA2_512 );
 		for (i = 0; i < (1024*1024*1024/inputLen); i++) {
-			RaSha2Update(&ctx, input, inputLen);
+			RaSha2Update(&sha2, input, inputLen);
 			if ((i % 10240) == 10239) {
 				printf("."); fflush(stdout);
 			}

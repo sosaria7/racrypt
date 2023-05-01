@@ -28,6 +28,7 @@ struct RaSha1Ctx
 	uint32_t totalLen_l;
 	uint32_t h[5];
 	uint8_t buffer[64];
+	void (*fnRaSha1Process)(struct RaSha1Ctx* ctx, const uint8_t data[64]);
 };
 
 int RaSha1Create(struct RaSha1Ctx **ctxp);
@@ -45,7 +46,12 @@ struct RaSha2Ctx
 	uint64_t h[8];
 	uint8_t buffer[128];
 	enum RaDigestAlgorithm	algorithm;
+	union {
+		void (*fnRaSha256Process)(struct RaSha2Ctx* ctx, const uint8_t data[64]);
+		void (*fnRaSha512Process)(struct RaSha2Ctx* ctx, const uint8_t data[128]);
+	};
 };
+
 #define RA_DGST_LEN_MD2				16
 #define RA_DGST_LEN_MD4				16
 #define RA_DGST_LEN_MD5				16

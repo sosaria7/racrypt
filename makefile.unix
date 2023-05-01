@@ -7,7 +7,7 @@ CC        = cc
 AR        = ar
 ARFLAGS   = r
 RANLIB    = ranlib
-CFLAGS    = -O2 -g -Wall
+CFLAGS    := $(CFLAGS) -O2 -g -Wall
 
 RA_CFLAGS  = -Isrc/include $(CFLAGS)
 RA_LDFLAGS = $(LDFLAGS) -lrt
@@ -35,7 +35,8 @@ OBJECTS=src/com/bignumber.o	\
 		src/cipher/rc4.o	\
 		src/cipher/seed.o	\
 		src/cipher/aria.o	\
-		src/cipher/blowfish.o
+		src/cipher/blowfish.o	\
+		$(EXT_OBJS)
 
 TOBJECTS=src/test/test.o	\
 		src/test/bnprint.o
