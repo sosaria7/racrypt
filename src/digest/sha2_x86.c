@@ -35,7 +35,7 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		"movdqa %%xmm5, 0x50%4\n\t"
 		"movdqa %%xmm6, 0x60%4\n\t"
 		"movdqa %%xmm7, 0x70%4\n\t"
-		// h 에서 abef, cdgh 를 읽는다. h는 64bit이지만 하위 32bit만 사용한다.
+		// Since ctx->h is a pointer to a 64-bit integer, the ABEF is assembled from the lower 32-bit values.
 		"movdqu 0x00(%0), %%xmm3\n\t"				// .b.a
 		"movdqu 0x20(%0), %%xmm1\n\t"				// .f.e
 		"pshufd $0b01110010, %%xmm3, %%xmm3\n\t"	// ..ab
@@ -48,47 +48,50 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		"pshufd $0b01110010, %%xmm2, %%xmm2\n\t"	// ..gh
 		"punpcklqdq %%xmm3, %%xmm2\n\t"				// cdgh
 
-		// msg 읽기
+		// read 1st 128bit message
 		"movdqu 0x00(%1), %%xmm0\n\t"				// w0...w3
 		"pshufb %3, %%xmm0\n\t"						// w3.w2.w1.w0
 		"movdqa %%xmm0, %%xmm4\n\t"
-		// raSha256K 읽기
+		// add four raSha256K values
 		"movdqu 0x00(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
+		// SHA2_P(0~3)
+		// do sha256rnds2
 		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
 		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
 
-		/////////////////
-		// msg 읽기
+		// read 2nd 128bit message
 		"movdqu 0x10(%1), %%xmm0\n\t"				// w4...w7
 		"pshufb %3, %%xmm0\n\t"						// w7.w6.w5.w4
 		"movdqa %%xmm0, %%xmm5\n\t"
-		// raSha256K 읽기
+		// add next four raSha256K values
 		"movdqu 0x10(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
+		// SHA2_P(4~7)
+		// do sha256rnds2
 		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r4~r5, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w5.w4.w7.w6
 		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r6~r7, cdgh, abef
 
-		/////////////////
-		// msg 읽기
+		// read 3rd 128bit message
 		"movdqu 0x20(%1), %%xmm0\n\t"				// w8...w11
 		"pshufb %3, %%xmm0\n\t"						// w11.w10.w9.w8
 		"movdqa %%xmm0, %%xmm6\n\t"
-		// raSha256K 읽기
+		// SHA2_P(8~11)
+		// add next four raSha256K values
 		"movdqu 0x20(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
 		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r8~r9, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w9.w8.w11.w10
 		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r10~r11, cdgh, abef
 
-		/////////////////
-		// msg 읽기
+		// read 4th 128bit message
 		"movdqu 0x30(%1), %%xmm0\n\t"				// w12...w15
 		"pshufb %3, %%xmm0\n\t"						// w15.w14.w13.w12
 		"movdqa %%xmm0, %%xmm7\n\t"
-		// raSha256K 읽기
+		// SHA2_P(12~15)
+		// add next four raSha256K values
 		"movdqu 0x30(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
 		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r12~r13, abef, cdgh
@@ -171,9 +174,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(32~35)
 		"movdqu 0x80(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r32~r33, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r34~r35, cdgh, abef
 
 		/////////////////
 		// SHA2_W(36~39)
@@ -187,9 +190,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(36~39)
 		"movdqu 0x90(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r36~r37, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r38~r39, cdgh, abef
 
 		/////////////////
 		// SHA2_W(40~43)
@@ -203,9 +206,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(40~43)
 		"movdqu 0xa0(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r40~r41, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r42~r43, cdgh, abef
 
 		/////////////////
 		// SHA2_W(44~47)
@@ -219,9 +222,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(44~47)
 		"movdqu 0xb0(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r44~r45, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r46~r47, cdgh, abef
 
 		/////////////////
 		// SHA2_W(48~51)
@@ -235,9 +238,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(48~51)
 		"movdqu 0xc0(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r48~r49, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r50~r51, cdgh, abef
 
 		/////////////////
 		// SHA2_W(52~55)
@@ -251,9 +254,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(52~55)
 		"movdqu 0xd0(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r52~r53, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r54~r55, cdgh, abef
 
 		/////////////////
 		// SHA2_W(56~59)
@@ -267,9 +270,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(56~59)
 		"movdqu 0xe0(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r56~r57, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r58~r59, cdgh, abef
 
 		/////////////////
 		// SHA2_W(60~63)
@@ -283,9 +286,9 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		// SHA2_P(60~63)
 		"movdqu 0xf0(%2), %%xmm3\n\t"
 		"paddd %%xmm3, %%xmm0\n\t"
-		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r0~r1, abef, cdgh
+		"sha256rnds2 %%xmm1, %%xmm2\n\t"			// r60~r61, abef, cdgh
 		"pshufd $0b01001110, %%xmm0, %%xmm0\n\t"	// w1.w0.w3.w2
-		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r2~r3, cdgh, abef
+		"sha256rnds2 %%xmm2, %%xmm1\n\t"			// r62~r63, cdgh, abef
 
 		"pxor %%xmm3, %%xmm3\n\t"
 		"pshufd $0b00011011, %%xmm1, %%xmm0\n\t"	// xmm0 = feba
