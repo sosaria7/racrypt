@@ -9,12 +9,12 @@
 //#define RACRYPT_RSA_VERIFY_KEY
 //#define BN_WORD_BYTE	4
 
-//#if defined(__GNUC__)
-//#if defined(__i386__) || defined(__x86_64__)
-//#define RACRYPT_USE_ASM_SHA1_X86
-//#define RACRYPT_USE_ASM_SHA256_X86
-//#endif
-//#endif
+#if defined RACRYPT_USE_ASM_X86
+#define RACRYPT_USE_ASM_SHA1_X86
+#define RACRYPT_USE_ASM_SHA256_X86
+#define RACRYPT_USE_ASM_AES_X86
+#endif
+
 
 //#define WORDS_BIGENDIAN
 //#define HAVE_TIMES

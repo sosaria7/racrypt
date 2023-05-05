@@ -27,14 +27,14 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 	* xmm7: w15.w14.w13.w12
 	*/
 	__asm__ __volatile__ (
-		"movdqa %%xmm0, 0x00%4\n\t"
-		"movdqa %%xmm1, 0x10%4\n\t"
-		"movdqa %%xmm2, 0x20%4\n\t"
-		"movdqa %%xmm3, 0x30%4\n\t"
-		"movdqa %%xmm4, 0x40%4\n\t"
-		"movdqa %%xmm5, 0x50%4\n\t"
-		"movdqa %%xmm6, 0x60%4\n\t"
-		"movdqa %%xmm7, 0x70%4\n\t"
+		"movdqa %%xmm0, %4\n\t"
+		"movdqa %%xmm1, 0x10 %4\n\t"
+		"movdqa %%xmm2, 0x20 %4\n\t"
+		"movdqa %%xmm3, 0x30 %4\n\t"
+		"movdqa %%xmm4, 0x40 %4\n\t"
+		"movdqa %%xmm5, 0x50 %4\n\t"
+		"movdqa %%xmm6, 0x60 %4\n\t"
+		"movdqa %%xmm7, 0x70 %4\n\t"
 		// Since ctx->h is a pointer to a 64-bit integer, the ABEF is assembled from the lower 32-bit values.
 		"movdqu 0x00(%0), %%xmm3\n\t"				// .b.a
 		"movdqu 0x20(%0), %%xmm1\n\t"				// .f.e
@@ -315,14 +315,14 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		"paddd %%xmm0, %%xmm4\n\t"
 		"movdqu %%xmm4, 0x30(%0)\n\t"
 
-		"movdqa 0x00%4, %%xmm0\n\t"
-		"movdqa 0x10%4, %%xmm1\n\t"
-		"movdqa 0x20%4, %%xmm2\n\t"
-		"movdqa 0x30%4, %%xmm3\n\t"
-		"movdqa 0x40%4, %%xmm4\n\t"
-		"movdqa 0x50%4, %%xmm5\n\t"
-		"movdqa 0x60%4, %%xmm6\n\t"
-		"movdqa 0x70%4, %%xmm7\n\t"
+		"movdqa %4, %%xmm0\n\t"
+		"movdqa 0x10 %4, %%xmm1\n\t"
+		"movdqa 0x20 %4, %%xmm2\n\t"
+		"movdqa 0x30 %4, %%xmm3\n\t"
+		"movdqa 0x40 %4, %%xmm4\n\t"
+		"movdqa 0x50 %4, %%xmm5\n\t"
+		"movdqa 0x60 %4, %%xmm6\n\t"
+		"movdqa 0x70 %4, %%xmm7\n\t"
 		:
 		: "r" (ctx->h), "r" (data), "r" (raSha256K), "m" (*order_byte), "m" (*xmm_save)
 		: "memory");

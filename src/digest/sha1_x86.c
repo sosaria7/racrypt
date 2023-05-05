@@ -6,14 +6,14 @@ static void RaSha1Process_x86(struct RaSha1Ctx *ctx, const uint8_t data[64])
 	uint8_t xmm_save[16 * 8] __attribute__((__aligned__(16)));
 
 	__asm__ __volatile__ (
-		"movdqa %%xmm0, 0x00%3\n\t"
-		"movdqa %%xmm1, 0x10%3\n\t"
-		"movdqa %%xmm2, 0x20%3\n\t"
-		"movdqa %%xmm3, 0x30%3\n\t"
-		"movdqa %%xmm4, 0x40%3\n\t"
-		"movdqa %%xmm5, 0x50%3\n\t"
-		"movdqa %%xmm6, 0x60%3\n\t"
-		"movdqa %%xmm7, 0x70%3\n\t"
+		"movdqa %%xmm0, %3\n\t"
+		"movdqa %%xmm1, 0x10 %3\n\t"
+		"movdqa %%xmm2, 0x20 %3\n\t"
+		"movdqa %%xmm3, 0x30 %3\n\t"
+		"movdqa %%xmm4, 0x40 %3\n\t"
+		"movdqa %%xmm5, 0x50 %3\n\t"
+		"movdqa %%xmm6, 0x60 %3\n\t"
+		"movdqa %%xmm7, 0x70 %3\n\t"
 
 		"movdqu (%0), %%xmm0\n\t"				// abcd
 		"movd   16(%0), %%xmm1\n\t"				// e
@@ -190,16 +190,16 @@ static void RaSha1Process_x86(struct RaSha1Ctx *ctx, const uint8_t data[64])
 		"paddd %%xmm1, %%xmm2\n\t"
 		"movd %%xmm2, 16(%0)\n\t"				// e
 
-		"movdqa 0x00%3, %%xmm0\n\t"
-		"movdqa 0x10%3, %%xmm1\n\t"
-		"movdqa 0x20%3, %%xmm2\n\t"
-		"movdqa 0x30%3, %%xmm3\n\t"
-		"movdqa 0x40%3, %%xmm4\n\t"
-		"movdqa 0x50%3, %%xmm5\n\t"
-		"movdqa 0x60%3, %%xmm6\n\t"
-		"movdqa 0x70%3, %%xmm7\n\t"
+		"movdqa %3, %%xmm0\n\t"
+		"movdqa 0x10 %3, %%xmm1\n\t"
+		"movdqa 0x20 %3, %%xmm2\n\t"
+		"movdqa 0x30 %3, %%xmm3\n\t"
+		"movdqa 0x40 %3, %%xmm4\n\t"
+		"movdqa 0x50 %3, %%xmm5\n\t"
+		"movdqa 0x60 %3, %%xmm6\n\t"
+		"movdqa 0x70 %3, %%xmm7\n\t"
 		:
-		: "r" (ctx->h), "r" (data), "m" (*order_byte), "m" (xmm_save)
+		: "r" (ctx->h), "r" (data), "m" (*order_byte), "m" (*xmm_save)
 		: "memory");
 }
 

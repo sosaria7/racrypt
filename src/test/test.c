@@ -1280,6 +1280,7 @@ int test7()
 		result = RA_ERR_INVALID_DATA;
 	}
 
+	memset(decrypted, 0, sizeof(decrypted));
 	RaAesInit( &ctx, key, RA_AES_128, RA_BLOCK_MODE_CBC );
 	RaAesSetIV(&ctx, iv);
 	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7 );
@@ -1295,6 +1296,7 @@ int test7()
 		result = RA_ERR_INVALID_DATA;
 	}
 
+	memset(decrypted, 0, sizeof(decrypted));
 	RaAesInit( &ctx, key, RA_AES_128, RA_BLOCK_MODE_CFB);
 	RaAesSetIV(&ctx, iv);
 	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7 );
@@ -1310,6 +1312,7 @@ int test7()
 		result = RA_ERR_INVALID_DATA;
 	}
 
+	memset(decrypted, 0, sizeof(decrypted));
 	RaAesInit( &ctx, key, RA_AES_128, RA_BLOCK_MODE_OFB );
 	RaAesSetIV(&ctx, iv);
 	writtenLen = RaAesEncryptFinal( &ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7 );
