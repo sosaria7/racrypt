@@ -430,14 +430,18 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 		for (j = 0; j < a->length; j++) {
 			cw = val.high;
 			_BnMul128(&val, *ad, *bd);
+
 			val.low += cw;
-			if (val.low < cw)
-				val.high++;
 			if (c != 0) {
 				val.low++;
-				if (val.low == 0)
+				if (val.low <= cw)
 					val.high++;
 			}
+			else {
+				if (val.low < cw)
+					val.high++;
+			}
+
 			*rd += val.low;
 			c = ((*rd) < val.low);
 			rd++;
@@ -448,11 +452,8 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 			val.high = 0;
 			if (c != 0) {
 				val.low++;
-				if (val.low == 0)
-					val.high++;
 			}
 			*rd += val.low;
-			c = ((*rd) < val.low) | (int)val.high;
 			rd++;
 		}
 #else
@@ -475,15 +476,9 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 		if (val > 0) {
 			val = (uint64_t)(*rd) + val + c;
 			*rd = (uint32_t)val;
-			c = (int)(val >> 32);
 			rd++;
 		}
 #endif
-		while (c) {
-			*rd += c;
-			c = ((*rd) == 0);
-			rd++;
-		}
 	}
 
 	r->length = (int)(intptr_t)(rd - r->data);;
@@ -529,14 +524,18 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 		for (j = 0; j < a->length; j++) {
 			cw = val.high;
 			_BnMul128(&val, *ad, *bd);
+
 			val.low += cw;
-			if (val.low < cw)
-				val.high++;
 			if (c != 0) {
 				val.low++;
-				if (val.low == 0)
+				if (val.low <= cw)
 					val.high++;
 			}
+			else {
+				if (val.low < cw)
+					val.high++;
+			}
+
 			*rd += val.low;
 			c = ((*rd) < val.low);
 			rd++;
@@ -547,11 +546,8 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 			val.high = 0;
 			if (c != 0) {
 				val.low++;
-				if (val.low == 0)
-					val.high++;
 			}
 			*rd += val.low;
-			c = ((*rd) < val.low) | (int)val.high;
 			rd++;
 		}
 #else
@@ -574,15 +570,9 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 		if (val > 0) {
 			val = (uint64_t)(*rd) + val + c;
 			*rd = (uint32_t)val;
-			c = (int)(val >> 32);
 			rd++;
 		}
 #endif
-		while (c) {
-			*rd += c;
-			c = ((*rd) == 0);
-			rd++;
-		}
 	}
 	r->length = (int)(intptr_t)(rd - r->data);
 	r->sign = 0;

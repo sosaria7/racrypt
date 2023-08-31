@@ -2850,6 +2850,9 @@ int main()
 			printf("%s error: %d\n", test_list[i].func_name, result);
 			goto _EXIT;
 		}
+		else {
+			printf("%s ok\n", test_list[i].func_name);
+		}
 	}
 
 	printf("\n");
