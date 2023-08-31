@@ -447,13 +447,9 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 			rd++;
 			ad++;
 		}
+		val.high += c;
 		if (val.high > 0) {
-			val.low = val.high;
-			val.high = 0;
-			if (c != 0) {
-				val.low++;
-			}
-			*rd += val.low;
+			*rd += val.high;
 			rd++;
 		}
 #else
@@ -473,9 +469,9 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 			ad++;
 		}
 		val >>= 32;
+		val += c;
 		if (val > 0) {
-			val = (uint64_t)(*rd) + val + c;
-			*rd = (uint32_t)val;
+			*rd += (uint32_t)val;
 			rd++;
 		}
 #endif
@@ -541,13 +537,9 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 			rd++;
 			ad++;
 		}
+		val.high += c;
 		if (val.high > 0) {
-			val.low = val.high;
-			val.high = 0;
-			if (c != 0) {
-				val.low++;
-			}
-			*rd += val.low;
+			*rd += val.high;
 			rd++;
 		}
 #else
@@ -567,9 +559,9 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 			ad++;
 		}
 		val >>= 32;
+		val += c;
 		if (val > 0) {
-			val = (uint64_t)(*rd) + val + c;
-			*rd = (uint32_t)val;
+			*rd += (uint32_t)val;
 			rd++;
 		}
 #endif
