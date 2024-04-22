@@ -222,12 +222,12 @@ RaAesCheckForIntelAesNI PROC
 	push		ecx
 	push		edx
 
-	; Look for CPUID.7.0.EBX[29]
-	; EAX = 7, ECX = 0
+	; Look for CPUID.1.ECX[25]
+	; EAX = 1
 	mov			eax, 1
 	cpuid
 
-	bt			ebx, 25
+	bt			ecx, 25
 	jnc			no_aesni
 
 	mov			ecx, ARG0					; (arg0) struct RaBlockCipher* blockCipher

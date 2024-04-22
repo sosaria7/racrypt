@@ -219,14 +219,13 @@ RaAesCheckForIntelAesNI PROC
 	push		rdx
 	push		rcx
 
-	; Look for CPUID.7.0.EBX[29]
-	; EAX = 7, ECX = 0
+	; Look for CPUID.1.ECX[25]
+	; EAX = 1
 	mov			eax, 1
 	cpuid
 
+	bt			ecx, 25
 	pop			rcx
-
-	bt			ebx, 25
 	jnc			no_aesni
 
 	mov			rax, RaAesEncryptBlock_x86

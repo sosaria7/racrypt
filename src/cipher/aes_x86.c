@@ -146,7 +146,7 @@ void RaAesCheckForIntelAesNI(struct RaBlockCipher* blockCipher)
 {
 	int a, b, c, d;
 
-	// Look for CPUID.7.0.EBX[29]
+	// Look for CPUID.1.ECX[25]
 	// EAX = 7, ECX = 0
 	a = 1;
 
