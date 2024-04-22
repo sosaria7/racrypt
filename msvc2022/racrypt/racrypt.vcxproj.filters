@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\cipher">
+      <UniqueIdentifier>{3767742d-f247-4873-9ea0-61f82179c75e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\com">
+      <UniqueIdentifier>{44b7d634-a8c9-458a-9277-f785401761c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\digest">
+      <UniqueIdentifier>{0103cfca-f4ac-4cbd-950e-f77c1ec2cad8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pk">
+      <UniqueIdentifier>{612ffcc1-4b7e-46f4-990d-3864d310504b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\include\racrypt_bn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\racrypt_cipher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\racrypt_com.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\racrypt_digest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\racrypt_pk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\racrypt_random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\racrypt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cipher\block_cipher.h">
+      <Filter>Source Files\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\pk\asn1.h">
+      <Filter>Source Files\pk</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\cipher\aes.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cipher\aria.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cipher\block_cipher.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cipher\blowfish.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cipher\des.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cipher\rc4.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cipher\seed.c">
+      <Filter>Source Files\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\com\bignumber.c">
+      <Filter>Source Files\com</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\com\gcd.c">
+      <Filter>Source Files\com</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\com\montexpmod.c">
+      <Filter>Source Files\com</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\com\prime.c">
+      <Filter>Source Files\com</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\com\random.c">
+      <Filter>Source Files\com</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\digest\has160.c">
+      <Filter>Source Files\digest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\digest\md2.c">
+      <Filter>Source Files\digest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\digest\md4.c">
+      <Filter>Source Files\digest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\digest\md5.c">
+      <Filter>Source Files\digest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\digest\sha1.c">
+      <Filter>Source Files\digest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\digest\sha2.c">
+      <Filter>Source Files\digest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\pk\asn1.c">
+      <Filter>Source Files\pk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\pk\rsa.c">
+      <Filter>Source Files\pk</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\..\src\cipher\aes_x86.asm">
+      <Filter>Source Files\cipher</Filter>
+    </MASM>
+    <MASM Include="..\..\src\cipher\aes_x86_64.asm">
+      <Filter>Source Files\cipher</Filter>
+    </MASM>
+    <MASM Include="..\..\src\digest\sha1_x86.asm">
+      <Filter>Source Files\digest</Filter>
+    </MASM>
+    <MASM Include="..\..\src\digest\sha1_x86_64.asm">
+      <Filter>Source Files\digest</Filter>
+    </MASM>
+    <MASM Include="..\..\src\digest\sha2_x86.asm">
+      <Filter>Source Files\digest</Filter>
+    </MASM>
+    <MASM Include="..\..\src\digest\sha2_x86_64.asm">
+      <Filter>Source Files\digest</Filter>
+    </MASM>
+  </ItemGroup>
+</Project>
