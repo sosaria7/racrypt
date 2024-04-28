@@ -9,7 +9,7 @@ case $(uname -m) in
     aarch64)
         # https://developer.arm.com/documentation/101754/0622/armclang-Reference/armclang-Command-line-Options/-march
         FLAG_ARCH="-march=armv8-a+aes"
-        CFLAGS="$CFLAGS -DRACRYPT_USE_ASM $FLAG_ARCH"
+        CFLAGS="$CFLAGS -DRACRYPT_USE_ASM_AES $FLAG_ARCH"
         EXT_OBJS="src/cipher/aes_arm64.o"
         ;;
 esac
