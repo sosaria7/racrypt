@@ -6,7 +6,7 @@
 
 _TEXT SEGMENT
 
-PUBLIC RaAesCheckForIntelAesNI
+PUBLIC RaAesCheckForInstructionSet
 
 ;		struct RaAesCtx {
 ;0	 -516	int nr;
@@ -213,8 +213,8 @@ _start_dec_round11:
 RaAesDecryptBlock_x86 ENDP
 
 
-; void RaAesCheckForIntelAesNI(struct RaBlockCipher* blockCipher);
-RaAesCheckForIntelAesNI PROC
+; void RaAesCheckForInstructionSet(struct RaBlockCipher* blockCipher);
+RaAesCheckForInstructionSet PROC
 	push		ebp
 	mov			ebp, esp
 	push		eax
@@ -246,7 +246,7 @@ no_aesni:
 	pop			ebp
 	ret
 
-RaAesCheckForIntelAesNI ENDP
+RaAesCheckForInstructionSet ENDP
 
 _TEXT ENDS
 

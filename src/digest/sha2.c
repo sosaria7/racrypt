@@ -15,7 +15,7 @@ static void _RaSha512Final(struct RaSha2Ctx* ctx, /*out*/uint8_t* output);
 static void RaSha256Process(struct RaSha2Ctx* ctx, const uint8_t data[64]);
 static void RaSha512Process(struct RaSha2Ctx* ctx, const uint8_t data[128]);
 
-void RaSha256CheckForIntelShaExtensions(struct RaSha2Ctx* ctx);
+void RaSha256CheckForInstructionSet(struct RaSha2Ctx* ctx);
 
 int RaSha2Create(enum RaDigestAlgorithm algorithm, struct RaSha2Ctx **ctxp)
 {
@@ -55,8 +55,8 @@ void RaSha256Init(struct RaSha2Ctx *ctx)
 	ctx->h[7] = 0x5be0cd19;
 	ctx->algorithm = RA_DGST_SHA2_256;
 	ctx->fnRaSha256Process = RaSha256Process;
-#ifdef RACRYPT_USE_ASM_SHA256_X86
-	RaSha256CheckForIntelShaExtensions(ctx);
+#ifdef RACRYPT_USE_ASM_SHA256
+	RaSha256CheckForInstructionSet(ctx);
 #endif
 }
 
@@ -75,8 +75,8 @@ void RaSha224Init(struct RaSha2Ctx *ctx)
 	ctx->h[7] = 0xbefa4fa4;
 	ctx->algorithm = RA_DGST_SHA2_224;
 	ctx->fnRaSha256Process = RaSha256Process;
-#ifdef RACRYPT_USE_ASM_SHA256_X86
-	RaSha256CheckForIntelShaExtensions(ctx);
+#ifdef RACRYPT_USE_ASM_SHA256
+	RaSha256CheckForInstructionSet(ctx);
 #endif
 }
 

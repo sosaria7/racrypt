@@ -10,7 +10,7 @@
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
-void RaSha1CheckForIntelShaExtensions( struct RaSha1Ctx *ctx );
+void RaSha1CheckForInstructionSet( struct RaSha1Ctx *ctx );
 static void RaSha1Process( struct RaSha1Ctx *ctx, const uint8_t data[64] );
 
 int RaSha1Create(struct RaSha1Ctx **ctxp)
@@ -45,8 +45,8 @@ void RaSha1Init(struct RaSha1Ctx *ctx)
 	ctx->h[3] = 0x10325476;
 	ctx->h[4] = 0xc3d2e1f0;
 	ctx->fnRaSha1Process = RaSha1Process;
-#ifdef RACRYPT_USE_ASM_SHA1_X86
-	RaSha1CheckForIntelShaExtensions( ctx );
+#ifdef RACRYPT_USE_ASM_SHA1
+	RaSha1CheckForInstructionSet( ctx );
 #endif
 }
 

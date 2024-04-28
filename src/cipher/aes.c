@@ -345,7 +345,7 @@ static const uint32_t revLookup3[256] = {
 static void RaAesEncryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output);
 static void RaAesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *input, uint8_t *output);
 
-void RaAesCheckForIntelAesNI(struct RaBlockCipher* blockCipher);
+void RaAesCheckForInstructionSet(struct RaBlockCipher* blockCipher);
 
 int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode, struct RaAesCtx **ctxp)
 {
@@ -380,8 +380,8 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 
 	RaBlockCipherInit(&ctx->blockCipher, RaAesEncryptBlock, RaAesDecryptBlock, opMode, RA_BLOCK_LEN_AES, ctx->iv, ctx->buffer);
 
-#ifdef RACRYPT_USE_ASM_AES_X86
-	RaAesCheckForIntelAesNI(&ctx->blockCipher);
+#ifdef RACRYPT_USE_ASM_AES
+	RaAesCheckForInstructionSet(&ctx->blockCipher);
 #endif
 
 	prevKey = (uint32_t*)ctx->key;

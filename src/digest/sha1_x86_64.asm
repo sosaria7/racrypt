@@ -8,7 +8,7 @@ _DATA ENDS
 
 _TEXT SEGMENT
 
-PUBLIC RaSha1CheckForIntelShaExtensions
+PUBLIC RaSha1CheckForInstructionSet
 
 ;		struct RaSha1Ctx
 ;		{
@@ -232,8 +232,8 @@ RaSha1Process_x86 PROC
 RaSha1Process_x86 ENDP
 
 
-; void RaSha1CheckForIntelShaExtensions( struct RaSha1Ctx *ctx )
-RaSha1CheckForIntelShaExtensions PROC
+; void RaSha1CheckForInstructionSet( struct RaSha1Ctx *ctx )
+RaSha1CheckForInstructionSet PROC
 	push		rax
 	push		rbx
 	push		rcx		; (arg0) ctx
@@ -261,7 +261,7 @@ no_shae:
 
 	ret
 
-RaSha1CheckForIntelShaExtensions ENDP
+RaSha1CheckForInstructionSet ENDP
 
 _TEXT ENDS
 

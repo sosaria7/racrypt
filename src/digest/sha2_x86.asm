@@ -22,7 +22,7 @@ _DATA ENDS
 
 _TEXT SEGMENT
 
-PUBLIC RaSha256CheckForIntelShaExtensions
+PUBLIC RaSha256CheckForInstructionSet
 
 ;		struct RaSha2Ctx
 ;		{
@@ -410,8 +410,8 @@ RaSha256Process_x86 PROC
 RaSha256Process_x86 ENDP
 
 
-; void RaSha256CheckForIntelShaExtensions( struct RaSha2Ctx *ctx )
-RaSha256CheckForIntelShaExtensions PROC
+; void RaSha256CheckForInstructionSet( struct RaSha2Ctx *ctx )
+RaSha256CheckForInstructionSet PROC
 	push		ebp
 	mov			ebp, esp
 	push		eax
@@ -439,7 +439,7 @@ no_shae:
 	pop			ebp
 	ret
 
-RaSha256CheckForIntelShaExtensions ENDP
+RaSha256CheckForInstructionSet ENDP
 
 _TEXT ENDS
 
