@@ -142,7 +142,7 @@ static void RaAesDecryptBlock_x86(struct RaBlockCipher* blockCipher, const uint8
 		: "memory" );
 }
 
-void RaAesCheckForIntelAesNI(struct RaBlockCipher* blockCipher)
+void RaAesCheckForInstructionSet(struct RaBlockCipher* blockCipher)
 {
 	int a, b, c, d;
 

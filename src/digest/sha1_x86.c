@@ -206,7 +206,7 @@ static void RaSha1Process_x86(struct RaSha1Ctx *ctx, const uint8_t data[64])
 		: "memory");
 }
 
-void RaSha1CheckForIntelShaExtensions( struct RaSha1Ctx *ctx )
+void RaSha1CheckForInstructionSet( struct RaSha1Ctx *ctx )
 {
 	int a, b, c, d;
 

@@ -348,7 +348,7 @@ static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 		: "memory");
 }
 
-void RaSha256CheckForIntelShaExtensions( struct RaSha2Ctx *ctx )
+void RaSha256CheckForInstructionSet( struct RaSha2Ctx *ctx )
 {
 	int a, b, c, d;
 
