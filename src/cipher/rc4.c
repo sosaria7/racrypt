@@ -46,7 +46,7 @@ void RaRc4Init(struct RaRc4Ctx *ctx, const uint8_t *key, int keyLen)
 		S[x] = (uint8_t)x;
 
 	for (x = 0; x < 256; x++) {
-		y = (y + S[x] + key[x % keyLen]) % 255;
+		y = (y + S[x] + key[x % keyLen]) % 256;
 
 		tmp = S[x];
 		S[x] = S[y];
