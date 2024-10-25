@@ -1,3 +1,5 @@
+/* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
+
 #include <racrypt.h>
 
 static const uint32_t raSha256K[64] = {

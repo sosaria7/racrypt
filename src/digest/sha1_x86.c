@@ -1,3 +1,5 @@
+/* Copyright 2017, Keonwoo Kim. Licensed under the BSD 2-clause license. */
+
 #include <racrypt.h>
 
 static void RaSha1Process_x86(struct RaSha1Ctx *ctx, const uint8_t data[64])
