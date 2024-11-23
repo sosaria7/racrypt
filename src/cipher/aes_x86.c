@@ -67,15 +67,15 @@ static void RaAesEncryptBlock_x86(struct RaBlockCipher* blockCipher, const uint8
 		"	movdqa	(%[xmm_save]), %%xmm0\n"
 		"	movdqa	0x10(%[xmm_save]), %%xmm1\n"
 		:
-		: [key] "r" ( ctx->key ), [nr] "r" ( (long)ctx->nr ), [input] "m" ( *input ),
-		  [output] "m" ( *output ), [xmm_save] "r" ( xmm_save )
+		: [key] "r" ( ctx->key ), [nr] "r" ( (uintptr_t)ctx->nr ), [input] "m" ( *input ),
+		  [output] "m" ( *output ), [xmm_save] "b" ( xmm_save )
 		: "memory" );
 }
 
 static void RaAesDecryptBlock_x86(struct RaBlockCipher* blockCipher, const uint8_t* input, uint8_t* output)
 {
 	struct RaAesCtx *ctx;
-	uint8_t xmm_save[2 * 16];
+	uint8_t xmm_save[3 * 16] __attribute__((__aligned__(16)));
 
 	ctx = CHILD_OF(blockCipher, struct RaAesCtx, blockCipher);
 
@@ -137,8 +137,8 @@ static void RaAesDecryptBlock_x86(struct RaBlockCipher* blockCipher, const uint8
 		"	movdqa	0x10(%[xmm_save]), %%xmm1\n"
 		"	pop		%[nr]"
 		:
-		: [key] "r" ( ctx->key ), [rev_key] "r" ( ctx->rev_key ), [nr] "r" ( (long)ctx->nr ),
-		  [input] "m" ( *input ), [output] "m" ( *output ), [xmm_save] "r" ( xmm_save )
+		: [key] "r" ( ctx->key ), [rev_key] "r" ( ctx->rev_key ), [nr] "r" ( (uintptr_t)ctx->nr ),
+		  [input] "m" ( *input ), [output] "m" ( *output ), [xmm_save] "b" ( xmm_save )
 		: "memory" );
 }
 

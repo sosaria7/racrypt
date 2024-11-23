@@ -204,7 +204,7 @@ static void RaSha1Process_x86(struct RaSha1Ctx *ctx, const uint8_t data[64])
 		"	movdqa		0x60(%[xmm_save]), %%xmm6\n"
 		"	movdqa		0x70(%[xmm_save]), %%xmm7\n"
 		:
-		: "r" (ctx->h), [data] "r" (data), [order_byte] "m" (*order_byte), [xmm_save] "r" (xmm_save)
+		: "r" (ctx->h), [data] "r" (data), [order_byte] "m" (*order_byte), [xmm_save] "b" (xmm_save)
 		: "memory");
 }
 
