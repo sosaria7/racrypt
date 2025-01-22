@@ -42,12 +42,14 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "
         src/digest/sha2_x86.c
     )
 	set(PLATFORM_DEFINES "-DRACRYPT_USE_ASM")
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
     set(PLATFORM_SOURCES
 		src/cipher/aes_arm64.c
         src/digest/sha1_arm64.c
         src/digest/sha2_arm64.c
+        src/digest/sha2_arm64.c
     )
+	set(PLATFORM_DEFINES "-DRACRYPT_USE_ASM")
 	set(PLATFORM_DEFINES "-DRACRYPT_USE_ASM")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+aes+crypto")
 else()

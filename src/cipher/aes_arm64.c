@@ -45,7 +45,7 @@ static void RaAesEncryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
         "   mov     v1.16b, v3.16b\n"
         "   mov     v2.16b, v4.16b\n"
 		"	cmp		%[nr], #11\n"
-		"	beq		_end_enc_round\n"
+		"	beq		9f\n"
 
 		"	aese	v1.16b, v0.16b\n"
 		"	aesmc	v0.16b, v1.16b\n"
@@ -55,7 +55,7 @@ static void RaAesEncryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 		// r12-r13
 		"	ld1		{v1.16b, v2.16b, v3.16b, v4.16b}, [%[key]], #64\n"
 		"	cmp		%[nr], #13\n"
-		"	beq		_end_enc_round\n"
+		"	beq		9f\n"
 
 		"	aese	v1.16b, v0.16b\n"
 		"	aesmc	v0.16b, v1.16b\n"
@@ -66,7 +66,8 @@ static void RaAesEncryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
         "   mov     v1.16b, v3.16b\n"
         "   mov     v2.16b, v4.16b\n"
 		// last-1, last
-		"_end_enc_round:\n"
+		"; _end_enc_round\n"
+		"9:\n"
 		"	aese	v0.16b, v1.16b\n"
 		"	eor     v0.16b, v0.16b, v2.16b\n"
 		"	st1		{v0.16b}, [%[output]]\n"
@@ -135,7 +136,7 @@ static void RaAesDecryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 		"	aesimc	v0.16b, v3.16b\n"
 
 		"	cmp		%[nr], #11\n"
-		"	beq		_end_dec_round\n"
+		"	beq		9f\n"
 
 		"	aesd	v2.16b, v0.16b\n"
 		"	aesimc	v0.16b, v2.16b\n"
@@ -147,7 +148,7 @@ static void RaAesDecryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 		"	ld1		{v1.16b, v2.16b}, [%[rev_key]]\n"
 
 		"	cmp		%[nr], #13\n"
-		"	beq		_end_dec_round\n"
+		"	beq		9f\n"
 
 		"	aesd	v2.16b, v0.16b\n"
 		"	aesimc	v0.16b, v2.16b\n"
@@ -158,14 +159,15 @@ static void RaAesDecryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 		"	sub		%[rev_key], %[rev_key], #32\n"
 		"	ld1		{v1.16b, v2.16b}, [%[rev_key]]\n"
 
-		"_end_dec_round:\n"
+		"; _end_dec_round\n"
+		"9:\n"
 		// v1 = aesd(v0, rev_key[1])
 		"	aesd	v0.16b, v2.16b\n"
 
 		// last round key addition
 		"	ld1		{v1.16b}, [%[key]]\n"
 		"	eor		v0.16b, v0.16b, v1.16b\n"
-        "_end_dec_test:\n"
+		"; _end_dec_test\n"
 		"	st1		{v0.16b}, [%[output]]\n"
 
 		:
@@ -176,7 +178,11 @@ static void RaAesDecryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 
 void RaAesCheckForInstructionSet(struct RaBlockCipher* blockCipher)
 {
-	int a;
+#ifdef __APPLE__
+	blockCipher->encryptBlock = RaAesEncryptBlock_arm64;
+	blockCipher->decryptBlock = RaAesDecryptBlock_arm64;
+#else
+	unsigned long a;
 
     // https://developer.arm.com/documentation/ddi0595/2020-12/AArch64-Registers/ID-AA64ISAR0-EL1--AArch64-Instruction-Set-Attribute-Register-0
 
@@ -190,5 +196,6 @@ void RaAesCheckForInstructionSet(struct RaBlockCipher* blockCipher)
 		blockCipher->encryptBlock = RaAesEncryptBlock_arm64;
 		blockCipher->decryptBlock = RaAesDecryptBlock_arm64;
 	}
+#endif
 }
 
