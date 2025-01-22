@@ -32,7 +32,9 @@ set(SOURCES
 	src/cipher/aria.c
 	src/cipher/blowfish.c
 	)
-	
+
+message( "cpu: ${CMAKE_SYSTEM_PROCESSOR}" )
+
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")
     set(PLATFORM_SOURCES
 		src/cipher/aes_x86.c
@@ -40,12 +42,13 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "
         src/digest/sha2_x86.c
     )
 	set(PLATFORM_DEFINES "-DRACRYPT_USE_ASM")
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
     set(PLATFORM_SOURCES
 		src/cipher/aes_arm64.c
         src/digest/sha1_arm64.c
+        src/digest/sha2_arm64.c
     )
-	set(PLATFORM_DEFINES "-DRACRYPT_USE_ASM_AES -DRACRYPT_USE_ASM_SHA1")
+	set(PLATFORM_DEFINES "-DRACRYPT_USE_ASM")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+aes+crypto")
 else()
     set(PLATFORM_SOURCES)
