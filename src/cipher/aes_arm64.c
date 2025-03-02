@@ -66,7 +66,7 @@ static void RaAesEncryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
         "   mov     v1.16b, v3.16b\n"
         "   mov     v2.16b, v4.16b\n"
 		// last-1, last
-		"; _end_enc_round\n"
+		"# _end_enc_round\n"
 		"9:\n"
 		"	aese	v0.16b, v1.16b\n"
 		"	eor     v0.16b, v0.16b, v2.16b\n"
@@ -159,7 +159,7 @@ static void RaAesDecryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 		"	sub		%[rev_key], %[rev_key], #32\n"
 		"	ld1		{v1.16b, v2.16b}, [%[rev_key]]\n"
 
-		"; _end_dec_round\n"
+		"# _end_dec_round\n"
 		"9:\n"
 		// v1 = aesd(v0, rev_key[1])
 		"	aesd	v0.16b, v2.16b\n"
@@ -167,7 +167,7 @@ static void RaAesDecryptBlock_arm64(struct RaBlockCipher* blockCipher, const uin
 		// last round key addition
 		"	ld1		{v1.16b}, [%[key]]\n"
 		"	eor		v0.16b, v0.16b, v1.16b\n"
-		"; _end_dec_test\n"
+		"# _end_dec_test\n"
 		"	st1		{v0.16b}, [%[output]]\n"
 
 		:
