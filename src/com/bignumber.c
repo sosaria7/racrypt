@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#if defined(__GNUC__)
+	#define __fallthrough __attribute__((fallthrough))
+#endif
+
 static int _BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
 static int _BnSub(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
 static int _BnCmp(struct RaBigNumber *a, struct RaBigNumber *b);
@@ -204,21 +208,29 @@ static int _BnSetByteArray(struct RaBigNumber *bn, const uint8_t *data, int len,
 #if BN_WORD_BYTE == 8
 	case 7:
 		*bd = (*bd << 8) | *d++;
+		__fallthrough;
 	case 6:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 	case 5:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 	case 4:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 #endif
 	case 3:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 	case 2:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 	case 1:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 	case 0:
 		*bd = (*bd << 8) | *d++;
+		 __fallthrough;
 	default:
 		break;
 	}

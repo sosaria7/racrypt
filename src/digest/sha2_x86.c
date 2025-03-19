@@ -15,7 +15,7 @@ static const uint32_t raSha256K[64] = {
 
 static void RaSha256Process_x86(struct RaSha2Ctx *ctx, const uint8_t data[64])
 {
-	const static uint8_t order_byte[] __attribute__((__aligned__(16))) = { 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x0b, 0x0a, 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c };
+	static const uint8_t order_byte[] __attribute__((__aligned__(16))) = { 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x0b, 0x0a, 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c };
 	uint8_t xmm_save[16 * 9];
 
 	/*
@@ -366,7 +366,7 @@ void RaSha256CheckForInstructionSet( struct RaSha2Ctx *ctx )
 		);
 	// Intel SHA Extensions feature bit is EBX[29]
 	if ( ( b >> 29 ) & 1 ) {
-		ctx->fnRaSha256Process = RaSha256Process_x86;
+		ctx->fn.fnRaSha256Process = RaSha256Process_x86;
 	}
 }
 

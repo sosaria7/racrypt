@@ -228,6 +228,10 @@ const uint32_t ariaCK[3][4] = {
   {0xdb92371d, 0x2126e970, 0x03249775, 0x04e8c90e}
 };
 
+#if defined(__GNUC__)
+	#define __fallthrough __attribute__((fallthrough))
+#endif
+
 #define GET_UINT32_BE(b)		(uint32_t)(((b)[0] << 24)|((b)[1] << 16)|((b)[2] << 8)|(b)[3])
 #define PUT_UINT32_BE(b, v)		{ (b)[0] = (uint8_t)((v)>>24); (b)[1] = (uint8_t)((v)>>16); (b)[2] = (uint8_t)((v)>>8); (b)[3] = (uint8_t)(v); }
 
@@ -443,6 +447,7 @@ void RaAriaInit(struct RaAriaCtx *ctx, const uint8_t *key, enum RaAriaKeyType ke
 	case RA_ARIA_256:
 		ARIA_GSRK(ctx->round_key[15], w3, w0, 97);
 		ARIA_GSRK(ctx->round_key[16], w0, w1, 109);
+		__fallthrough;
 	case RA_ARIA_192:
 		ARIA_GSRK(ctx->round_key[13], w1, w2, 97);
 		ARIA_GSRK(ctx->round_key[14], w2, w3, 97);

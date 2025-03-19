@@ -134,7 +134,7 @@ static uint8_t priv[] = {
 	0xcc
 };
 
-static uint8_t message[] = "Hello, World!!!.";
+static uint8_t s_message[] = "Hello, World!!!.";
 
 static void PrintTime(long elapsed)
 {
@@ -226,7 +226,7 @@ void PrintElapsed(struct Timer *t, char* prefix)
 	PrintTime(elapsed);
 }
 
-int test1()
+int test1(void)
 {
 	int result;
 	struct RaBigNumber *bn1 = NULL;
@@ -424,7 +424,7 @@ _EXIT:
 	return result;
 }
 
-int test2()
+int test2(void)
 {
 	int result;
 	struct RaMontCtx* ctx = NULL;
@@ -468,7 +468,7 @@ _EXIT:
 	return result;
 }
 
-int test3()
+int test3(void)
 {
 #define TEST3_KEY_BIT		2048
 	int result;
@@ -501,7 +501,7 @@ _EXIT:
 	return result;
 }
 
-int test4()
+int test4(void)
 {
 #define TEST4_KEY_BIT		4096
 	int result;
@@ -529,7 +529,7 @@ int test4()
 		goto _EXIT;
 	}
 
-	result = BnSetByteArray(m, message, sizeof(message));
+	result = BnSetByteArray(m, s_message, sizeof(s_message));
 	if (result != RA_ERR_SUCCESS) {
 		printf("BnSetByteArray failed(%d)\n", result);
 		goto _EXIT;
@@ -571,7 +571,7 @@ _EXIT:
 	return result;
 }
 
-int test5()
+int test5(void)
 {
 #define TEST5_KEY_BIT		2048
 	int result;
@@ -595,7 +595,7 @@ int test5()
 		goto _EXIT;
 	}
 
-	result = BnSetByteArray(m, message, sizeof(message));
+	result = BnSetByteArray(m, s_message, sizeof(s_message));
 	if (result != RA_ERR_SUCCESS) {
 		printf("BnSetByteArray failed(%d)\n", result);
 		goto _EXIT;
@@ -764,7 +764,7 @@ _EXIT:
 	return result;
 }
 
-int test5_1()
+int test5_1(void)
 {
 #define TEST5_1_KEY_BIT		2048
 	int result = RA_ERR_SUCCESS;
@@ -830,7 +830,7 @@ int test5_1()
 
 		for (mtry = 0; mtry < 50; mtry++) {
 			// generate random data
-			for (i = 0; i < sizeof(data); i++)
+			for (i = 0; i < (int)sizeof(data); i++)
 				data[i] = rand() % 256;
 			// clear msb to make smaller than key
 			data[0] &= 0x7f;
@@ -957,7 +957,7 @@ static uint8_t has160_2[20] = { 0x84, 0x5b, 0x19, 0x7a, 0x70, 0xef, 0x0e, 0x9e, 
 
 
 // digest
-int test6()
+int test6(void)
 {
 #define TEST6_INPUT_BUFFER_SIZE	10240
 
@@ -1239,7 +1239,7 @@ static uint8_t aes128_ctr1[] = {
 	0x9f, 0xf0, 0x8a, 0xc7, 0x28, 0x31, 0x20, 0x03, 0x93, 0x92, 0xee, 0xff, 0x90, 0x8f, 0xc5, 0xe4 };
 
 // aes
-int test7()
+int test7(void)
 {
 	int result = RA_ERR_SUCCESS;
 #define TEST7_BLOCK_SIZE		4096
@@ -1447,6 +1447,17 @@ int test7()
 			result = RA_ERR_INVALID_DATA;
 		}
 
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAesInit(&ctx, key, RA_AES_128, RA_BLOCK_MODE_CTR);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAesSetIV(&ctx, iv);
+		writtenLen = RaAesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("AES/128/CTR failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
 		// encrypt continus data
 		//printf("encrypt continus data\n");
 		memset(decrypted, 0, sizeof(decrypted));
@@ -1566,8 +1577,12 @@ static uint8_t des_ofb1[] = {
 	0xc0, 0xe2, 0x26, 0xd9, 0xfb, 0xf6, 0x26, 0x1d, 0x46, 0xca, 0xbf, 0xee, 0x7d, 0xfb, 0xd3, 0xd5,
 	0x2d, 0xe3, 0x82, 0xff, 0x07, 0x0a, 0xc7, 0xba, 0xe6, 0xf0, 0x4b, 0x4f, 0xe0, 0x1a, 0xed, 0xea,
 	0x6d, 0x03, 0x6b, 0x58, 0xf7, 0x8f, 0x11, 0xaa, 0x72, 0x3d, 0xc5, 0xfe, 0xf9, 0x34, 0xce, 0x73 };
+static uint8_t des_ctr1[] = {
+	0x09, 0x31, 0xb1, 0x66, 0x76, 0x3c, 0x33, 0x19, 0x61, 0x68, 0xe9, 0x99, 0xc2, 0xfd, 0x78, 0x9e,
+	0xc8, 0x97, 0xbb, 0x75, 0xd5, 0xfb, 0x32, 0x27, 0xb9, 0x02, 0x32, 0x0f, 0xdb, 0x38, 0x61, 0xa0,
+	0xa7, 0x0b, 0x79, 0xc6, 0xcf, 0x63, 0x6a, 0x1a, 0x82, 0x02, 0xbd, 0xec, 0x69, 0xc3, 0x8f, 0xd5 };
 
-int test8()
+int test8(void)
 {
 	int result = RA_ERR_SUCCESS;
 #define TEST8_BLOCK_SIZE		4096
@@ -1669,6 +1684,25 @@ int test8()
 		goto _EXIT;
 	}
 
+	RaDesInit(&ctx, key, RA_DES, RA_BLOCK_MODE_CTR);
+	RaDesSetIV(&ctx, iv);
+	writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("DES/CTR = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(des_ctr1) || memcmp(encrypted, des_ctr1, writtenLen)) {
+		printf("DES/CTR encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaDesSetIV(&ctx, iv);
+	writtenLen = RaDesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("DES/CTR decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
 	printf("DES: random data encryption/decryption test\n");
 	for (ntry = 0; ntry < 2000 && result == RA_ERR_SUCCESS; ntry++)
 	{
@@ -1723,6 +1757,16 @@ int test8()
 			result = RA_ERR_INVALID_DATA;
 		}
 
+		memset(decrypted, 0, sizeof(decrypted));
+		RaDesInit(&ctx, key, RA_3DES, RA_BLOCK_MODE_CTR);
+		RaDesSetIV(&ctx, iv);
+		writtenLen = RaDesEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaDesSetIV(&ctx, iv);
+		writtenLen = RaDesDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("DES/CTR failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
 
 		// encrypt continus data
 		//printf("encrypt continus data\n");
@@ -1832,7 +1876,7 @@ static const uint8_t message1_rc4[] = {
 	0xa1, 0x75, 0x07, 0x83, 0x9a, 0xb9, 0x86, 0xe7, 0x36, 0x0b, 0x22, 0x44, 0x42, 0xe4, 0x7f, 0xea,
 	0xc0, 0xa9, 0x55, 0x6b, 0x0c, 0xe5, 0xc0, 0xe5, 0x25, 0x15, 0xc2, 0xcb
 };
-int test9()
+int test9(void)
 {
 	int result = RA_ERR_SUCCESS;
 	struct RaRc4Ctx ctx;
@@ -1981,8 +2025,12 @@ static uint8_t seed_ofb1[] = {
 	0x61, 0xc1, 0x2a, 0x0b, 0x04, 0x39, 0xef, 0x67, 0x04, 0xd7, 0x5c, 0x8b, 0xc1, 0x20, 0xf4, 0xd2,
 	0xab, 0xa3, 0xae, 0xee, 0x14, 0xdc, 0x9c, 0x86, 0xa7, 0x14, 0x89, 0x04, 0x19, 0x4e, 0x39, 0xad,
 	0x69, 0xa3, 0x47, 0xa7, 0x23, 0x10, 0xf0, 0xaf, 0x6f, 0xf6, 0x26, 0xcf, 0x7c, 0x5f, 0xc7, 0xee };
+static uint8_t seed_ctr1[] = {
+	0x63, 0xb7, 0x94, 0x8c, 0x50, 0x9b, 0x0e, 0xa6, 0x52, 0x30, 0x32, 0x52, 0xb6, 0x54, 0xff, 0xa8,
+	0x41, 0xf3, 0xbd, 0xd2, 0xa7, 0xd4, 0x6e, 0xd3, 0x24, 0x1f, 0x49, 0x95, 0x68, 0xad, 0x7e, 0x71,
+	0x2d, 0x2c, 0x13, 0x02, 0x5f, 0xee, 0xee, 0x61, 0x51, 0x14, 0xe6, 0x35, 0x5f, 0x1c, 0x73, 0x61 };
 
-int test10()
+int test10(void)
 {
 	int result = RA_ERR_SUCCESS;
 #define TEST10_BLOCK_SIZE			4096
@@ -2083,6 +2131,25 @@ int test10()
 		goto _EXIT;
 	}
 
+	RaSeedInit(&ctx, key, RA_BLOCK_MODE_CTR);
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("SEED/CTR = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(seed_ctr1) || memcmp(encrypted, seed_ctr1, writtenLen)) {
+		printf("SEED/CTR encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaSeedSetIV(&ctx, iv);
+	writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("SEED/CTR decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
 	printf("SEED: random data encryption/decryption test\n");
 	for (ntry = 0; ntry < 2000 && result == RA_ERR_SUCCESS; ntry++)
 	{
@@ -2137,6 +2204,16 @@ int test10()
 			result = RA_ERR_INVALID_DATA;
 		}
 
+		memset(decrypted, 0, sizeof(decrypted));
+		RaSeedInit(&ctx, key, RA_BLOCK_MODE_CTR);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaSeedSetIV(&ctx, iv);
+		writtenLen = RaSeedDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("SEED/CTR failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
 
 		// encrypt continus data
 		//printf("encrypt continus data\n");
@@ -2240,20 +2317,23 @@ _EXIT:
 }
 
 // aria
-const static uint8_t aria128_ecb1[] = {
+static const uint8_t aria128_ecb1[] = {
 	0xc6, 0xec, 0xd0, 0x8e, 0x22, 0xc3, 0x0a, 0xbd, 0xb2, 0x15, 0xcf, 0x74, 0xe2, 0x07, 0x5e, 0x6e, 0x29, 0xcc, 0xaa, 0xc6, 0x34, 0x48, 0x70, 0x8d, 0x33, 0x1b, 0x2f, 0x81, 0x6c, 0x51, 0xb1, 0x7d, 0x66, 0x39, 0x74, 0x6c, 0x86, 0x8f, 0x3d, 0xe2, 0x4f, 0xf0, 0x3f, 0xf4, 0xeb, 0x0d, 0x23, 0x8f
 };
-const static uint8_t aria128_cbc1[] = {
+static const uint8_t aria128_cbc1[] = {
 	0x49, 0xd6, 0x18, 0x60, 0xb1, 0x49, 0x09, 0x10, 0x9c, 0xef, 0x0d, 0x22, 0xa9, 0x26, 0x81, 0x34, 0xfa, 0xdf, 0x9f, 0xb2, 0x31, 0x51, 0xe9, 0x64, 0x5f, 0xba, 0x75, 0x01, 0x8b, 0xdb, 0x15, 0x38, 0xbd, 0x5f, 0x9b, 0x46, 0x67, 0xe7, 0xba, 0x32, 0x2e, 0xe4, 0xa1, 0xb2, 0x56, 0x22, 0x60, 0x47
 };
-const static uint8_t aria128_cfb1[] = {
+static const uint8_t aria128_cfb1[] = {
 	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00, 0xc0, 0x7c, 0x21, 0xe6, 0x37, 0x0f, 0x41, 0x3a, 0x5d, 0x13, 0x25, 0x00, 0xa6, 0x82, 0x85, 0x01, 0x4e, 0x53, 0x86, 0x06, 0x7d, 0x0d, 0x70, 0x2c, 0xb7, 0x97, 0x22, 0x43, 0x2d, 0xb5, 0xe6, 0xe0
 };
-const static uint8_t aria128_ofb1[] = {
+static const uint8_t aria128_ofb1[] = {
 	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00, 0x00, 0x63, 0x06, 0x3f, 0x05, 0x60, 0x08, 0x34, 0x83, 0xfa, 0xeb, 0x04, 0x1c, 0x8a, 0xde, 0xce, 0xc1, 0x3e, 0xca, 0x3e, 0x55, 0x0a, 0xb8, 0x1a, 0xe0, 0xb2, 0x47, 0xa3, 0xc3, 0x47, 0xaa, 0x70
 };
+static const uint8_t aria128_ctr1[] = {
+	0x16, 0x73, 0x03, 0x2f, 0x7b, 0x65, 0xbf, 0xe4, 0xe5, 0x67, 0x13, 0x11, 0x1e, 0xfd, 0x09, 0x2c, 0x87, 0x52, 0x47, 0xbc, 0x49, 0x30, 0x17, 0xe1, 0x14, 0xe4, 0x93, 0xb7, 0x97, 0x2f, 0xfb, 0x76, 0x2e, 0xac, 0x1f, 0x37, 0x7b, 0x96, 0x82, 0x37, 0x32, 0xf0, 0x4e, 0xb3, 0xd9, 0x5d, 0x63, 0x9e
+};
 
-int test11()
+int test11(void)
 {
 	int result = RA_ERR_SUCCESS;
 #define TEST11_BLOCK_SIZE		4096
@@ -2356,6 +2436,25 @@ int test11()
 		goto _EXIT;
 	}
 
+	RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CTR);
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("ARIA/128/CTR = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(aria128_ctr1) || memcmp(encrypted, aria128_ctr1, writtenLen)) {
+		printf("ARIA/128/CTR encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaAriaSetIV(&ctx, iv);
+	writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("ARIA/128/CTR decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
 	printf("ARIA: random data encryption/decryption test\n");
 	for (ntry = 0; ntry < 20000 && result == RA_ERR_SUCCESS; ntry++)
 	{
@@ -2447,6 +2546,17 @@ int test11()
 		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
 		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
 			printf("ARIA/128/OFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaAriaInit(&ctx, key, RA_ARIA_128, RA_BLOCK_MODE_CTR);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaAriaSetIV(&ctx, iv);
+		writtenLen = RaAriaDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("ARIA/128/CTR failed\n");
 			result = RA_ERR_INVALID_DATA;
 		}
 
@@ -2568,8 +2678,12 @@ static uint8_t blowfish_ofb1[] = {
 	0x34, 0xe7, 0xd0, 0x8b, 0xf2, 0x8f, 0x18, 0xfe, 0xc6, 0xed, 0x4b, 0x50, 0x6e, 0xa0, 0x65, 0x80,
 	0xbb, 0xd4, 0x44, 0x8d, 0x65, 0x72, 0x44, 0x35, 0xd7, 0xe7, 0x2a, 0x44, 0x29, 0x14, 0xa1, 0x69,
 	0x62, 0x2d, 0xda, 0xaf, 0x67, 0x87, 0x2d, 0x6d, 0xcf, 0x96, 0x40, 0x1d, 0xcb, 0x9e, 0x5c, 0x74 };
+static uint8_t blowfish_ctr1[] = {
+	0xad, 0xe9, 0x56, 0x40, 0xd8, 0x19, 0x01, 0x11, 0x60, 0x86, 0xba, 0x61, 0xa1, 0x14, 0x10, 0x1d,
+	0xe7, 0xa0, 0x4b, 0xb4, 0xc4, 0x3d, 0xa8, 0x30, 0x1f, 0x03, 0x71, 0xed, 0x6b, 0xf1, 0xa5, 0xf6,
+	0xa4, 0x11, 0x27, 0xba, 0x0d, 0xad, 0x9b, 0x30, 0xae, 0xad, 0x8f, 0x19, 0x0c, 0x84, 0x77, 0x41 };
 
-int test12()
+int test12(void)
 {
 	int result = RA_ERR_SUCCESS;
 #define TEST12_BLOCK_SIZE		4096
@@ -2675,6 +2789,25 @@ int test12()
 		goto _EXIT;
 	}
 
+	RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CTR);
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+	printHex("BLOWFISH/CTR = ", encrypted, writtenLen);
+	if (writtenLen != sizeof(blowfish_ctr1) || memcmp(encrypted, blowfish_ctr1, writtenLen)) {
+		printf("BLOWFISH/CTR encrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+
+	RaBlowfishSetIV(&ctx, iv);
+	writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+	if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+		printf("BLOWFISH/CTR decrypt failed\n");
+		result = RA_ERR_INVALID_DATA;
+	}
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
 	printf("BLOWFISH: random data encryption/decryption test\n");
 	for (ntry = 0; ntry < 20000 && result == RA_ERR_SUCCESS; ntry++)
 	{
@@ -2727,6 +2860,17 @@ int test12()
 		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
 		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
 			printf("BLOWFISH/OFB failed\n");
+			result = RA_ERR_INVALID_DATA;
+		}
+
+		memset(decrypted, 0, sizeof(decrypted));
+		RaBlowfishInit(&ctx, key, keyLen, RA_BLOCK_MODE_CTR);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishEncryptFinal(&ctx, input, inputLen, encrypted, RA_BLOCK_PADDING_PKCS7);
+		RaBlowfishSetIV(&ctx, iv);
+		writtenLen = RaBlowfishDecryptFinal(&ctx, encrypted, writtenLen, decrypted, RA_BLOCK_PADDING_PKCS7);
+		if (inputLen != writtenLen || memcmp(input, decrypted, writtenLen) != 0) {
+			printf("BLOWFISH/CTR failed\n");
 			result = RA_ERR_INVALID_DATA;
 		}
 
@@ -2832,7 +2976,7 @@ _EXIT:
 	return result;
 }
 
-typedef int(*FnTest)();
+typedef int(*FnTest)(void);
 struct StTest {
 	FnTest func;
 	char *func_name;
@@ -2858,7 +3002,7 @@ static struct StTest test_list[] =
 
 #define TEST_LIST_COUNT		(int)(sizeof(test_list)/sizeof(test_list[0]))
 
-int main()
+int main(void)
 {
 	int result;
 	int i;

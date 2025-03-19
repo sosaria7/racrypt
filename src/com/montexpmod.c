@@ -55,7 +55,7 @@ static inline void _RaMontMul128(bn_uint128_t* r, uint64_t a, uint64_t b)
 	r->low = (r1 & 0xffffffff) + (t2 << 32);
 	r->high = r2 + (t2 >> 32);
 #endif
-};
+}
 #endif
 
 // N must be prime number

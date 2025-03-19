@@ -390,7 +390,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 	{
 	default:
 	case RA_AES_128:
-#define N		(RA_KEY_LEN_AES_128 / sizeof(uint32_t))		// 4
+#define N		(int)(RA_KEY_LEN_AES_128 / sizeof(uint32_t))		// 4
 		ctx->nr = 11;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
@@ -416,7 +416,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 #undef N
 		break;
 	case RA_AES_192:
-#define N		(RA_KEY_LEN_AES_192 / sizeof(uint32_t))		// 6
+#define N		(int)(RA_KEY_LEN_AES_192 / sizeof(uint32_t))		// 6
 		ctx->nr = 13;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
@@ -460,7 +460,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 #undef N
 		break;
 	case RA_AES_256:
-#define N		(RA_KEY_LEN_AES_256 / sizeof(uint32_t))		// 8
+#define N		(int)(RA_KEY_LEN_AES_256 / sizeof(uint32_t))		// 8
 		ctx->nr = 15;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;

@@ -49,7 +49,7 @@ struct RaSha2Ctx
 	union {
 		void (*fnRaSha256Process)(struct RaSha2Ctx* ctx, const uint8_t data[64]);
 		void (*fnRaSha512Process)(struct RaSha2Ctx* ctx, const uint8_t data[128]);
-	};
+	} fn;
 };
 
 #define RA_DGST_LEN_MD2				16

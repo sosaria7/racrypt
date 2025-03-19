@@ -24,7 +24,7 @@
 
 #define RA_RAND_SEED_LEN		(32 + 4)
 
-static uint32_t RaRandomGetRandomSeed();
+static uint32_t RaRandomGetRandomSeed(void);
 static void RaRandomGetRandomSeedBytes(/*out*/uint8_t seedBytes[RA_RAND_SEED_LEN]);
 
 static int RaRandomInit(struct RaRandom *ctx, enum RaRandomAlgorithm algorithm, uint8_t *seed, int seed_len);
@@ -116,7 +116,7 @@ static int RaRandomInit(struct RaRandom *ctx, enum RaRandomAlgorithm algorithm, 
 	return RA_ERR_SUCCESS;
 }
 
-static uint32_t RaRandomGetRandomSeed()
+static uint32_t RaRandomGetRandomSeed(void)
 {
 	uint32_t seed;
 #ifdef _WIN32

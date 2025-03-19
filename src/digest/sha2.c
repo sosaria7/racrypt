@@ -7,6 +7,10 @@
 #include <string.h>
 #include <assert.h>
 
+#if defined(__GNUC__)
+	#define __fallthrough __attribute__((fallthrough))
+#endif
+
 #define RL(X, n)					((X << n) | (X >> (32 - n)))
 #define CHANGE_ENDIAN(X)            (RL(X, 8) & 0x00ff00ff) | (RL(X,24) & 0xff00ff00)
 
@@ -54,7 +58,7 @@ void RaSha256Init(struct RaSha2Ctx *ctx)
 	ctx->h[6] = 0x1f83d9ab;
 	ctx->h[7] = 0x5be0cd19;
 	ctx->algorithm = RA_DGST_SHA2_256;
-	ctx->fnRaSha256Process = RaSha256Process;
+	ctx->fn.fnRaSha256Process = RaSha256Process;
 #ifdef RACRYPT_USE_ASM_SHA256
 	RaSha256CheckForInstructionSet(ctx);
 #endif
@@ -74,7 +78,7 @@ void RaSha224Init(struct RaSha2Ctx *ctx)
 	ctx->h[6] = 0x64f98fa7;
 	ctx->h[7] = 0xbefa4fa4;
 	ctx->algorithm = RA_DGST_SHA2_224;
-	ctx->fnRaSha256Process = RaSha256Process;
+	ctx->fn.fnRaSha256Process = RaSha256Process;
 #ifdef RACRYPT_USE_ASM_SHA256
 	RaSha256CheckForInstructionSet(ctx);
 #endif
@@ -235,13 +239,13 @@ void RaSha256Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 
 	if (bufferRemain < 64 && bufferRemain <= len) {
 		memcpy(ctx->buffer + bufferFilled, data, bufferRemain);
-		ctx->fnRaSha256Process(ctx, ctx->buffer);
+		ctx->fn.fnRaSha256Process(ctx, ctx->buffer);
 		data += bufferRemain;
 		len -= bufferRemain;
 		bufferFilled = 0;
 	}
 	while (len >= 64) {
-		ctx->fnRaSha256Process(ctx, data);
+		ctx->fn.fnRaSha256Process(ctx, data);
 		data += 64;
 		len -= 64;
 	}
@@ -274,7 +278,7 @@ static void _RaSha256Final(struct RaSha2Ctx *ctx, /*out*/uint8_t *output)
 	bufferRemain = 64 - bufferFilled;
 	if (bufferRemain < 8) {
 		memset(ctx->buffer + bufferFilled, 0, bufferRemain);
-		ctx->fnRaSha256Process(ctx, ctx->buffer);
+		ctx->fn.fnRaSha256Process(ctx, ctx->buffer);
 		bufferRemain = 64;
 		bufferFilled = 0;
 	}
@@ -286,7 +290,7 @@ static void _RaSha256Final(struct RaSha2Ctx *ctx, /*out*/uint8_t *output)
 	val = (ctx->totalLen_l << 3);
 	PUT_UINT32_BE(ctx->buffer + 64 - 4, val);
 
-	ctx->fnRaSha256Process(ctx, ctx->buffer);
+	ctx->fn.fnRaSha256Process(ctx, ctx->buffer);
 
 	PUT_UINT32_BE(output, ctx->h[0]);
 	PUT_UINT32_BE(output + 4, ctx->h[1]);
@@ -359,7 +363,7 @@ void RaSha512Init(struct RaSha2Ctx *ctx)
 	ctx->h[6] = U64(0x1f83d9abfb41bd6b);
 	ctx->h[7] = U64(0x5be0cd19137e2179);
 	ctx->algorithm = RA_DGST_SHA2_512;
-	ctx->fnRaSha512Process = RaSha512Process;
+	ctx->fn.fnRaSha512Process = RaSha512Process;
 }
 
 void RaSha384Init(struct RaSha2Ctx *ctx)
@@ -376,7 +380,7 @@ void RaSha384Init(struct RaSha2Ctx *ctx)
 	ctx->h[6] = U64(0xdb0c2e0d64f98fa7);
 	ctx->h[7] = U64(0x47b5481dbefa4fa4);
 	ctx->algorithm = RA_DGST_SHA2_384;
-	ctx->fnRaSha512Process = RaSha512Process;
+	ctx->fn.fnRaSha512Process = RaSha512Process;
 }
 
 void RaSha512_224Init(struct RaSha2Ctx *ctx)
@@ -404,7 +408,7 @@ void RaSha512_224Init(struct RaSha2Ctx *ctx)
 	ctx->h[6] = U64(0x3f9d85a86a1d36c8);
 	ctx->h[7] = U64(0x1112e6ad91d692a1);
 	ctx->algorithm = RA_DGST_SHA2_512_224;
-	ctx->fnRaSha512Process = RaSha512Process;
+	ctx->fn.fnRaSha512Process = RaSha512Process;
 }
 
 void RaSha512_256Init(struct RaSha2Ctx *ctx)
@@ -433,7 +437,7 @@ void RaSha512_256Init(struct RaSha2Ctx *ctx)
 	ctx->h[7] = U64(0x0eb72ddc81c52ca2);
 
 	ctx->algorithm = RA_DGST_SHA2_512_256;
-	ctx->fnRaSha512Process = RaSha512Process;
+	ctx->fn.fnRaSha512Process = RaSha512Process;
 }
 
 static void RaSha512Process(struct RaSha2Ctx *ctx, const uint8_t data[128])
@@ -504,13 +508,13 @@ void RaSha512Update(struct RaSha2Ctx *ctx, const uint8_t *data, int len)
 
 	if (bufferRemain < 128 && bufferRemain <= len) {
 		memcpy(ctx->buffer + bufferFilled, data, bufferRemain);
-		ctx->fnRaSha512Process(ctx, ctx->buffer);
+		ctx->fn.fnRaSha512Process(ctx, ctx->buffer);
 		data += bufferRemain;
 		len -= bufferRemain;
 		bufferFilled = 0;
 	}
 	while (len >= 128) {
-		ctx->fnRaSha512Process(ctx, data);
+		ctx->fn.fnRaSha512Process(ctx, data);
 		data += 128;
 		len -= 128;
 	}
@@ -543,7 +547,7 @@ static void _RaSha512Final(struct RaSha2Ctx* ctx, /*out*/uint8_t *output)
 	bufferRemain = 128 - bufferFilled;
 	if (bufferRemain < 16) {
 		memset(ctx->buffer + bufferFilled, 0, bufferRemain);
-		ctx->fnRaSha512Process(ctx, ctx->buffer);
+		ctx->fn.fnRaSha512Process(ctx, ctx->buffer);
 		bufferRemain = 128;
 		bufferFilled = 0;
 	}
@@ -561,7 +565,7 @@ static void _RaSha512Final(struct RaSha2Ctx* ctx, /*out*/uint8_t *output)
 	val = (ctx->totalLen_l << 3);
 	PUT_UINT32_BE(ctx->buffer + 128 - 4, val);
 
-	ctx->fnRaSha512Process(ctx, ctx->buffer);
+	ctx->fn.fnRaSha512Process(ctx, ctx->buffer);
 
 	PUT_UINT64_BE(output, ctx->h[0]);
 	PUT_UINT64_BE(output + 8, ctx->h[1]);
@@ -571,9 +575,11 @@ static void _RaSha512Final(struct RaSha2Ctx* ctx, /*out*/uint8_t *output)
 	case RA_DGST_SHA2_512:	default:
 		PUT_UINT64_BE(output + 56, ctx->h[7]);
 		PUT_UINT64_BE(output + 48, ctx->h[6]);
+		__fallthrough;
 	case RA_DGST_SHA2_384:
 		PUT_UINT64_BE(output + 40, ctx->h[5]);
 		PUT_UINT64_BE(output + 32, ctx->h[4]);
+		__fallthrough;
 	case RA_DGST_SHA2_512_256:
 		PUT_UINT64_BE(output + 24, ctx->h[3]);
 		break;
