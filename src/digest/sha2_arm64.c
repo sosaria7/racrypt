@@ -183,7 +183,7 @@ void RaSha256CheckForInstructionSet( struct RaSha2Ctx *ctx )
     );
 
     // Check if the SHA-2 instructions are supported (bits [15:12] should be 0b0001 or 0b0010)
-    if (((id_aa64isar0 >> 12) & 0xF) != 0b0000) {
+    if (((id_aa64isar0 >> 12) & 0xF) != 0) {
         ctx->fn.fnRaSha256Process = RaSha256Process_arm64;
     }
 #endif
