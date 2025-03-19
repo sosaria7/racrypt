@@ -18,7 +18,8 @@ enum RaBlockCipherMode {
 	RA_BLOCK_MODE_ECB,
 	RA_BLOCK_MODE_CBC,
 	RA_BLOCK_MODE_CFB,
-	RA_BLOCK_MODE_OFB
+	RA_BLOCK_MODE_OFB,
+	RA_BLOCK_MODE_CTR // Added CTR mode
 };
 
 enum RaBlockCipherPaddingType {

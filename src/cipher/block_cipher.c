@@ -41,6 +41,18 @@ static void RaBlockCipherEncryptBlock(struct RaBlockCipher *ctx, const uint8_t *
 		}
 		memcpy(output, tmpOutput, ctx->blockSize);
 		break;
+	case RA_BLOCK_MODE_CTR:
+		// Increment the counter byte-wise
+		for (i = ctx->blockSize - 1; i >= 0; i--) {
+			if (++((uint8_t *)ctx->iv)[i] != 0) break;
+		}
+		ctx->encryptBlock(ctx, (uint8_t *)ctx->iv, (uint8_t *)tmpOutput);
+		memcpy(tmpInput, input, ctx->blockSize);
+		for (i = 0; i < ctx->blockSize / 4; i++) {
+			tmpOutput[i] ^= tmpInput[i];
+		}
+		memcpy(output, tmpOutput, ctx->blockSize);
+		break;
 	}
 }
 
@@ -76,6 +88,18 @@ static void RaBlockCipherDecryptBlock(struct RaBlockCipher *ctx, const uint8_t *
 		memcpy(tmpOutput, input, ctx->blockSize);
 		for (i = 0; i < ctx->blockSize / 4; i++) {
 			tmpOutput[i] ^= ((uint32_t *)ctx->iv)[i];
+		}
+		memcpy(output, tmpOutput, ctx->blockSize);
+		break;
+	case RA_BLOCK_MODE_CTR:
+		// Increment the counter byte-wise
+		for (i = ctx->blockSize - 1; i >= 0; i--) {
+			if (++((uint8_t *)ctx->iv)[i] != 0) break;
+		}
+		ctx->encryptBlock(ctx, (uint8_t *)ctx->iv, (uint8_t *)tmpOutput);
+		memcpy(tmpInput, input, ctx->blockSize);
+		for (i = 0; i < ctx->blockSize / 4; i++) {
+			tmpOutput[i] ^= tmpInput[i];
 		}
 		memcpy(output, tmpOutput, ctx->blockSize);
 		break;
