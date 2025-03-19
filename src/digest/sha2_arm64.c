@@ -172,6 +172,9 @@ static void RaSha256Process_arm64(struct RaSha2Ctx *ctx, const uint8_t data[64])
 
 void RaSha256CheckForInstructionSet( struct RaSha2Ctx *ctx )
 {
+#ifdef __APPLE__
+    ctx->fnRaSha256Process = RaSha256Process_arm64;
+#else
     uint64_t id_aa64isar0;
     // Read the ID_AA64ISAR0_EL1 system register to check for SHA-2 support
     __asm__ __volatile__ (
@@ -183,5 +186,6 @@ void RaSha256CheckForInstructionSet( struct RaSha2Ctx *ctx )
     if (((id_aa64isar0 >> 12) & 0xF) != 0b0000) {
         ctx->fnRaSha256Process = RaSha256Process_arm64;
     }
+#endif
 }
 
