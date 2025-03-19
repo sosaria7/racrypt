@@ -68,7 +68,7 @@ jobs:
 
     - run: |
         echo "Run, Build Application using script"
-        cmake --build . --config Release --target all -j 10 --
+        cmake . && cmake --build . --config Release --target all -j 10 --
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
