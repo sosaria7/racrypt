@@ -209,16 +209,11 @@ int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a
 		for (j = 0; j < ctx->N->length; j++)
 		{
 			//val = (*nd) * m + (val >> 64) + c;
-			cw = val.high;
+			cw = val.high + c;
 			_RaMontMul128(&val, *nd, m);
 			val.low += cw;
 			if (val.low < cw)
 				val.high++;
-			if (c != 0) {
-				val.low++;
-				if (val.low == 0)
-					val.high++;
-			}
 
 			*td += val.low;
 			c = ((*td) < val.low);

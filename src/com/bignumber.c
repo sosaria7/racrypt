@@ -440,19 +440,12 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 		rd = &r->data[i];
 
 		for (j = 0; j < a->length; j++) {
-			cw = val.high;
+			cw = val.high + c;
 			_BnMul128(&val, *ad, *bd);
 
 			val.low += cw;
-			if (c != 0) {
-				val.low++;
-				if (val.low <= cw)
-					val.high++;
-			}
-			else {
-				if (val.low < cw)
-					val.high++;
-			}
+			if (val.low < cw)
+				val.high++;
 
 			*rd += val.low;
 			c = ((*rd) < val.low);
@@ -530,19 +523,12 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 		rd = &r->data[i];
 
 		for (j = 0; j < a->length; j++) {
-			cw = val.high;
+			cw = val.high + c;
 			_BnMul128(&val, *ad, *bd);
 
 			val.low += cw;
-			if (c != 0) {
-				val.low++;
-				if (val.low <= cw)
-					val.high++;
-			}
-			else {
-				if (val.low < cw)
-					val.high++;
-			}
+			if (val.low < cw)
+				val.high++;
 
 			*rd += val.low;
 			c = ((*rd) < val.low);
