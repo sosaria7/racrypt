@@ -225,13 +225,8 @@ int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a
 		if (val.high > 0)
 		{
 			// val = (*td) + (val >> 64) + c;
-			val.low = val.high;
+			val.low = val.high + c;
 			val.high = 0;
-			if (c != 0) {
-				val.low++;
-				if (val.low == 0)
-					val.high++;
-			}
 
 			*td += val.low;
 			c = ((*td) < val.low) | (int)val.high;
