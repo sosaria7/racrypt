@@ -229,7 +229,7 @@ int MontREDC(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a
 			val.high = 0;
 
 			*td += val.low;
-			c = ((*td) < val.low) | (int)val.high;
+			c = ((*td) < val.low);
 
 			td++;
 		}
