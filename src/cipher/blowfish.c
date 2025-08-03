@@ -317,8 +317,16 @@ int RaBlowfishCreate(const uint8_t *key, int keyLen, enum RaBlockCipherMode opMo
 void RaBlowfishDestroy(struct RaBlowfishCtx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaBlowfishCtx));
+		RaBlowfishCleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaBlowfishCleanup(struct RaBlowfishCtx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including keys and internal state
+		memset(ctx, 0, sizeof(struct RaBlowfishCtx));
 	}
 }
 

@@ -115,6 +115,13 @@ void RaAesDestroy(struct RaAesCtx *ctx);
 void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode);
 
 /**
+* @brief Cleanup AES block encryption/decryption context
+*
+* @param ctx		AES context to cleanup
+*/
+void RaAesCleanup(struct RaAesCtx *ctx);
+
+/**
 * @brief Set initialization vector
 *
 * @param ctx		AES context
@@ -232,6 +239,13 @@ int RaDesCreate(const uint8_t *key, enum RaDesKeyType keyType, enum RaBlockCiphe
 * @param ctx		DES context to destroy
 */
 void RaDesDestroy(struct RaDesCtx *ctx);
+
+/**
+* @brief Cleanup DES block encryption/decryption context
+*
+* @param ctx		DES context to cleanup
+*/
+void RaDesCleanup(struct RaDesCtx *ctx);
 
 /**
 * @brief Initialize DES block encryption/decryption context
@@ -352,6 +366,13 @@ int RaSeedCreate(const uint8_t *key, enum RaBlockCipherMode opMode, struct RaSee
 * @param ctx		SEED context to destroy
 */
 void RaSeedDestroy(struct RaSeedCtx *ctx);
+
+/**
+* @brief Cleanup SEED block encryption/decryption context
+*
+* @param ctx		SEED context to cleanup
+*/
+void RaSeedCleanup(struct RaSeedCtx *ctx);
 
 /**
 * @brief Initialize SEED block encryption/decryption context
@@ -479,6 +500,13 @@ int RaAriaCreate(const uint8_t *key, enum RaAriaKeyType keyType, enum RaBlockCip
 void RaAriaDestroy(struct RaAriaCtx *ctx);
 
 /**
+* @brief Cleanup ARIA block encryption/decryption context
+*
+* @param ctx		ARIA context to cleanup
+*/
+void RaAriaCleanup(struct RaAriaCtx *ctx);
+
+/**
 * @brief Initialize ARIA block encryption/decryption context
 *
 * @param ctx		ARIA context
@@ -598,6 +626,13 @@ int RaBlowfishCreate(const uint8_t *key, int keyLen, enum RaBlockCipherMode opMo
 void RaBlowfishDestroy(struct RaBlowfishCtx* ctx);
 
 /**
+* @brief Cleanup Blowfish block encryption/decryption context
+*
+* @param ctx		Blowfish context to cleanup
+*/
+void RaBlowfishCleanup(struct RaBlowfishCtx* ctx);
+
+/**
 * @brief Initialize Blowfish block encryption/decryption context
 *
 * @param ctx		Blowfish context
@@ -709,6 +744,13 @@ int RaRc4Create(const uint8_t *key, int keyLen, struct RaRc4Ctx **ctxp);
 * @param ctx		RC4 context to destroy
 */
 void RaRc4Destroy(struct RaRc4Ctx *ctx);
+
+/**
+* @brief Cleanup RC4 stream encryption/decryption context
+*
+* @param ctx		RC4 context to cleanup
+*/
+void RaRc4Cleanup(struct RaRc4Ctx *ctx);
 
 /**
 * @brief Initialize RC4 stream encryption/decryption context

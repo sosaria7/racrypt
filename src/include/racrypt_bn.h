@@ -48,10 +48,42 @@ struct RaBigNumber
 	bn_uint_t* data;
 };
 
+/**
+* @brief Create new big number with specified word length
+*
+* @param length		maximum word length for the big number
+* @return			pointer to new big number, or NULL on failure
+*/
 struct RaBigNumber* BnNewW(int length);
+
+/**
+* @brief Create new big number with specified bit length
+*
+* @param bit		maximum bit length for the big number
+* @return			pointer to new big number, or NULL on failure
+*/
 struct RaBigNumber* BnNew(int bit);
+
+/**
+* @brief Create a copy of existing big number
+*
+* @param bn			big number to clone
+* @return			pointer to cloned big number, or NULL on failure
+*/
 struct RaBigNumber* BnClone(struct RaBigNumber* bn);
+
+/**
+* @brief Free big number memory
+*
+* @param bn			big number to free
+*/
 void BnFree(struct RaBigNumber* bn);
+
+/**
+* @brief Clear and free big number memory
+*
+* @param bn			big number to clear and free
+*/
 void BnClearFree(struct RaBigNumber* bn);
 
 void BnSetInt(struct RaBigNumber* bn, bn_int_t value);

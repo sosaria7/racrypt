@@ -322,8 +322,16 @@ int RaSeedCreate(const uint8_t *key, enum RaBlockCipherMode opMode, struct RaSee
 void RaSeedDestroy(struct RaSeedCtx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaSeedCtx));
+		RaSeedCleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaSeedCleanup(struct RaSeedCtx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including keys and internal state
+		memset(ctx, 0, sizeof(struct RaSeedCtx));
 	}
 }
 

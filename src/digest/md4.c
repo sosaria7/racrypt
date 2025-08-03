@@ -39,8 +39,16 @@ int RaMd4Create(struct RaMd4Ctx **ctxp)
 void RaMd4Destroy(struct RaMd4Ctx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaMd4Ctx));
+		RaMd4Cleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaMd4Cleanup(struct RaMd4Ctx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including hash state and internal buffers
+		memset(ctx, 0, sizeof(struct RaMd4Ctx));
 	}
 }
 

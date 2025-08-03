@@ -39,8 +39,16 @@ int RaSha2Create(enum RaDigestAlgorithm algorithm, struct RaSha2Ctx **ctxp)
 void RaSha2Destroy(struct RaSha2Ctx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaSha2Ctx));
+		RaSha2Cleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaSha2Cleanup(struct RaSha2Ctx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including hash state and internal buffers
+		memset(ctx, 0, sizeof(struct RaSha2Ctx));
 	}
 }
 

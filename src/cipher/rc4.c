@@ -22,8 +22,16 @@ int RaRc4Create(const uint8_t* key, int keyLen, struct RaRc4Ctx** ctxp)
 void RaRc4Destroy(struct RaRc4Ctx* ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaRc4Ctx));
+		RaRc4Cleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaRc4Cleanup(struct RaRc4Ctx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including keys and internal state
+		memset(ctx, 0, sizeof(struct RaRc4Ctx));
 	}
 }
 

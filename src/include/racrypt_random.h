@@ -29,41 +29,48 @@ struct RaRandom {
 };
 
 /**
-* @brief Create random context
+* @brief Create random number generator context
 *
-* @param ctx		random context
+* @param algorithm	hash algorithm to use for random generation
+* @param seed		initial seed data
+* @param seed_len	length of seed data
+* @param ctxp		pointer for receiving random context
+* @retval RA_ERR_SUCCESS		success
+* @retval RA_ERR_OUT_OF_MEMORY	memory allocation failure
 */
 int RaRandomCreate(enum RaRandomAlgorithm algorithm, uint8_t *seed, int seed_len, struct RaRandom **ctxp);
 
 /**
-* @brief Destroy random context
+* @brief Destroy random number generator context
 *
-* @param ctx		random context
+* @param ctx		random context to destroy
 */
 void RaRandomDestroy(struct RaRandom *ctx);
 
 /**
-* @brief Get random bytes
+* @brief Generate random bytes
 *
-* @param ctx		random context
-* @param len		number of bytes to get
-* @param buffer		buffer to get random bytes
+* @param ctx		random number generator context
+* @param len		number of bytes to generate
+* @param buffer		output buffer for random bytes
 */
 void RaRandomBytes(struct RaRandom *ctx, int len, /*out*/uint8_t *buffer);
 
 /**
-* @brief Get random real number between 0 to 1
+* @brief Generate random real number between 0 and 1
 *
-* @param ctx		Random context
+* @param ctx		random number generator context
 * @return			random real number between 0 to 1, not including 0 and 1
 */
 double RaRandom(struct RaRandom *ctx);
 
 /**
-* @brief Get random integer number between min to max
+* @brief Generate random integer number within range
 *
-* @param ctx		Random context
-* @return			random real number between min to max, including min and max
+* @param ctx		random number generator context
+* @param min		minimum value (inclusive)
+* @param max		maximum value (inclusive)
+* @return			random integer number between min and max, including min and max
 */
 uint32_t RaRandomInt(struct RaRandom *ctx, uint32_t min, uint32_t max);
 

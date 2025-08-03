@@ -347,6 +347,10 @@ static void RaAesDecryptBlock(struct RaBlockCipher *blockCipher, const uint8_t *
 
 void RaAesCheckForInstructionSet(struct RaBlockCipher* blockCipher);
 
+#define AES_NR_128  11
+#define AES_NR_192  13
+#define AES_NR_256  15
+
 int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCipherMode opMode, struct RaAesCtx **ctxp)
 {
 	struct RaAesCtx *ctx;
@@ -364,8 +368,16 @@ int RaAesCreate(const uint8_t *key, enum RaAesKeyType keyType, enum RaBlockCiphe
 void RaAesDestroy(struct RaAesCtx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaAesCtx));
+		RaAesCleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaAesCleanup(struct RaAesCtx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including keys and internal state
+		memset(ctx, 0, sizeof(struct RaAesCtx));
 	}
 }
 
@@ -391,7 +403,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 	default:
 	case RA_AES_128:
 #define N		(int)(RA_KEY_LEN_AES_128 / sizeof(uint32_t))		// 4
-		ctx->nr = 11;
+		ctx->nr = AES_NR_128;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
 		tmpKey = prevKey[N - 1];
@@ -417,7 +429,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 		break;
 	case RA_AES_192:
 #define N		(int)(RA_KEY_LEN_AES_192 / sizeof(uint32_t))		// 6
-		ctx->nr = 13;
+		ctx->nr = AES_NR_192;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
 		tmpKey = prevKey[N - 1];
@@ -461,7 +473,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 		break;
 	case RA_AES_256:
 #define N		(int)(RA_KEY_LEN_AES_256 / sizeof(uint32_t))		// 8
-		ctx->nr = 15;
+		ctx->nr = AES_NR_256;
 		memcpy(prevKey, key, N * sizeof(uint32_t));
 		curKey = prevKey + N;
 		tmpKey = prevKey[N - 1];

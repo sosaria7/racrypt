@@ -569,8 +569,16 @@ int RaDesCreate(const uint8_t *key, enum RaDesKeyType keyType, enum RaBlockCiphe
 void RaDesDestroy(struct RaDesCtx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaDesCtx));
+		RaDesCleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaDesCleanup(struct RaDesCtx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including keys and internal state
+		memset(ctx, 0, sizeof(struct RaDesCtx));
 	}
 }
 

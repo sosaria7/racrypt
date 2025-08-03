@@ -30,8 +30,16 @@ int RaSha1Create(struct RaSha1Ctx **ctxp)
 void RaSha1Destroy(struct RaSha1Ctx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaSha1Ctx));
+		RaSha1Cleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaSha1Cleanup(struct RaSha1Ctx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including hash state and internal buffers
+		memset(ctx, 0, sizeof(struct RaSha1Ctx));
 	}
 }
 

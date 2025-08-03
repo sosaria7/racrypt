@@ -362,8 +362,16 @@ int RaAriaCreate(const uint8_t *key, enum RaAriaKeyType keyType, enum RaBlockCip
 void RaAriaDestroy(struct RaAriaCtx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaAriaCtx));
+		RaAriaCleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaAriaCleanup(struct RaAriaCtx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including keys and internal state
+		memset(ctx, 0, sizeof(struct RaAriaCtx));
 	}
 }
 

@@ -34,8 +34,16 @@ int RaHas160Create(struct RaHas160Ctx **ctxp)
 void RaHas160Destroy(struct RaHas160Ctx *ctx)
 {
 	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(struct RaHas160Ctx));
+		RaHas160Cleanup(ctx);
 		free(ctx);
+	}
+}
+
+void RaHas160Cleanup(struct RaHas160Ctx *ctx)
+{
+	if (ctx != NULL) {
+		// Clear all sensitive data including hash state and internal buffers
+		memset(ctx, 0, sizeof(struct RaHas160Ctx));
 	}
 }
 
