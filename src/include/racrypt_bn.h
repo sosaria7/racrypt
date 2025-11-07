@@ -149,6 +149,13 @@ struct RaMontCtx;
 int RaMontCreate(struct RaBigNumber* N, /*out*/struct RaMontCtx** montCtx);
 void RaMontDestroy(struct RaMontCtx* ctx);
 int RaMontExpMod(struct RaMontCtx* ctx, /*out*/struct RaBigNumber* r, struct RaBigNumber* a, struct RaBigNumber* b);
+int RaMontNeg(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a);
+int RaMontAdd(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
+int RaMontSub(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
+int RaMontMul(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
+int RaMontDiv(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b);
+int RaMontSqr(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a);
+int RaMontSqrt(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a);
 
 /* prime */
 int RaGenPrimeNumber(struct RaBigNumber* bn, int bit);

@@ -44,8 +44,8 @@ int RaRsaCreateKeyPair(int bit, /*out*/struct RaRsaKeyPair** keyPair) {
 	key->priv = BnNew(bit);
 	key->prime1 = BnNew(bit/2);
 	key->prime2 = BnNew(bit/2);
-	key->exp1 = BnNew(bit*2);
-	key->exp2 = BnNew(bit*2);
+	key->exp1 = BnNew(bit);
+	key->exp2 = BnNew(bit);
 	key->coeff = BnNew(bit);
 	key->mont = NULL;
 	phi = BnNew(bit);
@@ -562,7 +562,7 @@ int RaRsaPrivKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, 
 	int bytelen;
 	int len;
 	bit = BnGetBitLength(key->mod);
-	bytelen = bit * 8 + 1;	// max
+	bytelen = (bit + 7) / 8 + 1;	// max
 
 	if (key->priv == NULL) {
 		result = RA_ERR_INVALID_DATA;
@@ -735,7 +735,7 @@ int RaRsaPubKeyToByteArray(struct RaRsaKeyPair* key, /*out*/uint8_t *asn1Data, i
 	int bytelen;
 	int len;
 	bit = BnGetBitLength(key->mod);
-	bytelen = bit * 8 + 1;	// max
+	bytelen = (bit + 7) / 8 + 1;	// max
 
 	temp = (uint8_t*)malloc(bytelen);
 	if (temp == NULL) {
