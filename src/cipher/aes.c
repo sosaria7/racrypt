@@ -530,7 +530,7 @@ void RaAesInit(struct RaAesCtx *ctx, const uint8_t *key, enum RaAesKeyType keyTy
 
 	// rev_key = key * rev_mix_col = rev_sub(sub(key)) * rev_mix_col = rev_lookup(sub(key))
 	for (i = 0; i < ctx->nr; i++) {
-#define I(x,y)		s[W2B( prevKey[x], y )]
+#define I(x,y)		s[W2B(prevKey[x], y)]
 		curKey[0] = RT0(I(0, 0)) ^ RT1(I(0, 1)) ^ RT2(I(0, 2)) ^ RT3(I(0, 3));
 		curKey[1] = RT0(I(1, 0)) ^ RT1(I(1, 1)) ^ RT2(I(1, 2)) ^ RT3(I(1, 3));
 		curKey[2] = RT0(I(2, 0)) ^ RT1(I(2, 1)) ^ RT2(I(2, 2)) ^ RT3(I(2, 3));

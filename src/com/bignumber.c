@@ -330,6 +330,9 @@ int BnCmpUInt(struct RaBigNumber *a, bn_uint_t val)
 int BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int ret;
+	assert(r != a);
+	assert(r != b);
+
 	if (a->sign ^ b->sign) {
 		if (_BnCmp(a, b) > 0) {
 			ret = _BnSub(r, a, b);
@@ -351,6 +354,9 @@ int BnAdd(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 int BnSub(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	int ret;
+	assert(r != a);
+	assert(r != b);
+
 	if (a->sign ^ b->sign) {
 		ret = _BnAdd(r, a, b);
 		r->sign = a->sign;
@@ -375,6 +381,7 @@ int BnDouble(struct RaBigNumber *r, struct RaBigNumber *a)
 	int c;
 	bn_uint_t *rd;
 	bn_uint_t *ad;
+	assert(r != a);
 
 	if (r->max_length < a->length) {
 		assert(0);
@@ -412,6 +419,8 @@ int BnMul(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 	bn_uint_t *ad;
 	bn_uint_t *bd;
 	bn_uint_t *rd;
+	assert(r != a);
+	assert(r != b);
 
 	if (BN_ISZERO(a) || BN_ISZERO(b)) {
 		BnSetUInt(r, 0);
@@ -496,6 +505,8 @@ int BnSqr(struct RaBigNumber *r, struct RaBigNumber *a)
 	bn_uint_t *bd;
 	bn_uint_t *rd;
 
+	assert(r != a);
+
 	if (BN_ISZERO(a) || BN_ISONE(a)) {
 		BnSet(r, a);
 		return RA_ERR_SUCCESS;
@@ -576,6 +587,7 @@ int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 	struct RaBigNumber *aa;		// a << n
 	struct RaBigNumber *bb;		// b << n
 	struct RaBigNumber *bq;		// b * q
+	struct RaBigNumber *rr;		// r << n
 	int bit;
 #if BN_WORD_BYTE == 8
 	bn_uint128_t ru;
@@ -604,11 +616,13 @@ int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 	aa = BnNewW(a->length + 1);		// a << n
 	bb = BnNewW(b->length + 1);		// b << n
 	bq = BnNewW(b->length + 1);		// b * qu(32bit)
+	rr = BnNewW(b->length + 1);		// r << n
 
-	if (aa == NULL || bb == NULL || bq == NULL) {
+	if (aa == NULL || bb == NULL || bq == NULL || rr == NULL) {
 		BN_SAFEFREE(aa);
 		BN_SAFEFREE(bb);
 		BN_SAFEFREE(bq);
+		BN_SAFEFREE(rr);
 		return RA_ERR_OUT_OF_MEMORY;
 	}
 
@@ -622,31 +636,31 @@ int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 
 	// copy first bb->length-1 of aa->data to r
 	// this reduce loop count until r gets greater than bb
-	BnSetInt(r, 0);
+	BnSetInt(rr, 0);
 	if (b->length > 1) {
-		memcpy(r->data, aa->data + aa->length - bb->length + 1, sizeof(bn_uint_t) * ((size_t)bb->length - 1));
-		r->data[bb->length] = 0;
-		r->length = bb->length - 1;
+		memcpy(rr->data, aa->data + aa->length - bb->length + 1, sizeof(bn_uint_t) * ((size_t)bb->length - 1));
+		rr->data[bb->length] = 0;
+		rr->length = bb->length - 1;
 	}
 
 	bu = bb->data[bb->length - 1];		// highst word of bb
 	ad = &aa->data[aa->length - bb->length];
-	rd = &r->data[bb->length - 1];
+	rd = &rr->data[bb->length - 1];
 
 #if BN_WORD_BYTE == 8
 	ru.high = 0;
 	ru.low = 0;
 
 	while (ad >= aa->data) {
-		BnShiftL(r, 64);
-		r->data[0] = (*ad);
+		BnShiftL(rr, 64);
+		rr->data[0] = (*ad);
 
 		// check the length
-		if (r->length > b->length) {
+		if (rr->length > b->length) {
 			ru.low = *rd;
 			ru.high = *(rd + 1);
 		}
-		else if (r->length == b->length) {
+		else if (rr->length == b->length) {
 			ru.low = *rd;
 			ru.high = 0;
 		}
@@ -660,11 +674,11 @@ int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 
 			BnSet(bq, bb);
 			BnMulUInt(bq, qu);		// bq = bb * qu
-			while (_BnCmp(r, bq) < 0) {
+			while (_BnCmp(rr, bq) < 0) {
 				_BnSubR(bq, bb);
 				qu--;
 			}
-			_BnSubR(r, bq);		// rr -= bb * qu
+			_BnSubR(rr, bq);		// rr -= bb * qu
 		}
 
 		ad--;
@@ -673,13 +687,13 @@ int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 	ru = 0;
 
 	while (ad >= aa->data) {
-		BnShiftL(r, 32);
-		r->data[0] = (*ad);
+		BnShiftL(rr, 32);
+		rr->data[0] = (*ad);
 
 		// check the length
-		if (r->length > b->length)
+		if (rr->length > b->length)
 			ru = ((uint64_t)(*(rd + 1)) << 32) | (*rd);
-		else if (r->length == b->length)
+		else if (rr->length == b->length)
 			ru = *rd;
 		else
 			ru = 0;
@@ -692,27 +706,37 @@ int BnMod(struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 
 			BnSet(bq, bb);
 			BnMulUInt(bq, qu);		// bq = bb * qu
-			while (_BnCmp(r, bq) < 0) {
+			while (_BnCmp(rr, bq) < 0) {
 				_BnSubR(bq, bb);
 				qu--;
 			}
-			_BnSubR(r, bq);		// rr -= bb * qu
+			_BnSubR(rr, bq);		// rr -= bb * qu
 		}
 
 		ad--;
 	}
 #endif
 
-	BnShiftR(r, (uint32_t)bit);
-	r->sign = a->sign;
+	BnShiftR(rr, (uint32_t)bit);
+
+	rr->sign = a->sign;
+	if ((a->sign ^ b->sign) && !BN_ISZERO(rr)) {
+		BnAdd(r, rr, b);
+	}
+	else {
+		BnSet(r, rr);
+	}
 
 	BnFree(aa);
 	BnFree(bb);
 	BnFree(bq);
+	BnFree(rr);
 
 	return RA_ERR_SUCCESS;
 }
 
+// q = a / b
+// r = a % b
 int BnDiv(struct RaBigNumber *q, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
 {
 	struct RaBigNumber *rr;
@@ -1423,7 +1447,7 @@ int BnGenRandom(struct RaBigNumber *bn, int bit, struct RaRandom *rnd)
 	bit %= BN_WORD_BIT;
 
 	if (bit > 0) {
-		bn->data[word - 1] &= (1 << bit) - 1;
+		bn->data[word - 1] &= ((bn_uint_t)1 << bit) - 1;
 	}
 	bn->length = word;
 	while (bn->length > 1 && bn->data[bn->length - 1] == 0)

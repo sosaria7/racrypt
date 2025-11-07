@@ -468,6 +468,236 @@ _EXIT:
 	return result;
 }
 
+#define TEST2_1_BIT_LEN		1024
+#define TEST2_1_COUNT		400
+int test2_1(void)
+{
+	int result = RA_ERR_SUCCESS;
+	struct RaBigNumber *N = NULL;
+	struct RaBigNumber *val = NULL;
+	struct RaBigNumber *sqr = NULL;
+	struct RaBigNumber *sqrt = NULL;
+	struct RaMontCtx *mont = NULL;
+	struct RaRandom *rand = NULL;
+	int i;
+
+	N = BnNew(TEST2_1_BIT_LEN);
+	val = BnNew(TEST2_1_BIT_LEN);
+	sqr = BnNew(TEST2_1_BIT_LEN * 2);
+	sqrt = BnNew(TEST2_1_BIT_LEN);
+	if (N == NULL || val == NULL || sqr == NULL || sqrt == NULL) {
+		result = RA_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+	result = RaRandomCreate(RA_RAND_SHA512, NULL, 0, &rand);
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	for (i = 0; i < TEST2_1_COUNT; i++)
+	{
+		if ((i% 10) == 0) {
+			printf(".");
+			fflush(stdout);
+			result = RaGenPrimeNumberEx(N, TEST2_1_BIT_LEN, NULL, NULL, rand);
+			if (result != RA_ERR_SUCCESS)
+			{
+				goto _EXIT;
+			}
+		}
+
+		result = BnGenRandom(val, TEST2_1_BIT_LEN, rand);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		result = BnMod(val, val, N);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontCreate(N, &mont);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontSqr(mont, sqr, val);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontSqrt(mont, sqrt, sqr);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontSqr(mont, val, sqrt);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		RaMontDestroy(mont);
+		mont = NULL;
+
+		if (BnCmp(sqr, val) != 0)
+		{
+			printf("\n");
+			BnPrint(sqrt);
+			printf(" ** 2 = \n");
+			printf("orig: ");
+			BnPrintLn(sqr);
+			printf("sqr : ");
+			BnPrintLn(val);
+			result = RA_ERR_INVALID_DATA;
+			goto _EXIT;
+		}
+	}
+
+_EXIT:
+	printf("\n");
+
+	if (result == RA_ERR_SUCCESS)
+	{
+		printf("Montgomery sqrt test ok\n");
+	}
+	if (rand != NULL)
+		RaRandomDestroy(rand);
+	if (mont != NULL)
+		RaMontDestroy(mont);
+	BN_SAFEFREE(N);
+	BN_SAFEFREE(val);
+	BN_SAFEFREE(sqr);
+	BN_SAFEFREE(sqrt);
+
+	return result;
+}
+
+
+#define TEST2_2_BIT_LEN		1024
+#define TEST2_2_COUNT		400
+int test2_2(void)
+{
+	int result = RA_ERR_SUCCESS;
+	struct RaBigNumber *N = NULL;
+	struct RaBigNumber *val1 = NULL;
+	struct RaBigNumber *val2 = NULL;
+	struct RaBigNumber *mul = NULL;
+	struct RaBigNumber *div = NULL;
+	struct RaMontCtx *mont = NULL;
+	struct RaRandom *rand = NULL;
+	int i;
+
+	N = BnNew(TEST2_2_BIT_LEN);
+	val1 = BnNew(TEST2_2_BIT_LEN);
+	val2 = BnNew(TEST2_2_BIT_LEN);
+	mul = BnNew(TEST2_2_BIT_LEN * 2);
+	div = BnNew(TEST2_2_BIT_LEN);
+	if (N == NULL || val1 == NULL || val2 == NULL || mul == NULL || div == NULL) {
+		result = RA_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+	result = RaRandomCreate(RA_RAND_SHA512, NULL, 0, &rand);
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	for(i = 0; i < TEST2_2_COUNT; i++) {
+		if ((i% 10) == 0) {
+			printf(".");
+			fflush(stdout);
+			result = RaGenPrimeNumberEx(N, TEST2_2_BIT_LEN, NULL, NULL, rand);
+			if (result != RA_ERR_SUCCESS)
+			{
+				goto _EXIT;
+			}
+		}
+
+		result = BnGenRandom(val1, TEST2_2_BIT_LEN, rand);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		result = BnMod(val1, val1, N);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = BnGenRandom(val2, TEST2_2_BIT_LEN, rand);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		result = BnMod(val2, val2, N);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontCreate(N, &mont);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontDiv(mont, div, val1, val2);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontMul(mont, mul, div, val2);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		RaMontDestroy(mont);
+		mont = NULL;
+
+		if (BnCmp(mul, val1) != 0)
+		{
+			printf("\n");
+			printf("N = ");
+			BnPrintLn(N);
+			BnPrintLn(val1);
+			printf(" / ");
+			BnPrintLn(val2);
+			printf(" = ");
+			BnPrintLn(div);
+			printf(" * ");
+			BnPrintLn(val2);
+			printf(" = ");
+			BnPrintLn(mul);
+			result = RA_ERR_INVALID_DATA;
+			goto _EXIT;
+		}
+	}
+
+_EXIT:
+	printf("\n");
+
+	if (result == RA_ERR_SUCCESS)
+	{
+		printf("Montgomery mul,div test ok\n");
+	}
+	if (rand != NULL)
+		RaRandomDestroy(rand);
+	if (mont != NULL)
+		RaMontDestroy(mont);
+	BN_SAFEFREE(N);
+	BN_SAFEFREE(val1);
+	BN_SAFEFREE(val2);
+	BN_SAFEFREE(mul);
+	BN_SAFEFREE(div);
+
+	return result;
+}
+
 int test3(void)
 {
 #define TEST3_KEY_BIT		2048
@@ -2987,6 +3217,8 @@ static struct StTest test_list[] =
 {
 	TEST_FUNC(test1),
 	TEST_FUNC(test2),
+	TEST_FUNC(test2_1),
+	TEST_FUNC(test2_2),
 	TEST_FUNC(test3),
 	TEST_FUNC(test4),
 	TEST_FUNC(test5),

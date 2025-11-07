@@ -341,12 +341,15 @@ int RaMontExpMod(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaB
 
 	result = MontSet(ctx, val, a);
 	if (result != RA_ERR_SUCCESS) goto _EXIT;
-	MontSqr(ctx, val, val);
-	result = MontSet(ctx, window[0], a);
+	result = BnSet(window[0], val);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
+
+	result = MontSqr(ctx, val, val);
 	if (result != RA_ERR_SUCCESS) goto _EXIT;
 
 	for (i = 1; i < EXP_WINDOW; i++) {
-		MontMul(ctx, window[i], window[i-1], val);		// odd
+		result = MontMul(ctx, window[i], window[i-1], val);		// odd
+		if (result != RA_ERR_SUCCESS) goto _EXIT;
 	}
 
 	// r = Mont(1)
@@ -373,12 +376,14 @@ int RaMontExpMod(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaB
 					oddBit--;
 					pendBit -= oddBit;
 					while (pendBit-- > 0) {
-						MontSqr(ctx, val, val);
+						result = MontSqr(ctx, val, val);
+						if (result != RA_ERR_SUCCESS) goto _EXIT;
 					}
 					pend >>= oddBit + 1;
 					MontMul( ctx, val, val, window[pend] );
 					while (oddBit-- > 0) {
-						MontSqr(ctx, val, val);
+						result = MontSqr(ctx, val, val);
+						if (result != RA_ERR_SUCCESS) goto _EXIT;
 					}
 					pendBit = 0;
 					oddBit = 0;
@@ -387,7 +392,8 @@ int RaMontExpMod(struct RaMontCtx *ctx, /*out*/struct RaBigNumber *r, struct RaB
 				pend <<= 1;
 			}
 			else {
-				MontSqr(ctx, val, val);
+				result = MontSqr(ctx, val, val);
+				if (result != RA_ERR_SUCCESS) goto _EXIT;
 			}
 			mask >>= 1;
 		}
@@ -405,3 +411,343 @@ _EXIT:
 	}
 	return result;
 }
+
+int RaMontNeg(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a)
+{
+	int result;
+
+	if (BN_ISNEG(a)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+	result = BnSub(r, ctx->N, a);
+	return result;
+}
+
+int RaMontAdd(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
+{
+	int result;
+
+	if (BN_ISNEG(a) || BN_ISNEG(b)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0 || BnCmp(b, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+	result = BnAdd(ctx->mul, a, b);
+	if (result == RA_ERR_SUCCESS) {
+		if (BnCmp(ctx->mul, ctx->N) >= 0)
+			_BnSubR(ctx->mul, ctx->N);
+
+		result = BnSet(r, ctx->mul);
+	}
+	return result;
+}
+
+int RaMontSub(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
+{
+	int result;
+
+	if (BN_ISNEG(a) || BN_ISNEG(b)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0 || BnCmp(b, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, b) >= 0) {
+		result =  BnSub(r, a, b);
+	}
+	else {
+		// r = a - b = a + N - b
+		result = BnSub(ctx->mul, ctx->N, b);
+		if (result == RA_ERR_SUCCESS) {
+			_BnAddR(ctx->mul, a);
+			result = BnSet(r, ctx->mul);
+		}
+	}
+	return result;
+}
+
+// r = (a * b) mod N
+int RaMontMul(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
+{
+	int result;
+
+	if (BN_ISNEG(a) || BN_ISNEG(b)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0 || BnCmp(b, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+
+	result = BnMul(ctx->mul, a, b);
+	if (result == RA_ERR_SUCCESS)
+		result = BnMod(r, ctx->mul, ctx->N);
+
+	return result;
+}
+
+// r = (a / b) mod N ==> a = (r * b) mod N
+// r = (a * b^{-1}) mod N
+int RaMontDiv(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a, struct RaBigNumber *b)
+{
+	int result;
+
+	if (BN_ISNEG(a) || BN_ISNEG(b)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0 || BnCmp(b, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+
+	// get inverse of b
+	result = GetGCDEx(ctx->mul, ctx->tmp, NULL, b, ctx->N, 1);
+	if (result != RA_ERR_SUCCESS) goto _EXIT;
+
+	if (!BN_ISONE(ctx->mul)) {
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	result = BnMul(ctx->mul, a, ctx->tmp);
+	if (result == RA_ERR_SUCCESS)
+		result = BnMod(r, ctx->mul, ctx->N);
+
+_EXIT:
+	return result;
+}
+
+int RaMontSqr(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a)
+{
+	int result = RA_ERR_SUCCESS;
+
+	if (BN_ISNEG(a)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+
+	result = BnSqr(ctx->mul, a);
+	if (result == RA_ERR_SUCCESS)
+		result = BnMod(r, ctx->mul, ctx->N);
+
+	return result;
+}
+
+// Tonelli-Shanks Algorithm
+int RaMontSqrt(struct RaMontCtx *ctx, struct RaBigNumber *r, struct RaBigNumber *a)
+{
+	// Tonelli-Shanks: N = ctx->N (must be odd prime), find r: r^2 == a (mod N)
+	int result = RA_ERR_SUCCESS;
+	struct RaBigNumber *N = ctx->N;
+	struct RaBigNumber *q = NULL, *z = NULL, *c = NULL, *t = NULL, *b = NULL, *tmp = NULL, *rr = NULL, *exp = NULL;
+	struct RaBigNumber *montOne = NULL;
+	int s = 0, i, m;
+	int i_found;
+	bn_uint_t remain;
+
+	if (BN_ISNEG(a)) {
+		return RA_ERR_INVALID_DATA;
+	}
+	if (BnCmp(a, ctx->N) > 0) {
+		return RA_ERR_INVALID_DATA;
+	}
+	// 1. Check N is odd prime (skip primality test for perf, but check odd)
+	if (BN_ISEVEN(N))
+		return RA_ERR_INVALID_DATA;
+
+	// 2. a == 0 mod N => sqrt(0) = 0
+	if (BN_ISZERO(a)) {
+		BnSetUInt(r, 0);
+		result = RA_ERR_SUCCESS;
+		goto _EXIT;
+	}
+
+	tmp = BnNewW(N->length);
+	exp = BnNewW(N->length);
+
+	if (tmp == NULL || exp == NULL) {
+		result = RA_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+
+	// exp = (N-1)/2
+	BnSet(exp, N);
+	BnSubUInt(exp, 1);
+	BnShiftR(exp, 1);
+
+	// 3. Check if a is a quadratic residue mod N
+	//    a^((N-1)/2) mod N == 1 (Euler's Criterion)
+	result = RaMontExpMod(ctx, tmp, a, exp);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+
+	if (!BN_ISONE(tmp)) {
+		result = RA_ERR_INVALID_DATA;
+		goto _EXIT;
+	}
+
+	// 4. Check if N mod 4 == 3
+	BnModUInt(ctx->N, 4, &remain);
+	if (remain == 3) {
+		if (tmp == NULL) {
+			result = RA_ERR_OUT_OF_MEMORY;
+			goto _EXIT;
+		}
+		// r = (a^((N+1)/4)) mod N
+		BnSet(tmp, ctx->N);
+		BnAddUInt(tmp, 1);
+		BnDivUInt(tmp, 4, NULL);
+		result = RaMontExpMod(ctx, r, a, tmp);
+		goto _EXIT;
+	}
+
+	q = BnNewW(N->length);
+	z = BnNewW(N->length);
+	c = BnNewW(N->length);
+	t = BnNewW(N->length);
+	b = BnNewW(N->length);
+	rr = BnNewW(N->length);
+	montOne = BnNewW(N->length);
+
+	if (q == NULL || z == NULL || c == NULL || t == NULL || b == NULL || rr == NULL || montOne == NULL) {
+		result = RA_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+
+	// 5. q, s: N-1 = q*2^s, q odd
+	BnSet(q, N);
+	BnSubUInt(q, 1);
+
+	s = 0;
+	while (BN_ISEVEN(q)) {
+		BnShiftR(q, 1);
+		s++;
+	}
+
+	// 6. Find z: quadratic non-residue mod N (z^((N-1)/2) == N-1)
+	BnSetUInt(z, 2);
+
+	while (1) {
+		result = RaMontExpMod(ctx, tmp, z, exp); // tmp = z^((N-1)/2) mod N
+		if (result != RA_ERR_SUCCESS)
+			goto _EXIT;
+
+		if (!BN_ISONE(tmp))
+			break;
+
+		BnAddUInt(z, 1);
+		if (BnCmp(z, N) >= 0) {
+			result = RA_ERR_INVALID_DATA;
+			goto _EXIT;
+		}
+	}
+
+	// 7. c = z^q mod N
+	result = RaMontExpMod(ctx, c, z, q);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+
+	// 8. t = a^q mod N
+	result = RaMontExpMod(ctx, t, a, q);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+
+	// 9. r = a^{(q+1)/2} mod N
+	BnSet(exp, q);
+	BnAddUInt(exp, 1);
+	BnShiftR(exp, 1);
+
+	result = RaMontExpMod(ctx, rr, a, exp);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+
+	// 10. Main loop
+	m = s;
+	// montOne = number one of montgomery form
+	BnSetInt(montOne, 1);
+	result = MontSet(ctx, montOne, montOne);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+
+	// convert rr, c, t to montgomery form
+	result = MontSet(ctx, rr, rr);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+	result = MontSet(ctx, c, c);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+	result = MontSet(ctx, t, t);
+	if (result != RA_ERR_SUCCESS)
+		goto _EXIT;
+
+	while (1) {
+		// if t == 0, set r = 0
+		if (BN_ISZERO(t)) {
+			BnSetInt(r, 0);
+			result = RA_ERR_SUCCESS;
+			break;
+		}
+		// If t == 1, done
+		if (BnCmp(t, montOne) == 0) {
+			result = MontREDC(ctx, r, rr);
+			break;
+		}
+		// Find lowest i: t^{2^i} == 1
+		i_found = 0;
+
+		BnSet(tmp, t);
+
+		for (i = 1; i < m; i++) {
+			result = MontSqr(ctx, tmp, tmp);	// tmp = tmp^2 mod N
+			if (result != RA_ERR_SUCCESS)
+				goto _EXIT;
+
+			if (BnCmp(tmp, montOne) == 0) {
+				i_found = i;
+				break;
+			}
+		}
+		if (i_found == 0) {
+			result = RA_ERR_INVALID_DATA;
+			goto _EXIT;
+		}
+		// b = c^{2^{m-i-1}} mod N
+		BnSet(b, c);
+
+		for (i = 0; i < m - i_found - 1; i++) {
+			result = MontSqr(ctx, b, b);
+			if (result != RA_ERR_SUCCESS)
+				goto _EXIT;
+		}
+		// r = r * b mod N
+		result = MontMul(ctx, rr, rr, b);
+		if (result != RA_ERR_SUCCESS)
+			goto _EXIT;
+		// c = b^2 mod N
+		result = MontSqr(ctx, c, b);
+		if (result != RA_ERR_SUCCESS)
+			goto _EXIT;
+		// t = t * b^2 mod N
+		result = MontMul(ctx, t, t, c);
+		if (result != RA_ERR_SUCCESS)
+			goto _EXIT;
+		m = i_found;
+	}
+
+_EXIT:
+	BN_SAFEFREE(tmp);
+	BN_SAFEFREE(q);
+	BN_SAFEFREE(z);
+	BN_SAFEFREE(c);
+	BN_SAFEFREE(t);
+	BN_SAFEFREE(b);
+	BN_SAFEFREE(rr);
+	BN_SAFEFREE(exp);
+	BN_SAFEFREE(montOne);
+	return result;
+}
+
