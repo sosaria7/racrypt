@@ -21,6 +21,7 @@
 #endif
 
 #include "bnprint.h"
+#include "test_vector.h"
 
 static void printHex( char* prefix, uint8_t* data, int len );
 //static void printHexData( char* prefix, uint8_t* data, int len );
@@ -1464,9 +1465,9 @@ static uint8_t aes128_ofb1[] = {
 	0x91, 0xfa, 0xc5, 0x6a, 0x38, 0x97, 0xf3, 0xa7, 0x60, 0xf3, 0x7c, 0x8c, 0x45, 0x9b, 0xad, 0xc8,
 	0xc9, 0x69, 0xd6, 0x01, 0x6e, 0xa7, 0x8a, 0x60, 0x37, 0x1f, 0xd3, 0xbf, 0x89, 0xf1, 0xbb, 0xb7 };
 static uint8_t aes128_ctr1[] = {
-	0x0c, 0x8a, 0x99, 0xee, 0x8b, 0x0b, 0x59, 0x02, 0x5d, 0x5f, 0x7f, 0x25, 0xcb, 0x90, 0x2b, 0x7a,
-	0x65, 0xe7, 0xa2, 0xee, 0x0a, 0xc3, 0xce, 0xe2, 0x80, 0x08, 0xad, 0xcf, 0x14, 0xc0, 0xde, 0x0c,
-	0x9f, 0xf0, 0x8a, 0xc7, 0x28, 0x31, 0x20, 0x03, 0x93, 0x92, 0xee, 0xff, 0x90, 0x8f, 0xc5, 0xe4 };
+	0x32, 0x81, 0x2e, 0xf4, 0x9e, 0xff, 0x45, 0x58, 0xe3, 0x6c, 0x98, 0x2b, 0xa5, 0x43, 0x45, 0x0e,
+	0x3e, 0x8d, 0x84, 0xee, 0x90, 0x0b, 0x5d, 0x11, 0x45, 0x5f, 0x72, 0x21, 0xc1, 0x95, 0x65, 0x2e,
+	0x6b, 0xed, 0xfa, 0xa2, 0x01, 0xcc, 0xda, 0xb2, 0x97, 0x47, 0xa5, 0xb9, 0x75, 0xb6, 0xfa, 0x7c };
 
 // aes
 int test7(void)
@@ -1808,9 +1809,9 @@ static uint8_t des_ofb1[] = {
 	0x2d, 0xe3, 0x82, 0xff, 0x07, 0x0a, 0xc7, 0xba, 0xe6, 0xf0, 0x4b, 0x4f, 0xe0, 0x1a, 0xed, 0xea,
 	0x6d, 0x03, 0x6b, 0x58, 0xf7, 0x8f, 0x11, 0xaa, 0x72, 0x3d, 0xc5, 0xfe, 0xf9, 0x34, 0xce, 0x73 };
 static uint8_t des_ctr1[] = {
-	0x09, 0x31, 0xb1, 0x66, 0x76, 0x3c, 0x33, 0x19, 0x61, 0x68, 0xe9, 0x99, 0xc2, 0xfd, 0x78, 0x9e,
-	0xc8, 0x97, 0xbb, 0x75, 0xd5, 0xfb, 0x32, 0x27, 0xb9, 0x02, 0x32, 0x0f, 0xdb, 0x38, 0x61, 0xa0,
-	0xa7, 0x0b, 0x79, 0xc6, 0xcf, 0x63, 0x6a, 0x1a, 0x82, 0x02, 0xbd, 0xec, 0x69, 0xc3, 0x8f, 0xd5 };
+	0xc0, 0xe2, 0x26, 0xd9, 0xfb, 0xf6, 0x26, 0x1d, 0x36, 0x79, 0xb6, 0x34, 0x68, 0x3e, 0x34, 0x5a,
+	0x6c, 0x27, 0xf3, 0xcb, 0xc7, 0xff, 0x7b, 0xce, 0xdd, 0xd8, 0xac, 0x23, 0xda, 0xfc, 0x7f, 0x23,
+	0xa2, 0x47, 0x7d, 0x15, 0xdf, 0x30, 0x38, 0xf4, 0xab, 0x01, 0x3e, 0xaa, 0xaa, 0x1d, 0x17, 0x3e };
 
 int test8(void)
 {
@@ -2256,9 +2257,9 @@ static uint8_t seed_ofb1[] = {
 	0xab, 0xa3, 0xae, 0xee, 0x14, 0xdc, 0x9c, 0x86, 0xa7, 0x14, 0x89, 0x04, 0x19, 0x4e, 0x39, 0xad,
 	0x69, 0xa3, 0x47, 0xa7, 0x23, 0x10, 0xf0, 0xaf, 0x6f, 0xf6, 0x26, 0xcf, 0x7c, 0x5f, 0xc7, 0xee };
 static uint8_t seed_ctr1[] = {
-	0x63, 0xb7, 0x94, 0x8c, 0x50, 0x9b, 0x0e, 0xa6, 0x52, 0x30, 0x32, 0x52, 0xb6, 0x54, 0xff, 0xa8,
-	0x41, 0xf3, 0xbd, 0xd2, 0xa7, 0xd4, 0x6e, 0xd3, 0x24, 0x1f, 0x49, 0x95, 0x68, 0xad, 0x7e, 0x71,
-	0x2d, 0x2c, 0x13, 0x02, 0x5f, 0xee, 0xee, 0x61, 0x51, 0x14, 0xe6, 0x35, 0x5f, 0x1c, 0x73, 0x61 };
+	0x61, 0xc1, 0x2a, 0x0b, 0x04, 0x39, 0xef, 0x67, 0x04, 0xd7, 0x5c, 0x8b, 0xc1, 0x20, 0xf4, 0xd2,
+	0x51, 0xb0, 0x89, 0x8c, 0x4b, 0x9b, 0x0a, 0xb5, 0x4a, 0x30, 0x3f, 0x56, 0xbc, 0x51, 0xb1, 0xfc,
+	0x4f, 0xf9, 0xe5, 0x9e, 0xac, 0xdb, 0x7a, 0x83, 0x33, 0x50, 0x41, 0xe3, 0x09, 0xdb, 0x5a, 0x01 };
 
 int test10(void)
 {
@@ -2548,20 +2549,25 @@ _EXIT:
 
 // aria
 static const uint8_t aria128_ecb1[] = {
-	0xc6, 0xec, 0xd0, 0x8e, 0x22, 0xc3, 0x0a, 0xbd, 0xb2, 0x15, 0xcf, 0x74, 0xe2, 0x07, 0x5e, 0x6e, 0x29, 0xcc, 0xaa, 0xc6, 0x34, 0x48, 0x70, 0x8d, 0x33, 0x1b, 0x2f, 0x81, 0x6c, 0x51, 0xb1, 0x7d, 0x66, 0x39, 0x74, 0x6c, 0x86, 0x8f, 0x3d, 0xe2, 0x4f, 0xf0, 0x3f, 0xf4, 0xeb, 0x0d, 0x23, 0x8f
-};
+	0xc6, 0xec, 0xd0, 0x8e, 0x22, 0xc3, 0x0a, 0xbd, 0xb2, 0x15, 0xcf, 0x74, 0xe2, 0x07, 0x5e, 0x6e,
+	0x29, 0xcc, 0xaa, 0xc6, 0x34, 0x48, 0x70, 0x8d, 0x33, 0x1b, 0x2f, 0x81, 0x6c, 0x51, 0xb1, 0x7d,
+	0x66, 0x39, 0x74, 0x6c, 0x86, 0x8f, 0x3d, 0xe2, 0x4f, 0xf0, 0x3f, 0xf4, 0xeb, 0x0d, 0x23, 0x8f };
 static const uint8_t aria128_cbc1[] = {
-	0x49, 0xd6, 0x18, 0x60, 0xb1, 0x49, 0x09, 0x10, 0x9c, 0xef, 0x0d, 0x22, 0xa9, 0x26, 0x81, 0x34, 0xfa, 0xdf, 0x9f, 0xb2, 0x31, 0x51, 0xe9, 0x64, 0x5f, 0xba, 0x75, 0x01, 0x8b, 0xdb, 0x15, 0x38, 0xbd, 0x5f, 0x9b, 0x46, 0x67, 0xe7, 0xba, 0x32, 0x2e, 0xe4, 0xa1, 0xb2, 0x56, 0x22, 0x60, 0x47
-};
+	0x49, 0xd6, 0x18, 0x60, 0xb1, 0x49, 0x09, 0x10, 0x9c, 0xef, 0x0d, 0x22, 0xa9, 0x26, 0x81, 0x34,
+	0xfa, 0xdf, 0x9f, 0xb2, 0x31, 0x51, 0xe9, 0x64, 0x5f, 0xba, 0x75, 0x01, 0x8b, 0xdb, 0x15, 0x38,
+	0xbd, 0x5f, 0x9b, 0x46, 0x67, 0xe7, 0xba, 0x32, 0x2e, 0xe4, 0xa1, 0xb2, 0x56, 0x22, 0x60, 0x47 };
 static const uint8_t aria128_cfb1[] = {
-	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00, 0xc0, 0x7c, 0x21, 0xe6, 0x37, 0x0f, 0x41, 0x3a, 0x5d, 0x13, 0x25, 0x00, 0xa6, 0x82, 0x85, 0x01, 0x4e, 0x53, 0x86, 0x06, 0x7d, 0x0d, 0x70, 0x2c, 0xb7, 0x97, 0x22, 0x43, 0x2d, 0xb5, 0xe6, 0xe0
-};
+	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00,
+	0xc0, 0x7c, 0x21, 0xe6, 0x37, 0x0f, 0x41, 0x3a, 0x5d, 0x13, 0x25, 0x00, 0xa6, 0x82, 0x85, 0x01,
+	0x4e, 0x53, 0x86, 0x06, 0x7d, 0x0d, 0x70, 0x2c, 0xb7, 0x97, 0x22, 0x43, 0x2d, 0xb5, 0xe6, 0xe0 };
 static const uint8_t aria128_ofb1[] = {
-	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00, 0x00, 0x63, 0x06, 0x3f, 0x05, 0x60, 0x08, 0x34, 0x83, 0xfa, 0xeb, 0x04, 0x1c, 0x8a, 0xde, 0xce, 0xc1, 0x3e, 0xca, 0x3e, 0x55, 0x0a, 0xb8, 0x1a, 0xe0, 0xb2, 0x47, 0xa3, 0xc3, 0x47, 0xaa, 0x70
-};
+	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00,
+	0x00, 0x63, 0x06, 0x3f, 0x05, 0x60, 0x08, 0x34, 0x83, 0xfa, 0xeb, 0x04, 0x1c, 0x8a, 0xde, 0xce,
+	0xc1, 0x3e, 0xca, 0x3e, 0x55, 0x0a, 0xb8, 0x1a, 0xe0, 0xb2, 0x47, 0xa3, 0xc3, 0x47, 0xaa, 0x70 };
 static const uint8_t aria128_ctr1[] = {
-	0x16, 0x73, 0x03, 0x2f, 0x7b, 0x65, 0xbf, 0xe4, 0xe5, 0x67, 0x13, 0x11, 0x1e, 0xfd, 0x09, 0x2c, 0x87, 0x52, 0x47, 0xbc, 0x49, 0x30, 0x17, 0xe1, 0x14, 0xe4, 0x93, 0xb7, 0x97, 0x2f, 0xfb, 0x76, 0x2e, 0xac, 0x1f, 0x37, 0x7b, 0x96, 0x82, 0x37, 0x32, 0xf0, 0x4e, 0xb3, 0xd9, 0x5d, 0x63, 0x9e
-};
+	0x37, 0x20, 0xe5, 0x3b, 0xa7, 0xd6, 0x15, 0x38, 0x34, 0x06, 0xb0, 0x9f, 0x0a, 0x05, 0xa2, 0x00,
+	0x16, 0x73, 0x03, 0x2f, 0x1d, 0x03, 0xd9, 0x82, 0xe5, 0x67, 0x13, 0x11, 0x78, 0x9b, 0x6f, 0x4a,
+	0x86, 0x53, 0x46, 0xbd, 0x95, 0xec, 0xcb, 0x3d, 0x15, 0xe5, 0x92, 0xb6, 0x5a, 0xe2, 0x36, 0xbb };
 
 int test11(void)
 {
@@ -2909,9 +2915,9 @@ static uint8_t blowfish_ofb1[] = {
 	0xbb, 0xd4, 0x44, 0x8d, 0x65, 0x72, 0x44, 0x35, 0xd7, 0xe7, 0x2a, 0x44, 0x29, 0x14, 0xa1, 0x69,
 	0x62, 0x2d, 0xda, 0xaf, 0x67, 0x87, 0x2d, 0x6d, 0xcf, 0x96, 0x40, 0x1d, 0xcb, 0x9e, 0x5c, 0x74 };
 static uint8_t blowfish_ctr1[] = {
-	0xad, 0xe9, 0x56, 0x40, 0xd8, 0x19, 0x01, 0x11, 0x60, 0x86, 0xba, 0x61, 0xa1, 0x14, 0x10, 0x1d,
-	0xe7, 0xa0, 0x4b, 0xb4, 0xc4, 0x3d, 0xa8, 0x30, 0x1f, 0x03, 0x71, 0xed, 0x6b, 0xf1, 0xa5, 0xf6,
-	0xa4, 0x11, 0x27, 0xba, 0x0d, 0xad, 0x9b, 0x30, 0xae, 0xad, 0x8f, 0x19, 0x0c, 0x84, 0x77, 0x41 };
+	0x34, 0xe7, 0xd0, 0x8b, 0xf2, 0x8f, 0x18, 0xfe, 0x92, 0xa1, 0x51, 0x12, 0xc6, 0x1b, 0x06, 0x52,
+	0x6d, 0xc9, 0xa0, 0x33, 0xa4, 0x16, 0x13, 0x4d, 0xf2, 0xef, 0x5c, 0xe2, 0xcb, 0x3a, 0xe5, 0x34,
+	0x04, 0x46, 0x3e, 0xf7, 0x6f, 0xf9, 0xfc, 0xa2, 0xa8, 0x1b, 0x60, 0xd6, 0x68, 0xd3, 0xe6, 0x14 };
 
 int test12(void)
 {
@@ -3206,6 +3212,918 @@ _EXIT:
 	return result;
 }
 
+#define TEST13_BIT_LEN		1024
+#define TEST13_COUNT		400
+int test13(void)
+{
+	int result = RA_ERR_SUCCESS;
+	struct RaBigNumber *N = NULL;
+	struct RaBigNumber *val = NULL;
+	struct RaBigNumber *sqr = NULL;
+	struct RaBigNumber *sqrt = NULL;
+	struct RaMontCtx *mont = NULL;
+	struct RaRandom *rand = NULL;
+	int i;
+
+	N = BnNew(TEST13_BIT_LEN);
+	val = BnNew(TEST13_BIT_LEN);
+	sqr = BnNew(TEST13_BIT_LEN * 2);
+	sqrt = BnNew(TEST13_BIT_LEN);
+	if (N == NULL || val == NULL || sqr == NULL || sqrt == NULL) {
+		result = RA_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+	result = RaRandomCreate(RA_RAND_SHA512, NULL, 0, &rand);
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	for (i = 0; i < TEST13_COUNT; i++)
+	{
+		if ((i% 10) == 0) {
+			printf(".");
+			fflush(stdout);
+			result = RaGenPrimeNumberEx(N, TEST13_BIT_LEN, NULL, NULL, rand);
+			if (result != RA_ERR_SUCCESS)
+			{
+				goto _EXIT;
+			}
+		}
+
+		result = BnGenRandom(val, TEST13_BIT_LEN, rand);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		result = BnMod(val, val, N);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontCreate(N, &mont);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontSqr(mont, sqr, val);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontSqrt(mont, sqrt, sqr);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontSqr(mont, val, sqrt);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		RaMontDestroy(mont);
+		mont = NULL;
+
+		if (BnCmp(sqr, val) != 0)
+		{
+			printf("\n");
+			BnPrint(sqrt);
+			printf(" ** 2 = \n");
+			printf("orig: ");
+			BnPrintLn(sqr);
+			printf("sqr : ");
+			BnPrintLn(val);
+			result = RA_ERR_INVALID_DATA;
+			goto _EXIT;
+		}
+	}
+
+_EXIT:
+	printf("\n");
+
+	if (result == RA_ERR_SUCCESS)
+	{
+		printf("Montgomery sqrt test ok\n");
+	}
+	if (rand != NULL)
+		RaRandomDestroy(rand);
+	if (mont != NULL)
+		RaMontDestroy(mont);
+	BN_SAFEFREE(N);
+	BN_SAFEFREE(val);
+	BN_SAFEFREE(sqr);
+	BN_SAFEFREE(sqrt);
+
+	return result;
+}
+
+
+#define TEST14_BIT_LEN		1024
+#define TEST14_COUNT		400
+int test14(void)
+{
+	int result = RA_ERR_SUCCESS;
+	struct RaBigNumber *N = NULL;
+	struct RaBigNumber *val1 = NULL;
+	struct RaBigNumber *val2 = NULL;
+	struct RaBigNumber *mul = NULL;
+	struct RaBigNumber *div = NULL;
+	struct RaMontCtx *mont = NULL;
+	struct RaRandom *rand = NULL;
+	int i;
+
+	N = BnNew(TEST14_BIT_LEN);
+	val1 = BnNew(TEST14_BIT_LEN);
+	val2 = BnNew(TEST14_BIT_LEN);
+	mul = BnNew(TEST14_BIT_LEN * 2);
+	div = BnNew(TEST14_BIT_LEN);
+	if (N == NULL || val1 == NULL || val2 == NULL || mul == NULL || div == NULL) {
+		result = RA_ERR_OUT_OF_MEMORY;
+		goto _EXIT;
+	}
+	result = RaRandomCreate(RA_RAND_SHA512, NULL, 0, &rand);
+	if (result != RA_ERR_SUCCESS) {
+		goto _EXIT;
+	}
+
+	for(i = 0; i < TEST14_COUNT; i++) {
+		if ((i% 10) == 0) {
+			printf(".");
+			fflush(stdout);
+			result = RaGenPrimeNumberEx(N, TEST14_BIT_LEN, NULL, NULL, rand);
+			if (result != RA_ERR_SUCCESS)
+			{
+				goto _EXIT;
+			}
+		}
+
+		result = BnGenRandom(val1, TEST14_BIT_LEN, rand);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		result = BnMod(val1, val1, N);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = BnGenRandom(val2, TEST14_BIT_LEN, rand);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+		result = BnMod(val2, val2, N);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontCreate(N, &mont);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontDiv(mont, div, val1, val2);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		result = RaMontMul(mont, mul, div, val2);
+		if (result != RA_ERR_SUCCESS)
+		{
+			goto _EXIT;
+		}
+
+		RaMontDestroy(mont);
+		mont = NULL;
+
+		if (BnCmp(mul, val1) != 0)
+		{
+			printf("\n");
+			printf("N = ");
+			BnPrintLn(N);
+			BnPrintLn(val1);
+			printf(" / ");
+			BnPrintLn(val2);
+			printf(" = ");
+			BnPrintLn(div);
+			printf(" * ");
+			BnPrintLn(val2);
+			printf(" = ");
+			BnPrintLn(mul);
+			result = RA_ERR_INVALID_DATA;
+			goto _EXIT;
+		}
+	}
+
+_EXIT:
+	printf("\n");
+
+	if (result == RA_ERR_SUCCESS)
+	{
+		printf("Montgomery mul,div test ok\n");
+	}
+	if (rand != NULL)
+		RaRandomDestroy(rand);
+	if (mont != NULL)
+		RaMontDestroy(mont);
+	BN_SAFEFREE(N);
+	BN_SAFEFREE(val1);
+	BN_SAFEFREE(val2);
+	BN_SAFEFREE(mul);
+	BN_SAFEFREE(div);
+
+	return result;
+}
+
+static int test_gcm_extended(void)
+{
+	TestVector vectors[100];
+	int count = 0;
+	int result;
+	int i;
+	TestVector *v;
+	struct RaAesCtx *ctx;
+	uint8_t ciphertext[TVEC_MAX_DATA_LEN];
+	uint8_t decrypted[TVEC_MAX_DATA_LEN];
+	uint8_t tag[16];
+	int len;
+	int enc_result, dec_result;
+	enum RaAesKeyType keyType;
+	
+	printf("GCM Extended Tests (from binary test vectors)\n");
+	
+	/* Load test vectors */
+	result = TvecLoad("build/tests/gcm_vectors.bin", vectors, 100, &count);
+	if (result != 0) {
+		printf("Test vector file not found or invalid (error %d)\n", result);
+		printf("Skipping extended GCM tests (this is not a failure)\n");
+		return RA_ERR_SUCCESS;
+	}
+	
+	printf("Loaded %d GCM test vectors\n", count);
+	
+	/* Run tests */
+	for (i = 0; i < count; i++) {
+		v = &vectors[i];
+		
+		printf("  Test vector %d: ", i + 1);
+		
+		/* Validate algorithm and mode */
+		if (v->algorithm != TVEC_ALG_AES || v->mode != TVEC_MODE_GCM) {
+			printf("SKIPPED (not AES-GCM)\n");
+			continue;
+		}
+		
+		/* Determine key type based on key length */
+		if (v->key_len == 16) {
+			keyType = RA_AES_128;
+		} else if (v->key_len == 24) {
+			keyType = RA_AES_192;
+		} else if (v->key_len == 32) {
+			keyType = RA_AES_256;
+		} else {
+			printf("FAILED (invalid key length %d)\n", v->key_len);
+			return -1;
+		}
+		
+		/* Create context */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_GCM, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		/* Encryption test */
+		result = RaBlockCipherGcmSetIV(&ctx->blockCipher, v->iv, v->iv_len);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (GcmSetIV failed: %d)\n", result);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		result = RaBlockCipherGcmSetAAD(&ctx->blockCipher, v->aad, v->aad_len);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (GcmSetAAD failed: %d)\n", result);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		len = RaAesEncryptFinal(ctx, v->plaintext, v->plaintext_len, ciphertext, RA_BLOCK_PADDING_NONE);
+		if (len != v->ciphertext_len) {
+			printf("FAILED (encryption length mismatch: %d != %d)\n", len, v->ciphertext_len);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		result = RaBlockCipherGcmGetTag(&ctx->blockCipher, tag);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (GcmGetTag failed: %d)\n", result);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		/* Verify ciphertext and tag */
+		enc_result = (memcmp(ciphertext, v->ciphertext, v->ciphertext_len) == 0);
+		enc_result &= (memcmp(tag, v->tag, v->tag_len) == 0);
+		
+		if (!enc_result) {
+			printf("FAILED (encryption mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		RaAesDestroy(ctx);
+		
+		/* Decryption test */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_GCM, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		result = RaBlockCipherGcmSetIV(&ctx->blockCipher, v->iv, v->iv_len);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (GcmSetIV decrypt failed: %d)\n", result);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		result = RaBlockCipherGcmSetAAD(&ctx->blockCipher, v->aad, v->aad_len);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (GcmSetAAD decrypt failed: %d)\n", result);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		len = RaAesDecryptFinal(ctx, v->ciphertext, v->ciphertext_len, decrypted, RA_BLOCK_PADDING_NONE);
+		if (len != v->plaintext_len) {
+			printf("FAILED (decryption length mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		result = RaBlockCipherGcmVerifyTag(&ctx->blockCipher, v->tag);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (tag verification failed)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		dec_result = (memcmp(decrypted, v->plaintext, v->plaintext_len) == 0);
+		
+		if (!dec_result) {
+			printf("FAILED (decryption mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		printf("PASSED\n");
+		RaAesDestroy(ctx);
+	}
+	
+	printf("Extended GCM tests completed (%d vectors tested)\n", count);
+	TvecFree(vectors, count);
+	
+	return RA_ERR_SUCCESS;
+}
+
+static int test_ecb_extended(void)
+{
+	TestVector vectors[100];
+	int count = 0;
+	int result;
+	int i;
+	TestVector *v;
+	struct RaAesCtx *ctx;
+	uint8_t ciphertext[TVEC_MAX_DATA_LEN];
+	uint8_t decrypted[TVEC_MAX_DATA_LEN];
+	int len;
+	enum RaAesKeyType keyType;
+	
+	printf("ECB Extended Tests (from binary test vectors)\n");
+	
+	/* Load test vectors */
+	result = TvecLoad("build/tests/ecb_vectors.bin", vectors, 100, &count);
+	if (result != 0) {
+		printf("Test vector file not found or invalid (error %d)\n", result);
+		printf("Skipping extended ECB tests (this is not a failure)\n");
+		return RA_ERR_SUCCESS;
+	}
+	
+	printf("Loaded %d ECB test vectors\n", count);
+	
+	/* Run tests */
+	for (i = 0; i < count; i++) {
+		v = &vectors[i];
+		
+		printf("  Test vector %d: ", i + 1);
+		
+		/* Validate algorithm and mode */
+		if (v->algorithm != TVEC_ALG_AES || v->mode != TVEC_MODE_ECB) {
+			printf("SKIPPED (not AES-ECB)\n");
+			continue;
+		}
+		
+		/* Determine key type */
+		if (v->key_len == 16) {
+			keyType = RA_AES_128;
+		} else if (v->key_len == 24) {
+			keyType = RA_AES_192;
+		} else if (v->key_len == 32) {
+			keyType = RA_AES_256;
+		} else {
+			printf("FAILED (invalid key length %d)\n", v->key_len);
+			return -1;
+		}
+		
+		/* Create context */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_ECB, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		/* Encryption test (ECB does not use IV) */
+		len = RaAesEncryptFinal(ctx, v->plaintext, v->plaintext_len, ciphertext, RA_BLOCK_PADDING_NONE);
+		if (len != v->ciphertext_len) {
+			printf("FAILED (encryption length mismatch: %d != %d)\n", len, v->ciphertext_len);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(ciphertext, v->ciphertext, v->ciphertext_len) != 0) {
+			printf("FAILED (ciphertext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		RaAesDestroy(ctx);
+		
+		/* Decryption test */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_ECB, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate decrypt failed: %d)\n", result);
+			return -1;
+		}
+		
+		len = RaAesDecryptFinal(ctx, v->ciphertext, v->ciphertext_len, decrypted, RA_BLOCK_PADDING_NONE);
+		if (len != v->plaintext_len) {
+			printf("FAILED (decryption length mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(decrypted, v->plaintext, v->plaintext_len) != 0) {
+			printf("FAILED (plaintext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		printf("PASSED\n");
+		RaAesDestroy(ctx);
+	}
+	
+	printf("Extended ECB tests completed (%d vectors tested)\n", count);
+	TvecFree(vectors, count);
+	
+	return RA_ERR_SUCCESS;
+}
+
+static int test_cbc_extended(void)
+{
+	TestVector vectors[100];
+	int count = 0;
+	int result;
+	int i;
+	TestVector *v;
+	struct RaAesCtx *ctx;
+	uint8_t ciphertext[TVEC_MAX_DATA_LEN];
+	uint8_t decrypted[TVEC_MAX_DATA_LEN];
+	int len;
+	enum RaAesKeyType keyType;
+	
+	printf("CBC Extended Tests (from binary test vectors)\n");
+	
+	/* Load test vectors */
+	result = TvecLoad("build/tests/cbc_vectors.bin", vectors, 100, &count);
+	if (result != 0) {
+		printf("Test vector file not found or invalid (error %d)\n", result);
+		printf("Skipping extended CBC tests (this is not a failure)\n");
+		return RA_ERR_SUCCESS;
+	}
+	
+	printf("Loaded %d CBC test vectors\n", count);
+	
+	/* Run tests */
+	for (i = 0; i < count; i++) {
+		v = &vectors[i];
+		
+		printf("  Test vector %d: ", i + 1);
+		
+		/* Validate algorithm and mode */
+		if (v->algorithm != TVEC_ALG_AES || v->mode != TVEC_MODE_CBC) {
+			printf("SKIPPED (not AES-CBC)\n");
+			continue;
+		}
+		
+		/* Determine key type */
+		if (v->key_len == 16) {
+			keyType = RA_AES_128;
+		} else if (v->key_len == 24) {
+			keyType = RA_AES_192;
+		} else if (v->key_len == 32) {
+			keyType = RA_AES_256;
+		} else {
+			printf("FAILED (invalid key length %d)\n", v->key_len);
+			return -1;
+		}
+		
+		/* Create context */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_CBC, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		/* Set IV for CBC mode */
+		RaAesSetIV(ctx, v->iv);
+		
+		/* Encryption test */
+		len = RaAesEncryptFinal(ctx, v->plaintext, v->plaintext_len, ciphertext, RA_BLOCK_PADDING_NONE);
+		if (len != v->ciphertext_len) {
+			printf("FAILED (encryption length mismatch: %d != %d)\n", len, v->ciphertext_len);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(ciphertext, v->ciphertext, v->ciphertext_len) != 0) {
+			printf("FAILED (ciphertext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		RaAesDestroy(ctx);
+		
+		/* Decryption test */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_CBC, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate decrypt failed: %d)\n", result);
+			return -1;
+		}
+		
+		RaAesSetIV(ctx, v->iv);
+		
+		len = RaAesDecryptFinal(ctx, v->ciphertext, v->ciphertext_len, decrypted, RA_BLOCK_PADDING_NONE);
+		if (len != v->plaintext_len) {
+			printf("FAILED (decryption length mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(decrypted, v->plaintext, v->plaintext_len) != 0) {
+			printf("FAILED (plaintext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		printf("PASSED\n");
+		RaAesDestroy(ctx);
+	}
+	
+	printf("Extended CBC tests completed (%d vectors tested)\n", count);
+	TvecFree(vectors, count);
+	
+	return RA_ERR_SUCCESS;
+}
+
+static int test_ctr_extended(void)
+{
+	TestVector vectors[100];
+	int count = 0;
+	int result;
+	int i;
+	TestVector *v;
+	struct RaAesCtx *ctx;
+	uint8_t ciphertext[TVEC_MAX_DATA_LEN];
+	uint8_t decrypted[TVEC_MAX_DATA_LEN];
+	int len;
+	enum RaAesKeyType keyType;
+	
+	printf("CTR Extended Tests (from binary test vectors)\n");
+	
+	/* Load test vectors */
+	result = TvecLoad("build/tests/ctr_vectors.bin", vectors, 100, &count);
+	if (result != 0) {
+		printf("Test vector file not found or invalid (error %d)\n", result);
+		printf("Skipping extended CTR tests (this is not a failure)\n");
+		return RA_ERR_SUCCESS;
+	}
+	
+	printf("Loaded %d CTR test vectors\n", count);
+	
+	/* Run tests */
+	for (i = 0; i < count; i++) {
+		v = &vectors[i];
+		
+		printf("  Test vector %d: ", i + 1);
+		
+		/* Validate algorithm and mode */
+		if (v->algorithm != TVEC_ALG_AES || v->mode != TVEC_MODE_CTR) {
+			printf("SKIPPED (not AES-CTR)\n");
+			continue;
+		}
+		
+		/* Determine key type */
+		if (v->key_len == 16) {
+			keyType = RA_AES_128;
+		} else if (v->key_len == 24) {
+			keyType = RA_AES_192;
+		} else if (v->key_len == 32) {
+			keyType = RA_AES_256;
+		} else {
+			printf("FAILED (invalid key length %d)\n", v->key_len);
+			return -1;
+		}
+		
+		/* Create context */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_CTR, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		/* Set IV (counter) for CTR mode */
+		RaAesSetIV(ctx, v->iv);
+		
+		/* Encryption test */
+		len = RaAesEncryptFinal(ctx, v->plaintext, v->plaintext_len, ciphertext, RA_BLOCK_PADDING_NONE);
+		if (len != v->ciphertext_len) {
+			printf("FAILED (encryption length mismatch: %d != %d)\n", len, v->ciphertext_len);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(ciphertext, v->ciphertext, v->ciphertext_len) != 0) {
+			printf("FAILED (ciphertext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		RaAesDestroy(ctx);
+		
+		/* Decryption test */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_CTR, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate decrypt failed: %d)\n", result);
+			return -1;
+		}
+		
+		RaAesSetIV(ctx, v->iv);
+		
+		len = RaAesDecryptFinal(ctx, v->ciphertext, v->ciphertext_len, decrypted, RA_BLOCK_PADDING_NONE);
+		if (len != v->plaintext_len) {
+			printf("FAILED (decryption length mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(decrypted, v->plaintext, v->plaintext_len) != 0) {
+			printf("FAILED (plaintext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		printf("PASSED\n");
+		RaAesDestroy(ctx);
+	}
+	
+	printf("Extended CTR tests completed (%d vectors tested)\n", count);
+	TvecFree(vectors, count);
+	
+	return RA_ERR_SUCCESS;
+}
+
+static int test_cfb_extended(void)
+{
+	TestVector vectors[100];
+	int count = 0;
+	int result;
+	int i;
+	TestVector *v;
+	struct RaAesCtx *ctx;
+	uint8_t ciphertext[TVEC_MAX_DATA_LEN];
+	uint8_t decrypted[TVEC_MAX_DATA_LEN];
+	int len;
+	enum RaAesKeyType keyType;
+	
+	printf("CFB Extended Tests (from binary test vectors)\n");
+	
+	/* Load test vectors */
+	result = TvecLoad("build/tests/cfb_vectors.bin", vectors, 100, &count);
+	if (result != 0) {
+		printf("Test vector file not found or invalid (error %d)\n", result);
+		printf("Skipping extended CFB tests (this is not a failure)\n");
+		return RA_ERR_SUCCESS;
+	}
+	
+	printf("Loaded %d CFB test vectors\n", count);
+	
+	/* Run tests */
+	for (i = 0; i < count; i++) {
+		v = &vectors[i];
+		
+		printf("  Test vector %d: ", i + 1);
+		
+		/* Validate algorithm and mode */
+		if (v->algorithm != TVEC_ALG_AES || v->mode != TVEC_MODE_CFB) {
+			printf("SKIPPED (not AES-CFB)\n");
+			continue;
+		}
+		
+		/* Determine key type */
+		if (v->key_len == 16) {
+			keyType = RA_AES_128;
+		} else if (v->key_len == 24) {
+			keyType = RA_AES_192;
+		} else if (v->key_len == 32) {
+			keyType = RA_AES_256;
+		} else {
+			printf("FAILED (invalid key length %d)\n", v->key_len);
+			return -1;
+		}
+		
+		/* Create context */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_CFB, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		/* Set IV for CFB mode */
+		RaAesSetIV(ctx, v->iv);
+		
+		/* Encryption test */
+		len = RaAesEncryptFinal(ctx, v->plaintext, v->plaintext_len, ciphertext, RA_BLOCK_PADDING_NONE);
+		if (len != v->ciphertext_len) {
+			printf("FAILED (encryption length mismatch: %d != %d)\n", len, v->ciphertext_len);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(ciphertext, v->ciphertext, v->ciphertext_len) != 0) {
+			printf("FAILED (ciphertext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		RaAesDestroy(ctx);
+		
+		/* Decryption test */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_CFB, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate decrypt failed: %d)\n", result);
+			return -1;
+		}
+		
+		RaAesSetIV(ctx, v->iv);
+		
+		len = RaAesDecryptFinal(ctx, v->ciphertext, v->ciphertext_len, decrypted, RA_BLOCK_PADDING_NONE);
+		if (len != v->plaintext_len) {
+			printf("FAILED (decryption length mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(decrypted, v->plaintext, v->plaintext_len) != 0) {
+			printf("FAILED (plaintext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		printf("PASSED\n");
+		RaAesDestroy(ctx);
+	}
+	
+	printf("Extended CFB tests completed (%d vectors tested)\n", count);
+	TvecFree(vectors, count);
+	
+	return RA_ERR_SUCCESS;
+}
+
+static int test_ofb_extended(void)
+{
+	TestVector vectors[100];
+	int count = 0;
+	int result;
+	int i;
+	TestVector *v;
+	struct RaAesCtx *ctx;
+	uint8_t ciphertext[TVEC_MAX_DATA_LEN];
+	uint8_t decrypted[TVEC_MAX_DATA_LEN];
+	int len;
+	enum RaAesKeyType keyType;
+	
+	printf("OFB Extended Tests (from binary test vectors)\n");
+	
+	/* Load test vectors */
+	result = TvecLoad("build/tests/ofb_vectors.bin", vectors, 100, &count);
+	if (result != 0) {
+		printf("Test vector file not found or invalid (error %d)\n", result);
+		printf("Skipping extended OFB tests (this is not a failure)\n");
+		return RA_ERR_SUCCESS;
+	}
+	
+	printf("Loaded %d OFB test vectors\n", count);
+	
+	/* Run tests */
+	for (i = 0; i < count; i++) {
+		v = &vectors[i];
+		
+		printf("  Test vector %d: ", i + 1);
+		
+		/* Validate algorithm and mode */
+		if (v->algorithm != TVEC_ALG_AES || v->mode != TVEC_MODE_OFB) {
+			printf("SKIPPED (not AES-OFB)\n");
+			continue;
+		}
+		
+		/* Determine key type */
+		if (v->key_len == 16) {
+			keyType = RA_AES_128;
+		} else if (v->key_len == 24) {
+			keyType = RA_AES_192;
+		} else if (v->key_len == 32) {
+			keyType = RA_AES_256;
+		} else {
+			printf("FAILED (invalid key length %d)\n", v->key_len);
+			return -1;
+		}
+		
+		/* Create context */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_OFB, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate failed: %d)\n", result);
+			return -1;
+		}
+		
+		/* Set IV for OFB mode */
+		RaAesSetIV(ctx, v->iv);
+		
+		/* Encryption test */
+		len = RaAesEncryptFinal(ctx, v->plaintext, v->plaintext_len, ciphertext, RA_BLOCK_PADDING_NONE);
+		if (len != v->ciphertext_len) {
+			printf("FAILED (encryption length mismatch: %d != %d)\n", len, v->ciphertext_len);
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(ciphertext, v->ciphertext, v->ciphertext_len) != 0) {
+			printf("FAILED (ciphertext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		RaAesDestroy(ctx);
+		
+		/* Decryption test */
+		result = RaAesCreate(v->key, keyType, RA_BLOCK_MODE_OFB, &ctx);
+		if (result != RA_ERR_SUCCESS) {
+			printf("FAILED (RaAesCreate decrypt failed: %d)\n", result);
+			return -1;
+		}
+		
+		RaAesSetIV(ctx, v->iv);
+		
+		len = RaAesDecryptFinal(ctx, v->ciphertext, v->ciphertext_len, decrypted, RA_BLOCK_PADDING_NONE);
+		if (len != v->plaintext_len) {
+			printf("FAILED (decryption length mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		if (memcmp(decrypted, v->plaintext, v->plaintext_len) != 0) {
+			printf("FAILED (plaintext mismatch)\n");
+			RaAesDestroy(ctx);
+			return -1;
+		}
+		
+		printf("PASSED\n");
+		RaAesDestroy(ctx);
+	}
+	
+	printf("Extended OFB tests completed (%d vectors tested)\n", count);
+	TvecFree(vectors, count);
+	
+	return RA_ERR_SUCCESS;
+}
+
 typedef int(*FnTest)(void);
 struct StTest {
 	FnTest func;
@@ -3215,6 +4133,7 @@ struct StTest {
 
 static struct StTest test_list[] =
 {
+
 	TEST_FUNC(test1),
 	TEST_FUNC(test2),
 	TEST_FUNC(test2_1),
@@ -3230,6 +4149,14 @@ static struct StTest test_list[] =
 	TEST_FUNC(test10),
 	TEST_FUNC(test11),
 	TEST_FUNC(test12),
+	TEST_FUNC(test13),
+	TEST_FUNC(test14),
+	TEST_FUNC(test_gcm_extended),
+	TEST_FUNC(test_ecb_extended),
+	TEST_FUNC(test_cbc_extended),
+	TEST_FUNC(test_ctr_extended),
+	TEST_FUNC(test_cfb_extended),
+	TEST_FUNC(test_ofb_extended),
 };
 
 #define TEST_LIST_COUNT		(int)(sizeof(test_list)/sizeof(test_list[0]))

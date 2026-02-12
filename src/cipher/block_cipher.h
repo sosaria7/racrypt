@@ -19,6 +19,11 @@ int RaBlockCipherDecryptFinal(struct RaBlockCipher *ctx, const uint8_t *input, i
 void RaBlockCipherSetIV(struct RaBlockCipher *ctx, const uint8_t *iv);
 void RaBlockCipherGetIV(struct RaBlockCipher *ctx, /*out*/uint8_t *iv);
 
+int RaBlockCipherGcmSetIV(struct RaBlockCipher *ctx, const uint8_t *iv, int iv_len);
+int RaBlockCipherGcmSetAAD(struct RaBlockCipher *ctx, const uint8_t *aad, int aad_len);
+int RaBlockCipherGcmGetTag(struct RaBlockCipher *ctx, uint8_t tag[16]);
+int RaBlockCipherGcmVerifyTag(struct RaBlockCipher *ctx, const uint8_t tag[16]);
+
 #ifdef __cplusplus
 }
 #endif

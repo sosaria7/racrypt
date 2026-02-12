@@ -85,8 +85,46 @@ add_library(racrypt STATIC ${SOURCES})
 target_compile_definitions(racrypt PRIVATE ${PLATFORM_DEFINES})
 target_include_directories(racrypt PRIVATE "${CMAKE_SOURCE_DIR}/src/include")
 
-add_executable(racrypt_test src/test/bnprint.c src/test/test.c)
+add_executable(racrypt_test src/test/bnprint.c src/test/test.c src/test/test_vector.c)
 #target_link_libraries(racrypt_test PUBLIC racrypt)
 target_link_libraries(racrypt_test PRIVATE racrypt)
 target_include_directories(racrypt_test PRIVATE "${CMAKE_SOURCE_DIR}/src/include")
 add_dependencies(racrypt_test racrypt)
+
+# Test vector conversion (optional, requires Python)
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+    # List of cipher modes to generate test vectors for
+    set(CIPHER_MODES gcm ecb cbc ctr cfb ofb)
+    set(TEST_VECTOR_BINS)
+    
+    foreach(mode ${CIPHER_MODES})
+        set(INPUT_FILE "${CMAKE_SOURCE_DIR}/tests/nist_${mode}.txt")
+        set(OUTPUT_FILE "${CMAKE_BINARY_DIR}/tests/${mode}_vectors.bin")
+        
+        add_custom_command(
+            OUTPUT "${OUTPUT_FILE}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/tests
+            COMMAND ${Python3_EXECUTABLE} 
+                    ${CMAKE_SOURCE_DIR}/tools/nist_to_tvec.py
+                    "${INPUT_FILE}"
+                    "${OUTPUT_FILE}"
+            DEPENDS "${INPUT_FILE}"
+                    ${CMAKE_SOURCE_DIR}/tools/nist_to_tvec.py
+            COMMENT "Converting NIST ${mode} test vectors to binary format"
+        )
+        
+        list(APPEND TEST_VECTOR_BINS "${OUTPUT_FILE}")
+    endforeach()
+    
+    add_custom_target(test_vectors ALL
+        DEPENDS ${TEST_VECTOR_BINS}
+    )
+    
+    add_dependencies(racrypt_test test_vectors)
+    
+    message(STATUS "Python3 found: Test vectors will be generated automatically")
+else()
+    message(WARNING "Python3 not found. Test vectors will not be generated.")
+    message(WARNING "You can manually run: python tools/nist_to_tvec.py tests/nist_<mode>.txt build/tests/<mode>_vectors.bin")
+endif()

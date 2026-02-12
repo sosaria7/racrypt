@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+
+	"settings": {
+		"cmake.debugConfig": {
+		"cwd": "${workspaceFolder}",
+		"args": [],
+		}
+	}
+}

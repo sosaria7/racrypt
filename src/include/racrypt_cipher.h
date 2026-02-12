@@ -19,7 +19,8 @@ enum RaBlockCipherMode {
 	RA_BLOCK_MODE_CBC,
 	RA_BLOCK_MODE_CFB,
 	RA_BLOCK_MODE_OFB,
-	RA_BLOCK_MODE_CTR
+	RA_BLOCK_MODE_CTR,
+	RA_BLOCK_MODE_GCM
 };
 
 enum RaBlockCipherPaddingType {
@@ -27,6 +28,33 @@ enum RaBlockCipherPaddingType {
 	RA_BLOCK_PADDING_ZERO,
 	RA_BLOCK_PADDING_PKCS7
 };
+
+/**
+ * @brief GCM (Galois/Counter Mode) state
+ * 
+ * @note GCM mode is only supported with 128-bit block ciphers
+ *       (AES, ARIA, SEED). DES/3DES (64-bit blocks) are not supported.
+ */
+typedef struct RaGcmState {
+	uint32_t H[4];              /**< Hash subkey (128-bit) */
+	uint32_t ghash[4];          /**< Current GHASH accumulator */
+	uint32_t J0[4];             /**< Initial counter block */
+	uint32_t counter[4];        /**< Current counter value */
+	uint64_t aad_len;           /**< AAD length in bits */
+	uint64_t text_len;          /**< Plaintext/ciphertext length in bits */
+	uint8_t tag[16];            /**< Authentication tag */
+	uint8_t state;              /**< State machine: 0=init, 1=aad, 2=text, 3=final */
+} RaGcmState;
+
+/**
+ * @brief Block cipher operation context
+ * 
+ * @note This structure includes GCM state (~168 bytes) for all cipher
+ *       contexts regardless of mode. This adds memory overhead for
+ *       non-GCM modes but ensures structural simplicity and eliminates
+ *       conditional allocation complexity. The gcm field is only
+ *       accessed when opMode == RA_BLOCK_MODE_GCM.
+ */
 struct RaBlockCipher {
 	blockCipherEncryptBlock encryptBlock;
 	blockCipherDecryptBlock decryptBlock;
@@ -35,6 +63,8 @@ struct RaBlockCipher {
 	uint8_t *buffer;		// block size
 	int blockSize;
 	int bufferFilled;
+	
+	RaGcmState gcm;         /**< GCM state (always present, used only in GCM mode) */
 };
 
 
@@ -784,6 +814,52 @@ int RaRc4Encrypt(struct RaRc4Ctx *ctx, const uint8_t *input, int length, uint8_t
 * @return			written length in bytes
 */
 int RaRc4Decrypt(struct RaRc4Ctx *ctx, const uint8_t *input, int length, uint8_t *output);
+
+/**
+ * @brief Set GCM initialization vector and compute hash subkey
+ * 
+ * @param ctx        Block cipher context (must be in GCM mode)
+ * @param iv         Initialization vector
+ * @param iv_len     IV length in bytes (recommended: 12 bytes)
+ * @retval RA_ERR_SUCCESS           Success
+ * @retval RA_ERR_INVALID_PARAM		Invalid mode or parameters
+ * @note Must be called after RaAesInit/RaAriaInit/RaSeedInit with RA_BLOCK_MODE_GCM
+ */
+int RaBlockCipherGcmSetIV(struct RaBlockCipher *ctx, const uint8_t *iv, int iv_len);
+
+/**
+ * @brief Process Additional Authenticated Data (AAD)
+ * 
+ * @param ctx        Block cipher context
+ * @param aad        Additional authenticated data
+ * @param aad_len    AAD length in bytes
+ * @retval RA_ERR_SUCCESS           Success
+ * @retval RA_ERR_INVALID_STATE     Called in wrong state
+ * @note Must be called after RaBlockCipherGcmSetIV, before encryption/decryption
+ */
+int RaBlockCipherGcmSetAAD(struct RaBlockCipher *ctx, const uint8_t *aad, int aad_len);
+
+/**
+ * @brief Get authentication tag after encryption
+ * 
+ * @param ctx        Block cipher context
+ * @param tag        Output buffer for tag (16 bytes)
+ * @retval RA_ERR_SUCCESS           Success
+ * @retval RA_ERR_INVALID_STATE     Called before finalization
+ * @note Call after RaBlockCipherEncryptFinal
+ */
+int RaBlockCipherGcmGetTag(struct RaBlockCipher *ctx, uint8_t tag[16]);
+
+/**
+ * @brief Verify authentication tag after decryption
+ * 
+ * @param ctx        Block cipher context
+ * @param tag        Expected tag (16 bytes)
+ * @retval RA_ERR_SUCCESS           Tag verified
+ * @retval RA_ERR_VERIFY_FAILED     Tag mismatch
+ * @note Call after RaBlockCipherDecryptFinal
+ */
+int RaBlockCipherGcmVerifyTag(struct RaBlockCipher *ctx, const uint8_t tag[16]);
 
 #ifdef __cplusplus
 }

@@ -14,7 +14,9 @@ extern "C" {
 #define RA_ERR_NUMBER_SIZE					(-4)
 #define RA_ERR_INVALID_PARAM				(-5)
 #define RA_ERR_INVALID_DATA					(-6)
-
+#define RA_ERR_OPERATION_ABORTED			(-7)
+#define RA_ERR_INVALID_STATE				(-8)
+#define RA_ERR_VERIFY_FAILED				(-9)
 
 #ifdef __cplusplus
 }
