@@ -424,6 +424,161 @@ _EXIT:
 	return result;
 }
 
+// Compares bn against the expected value, printing a PASS/FAIL line labeled by `name`.
+// Returns 1 on match, 0 on mismatch (and dumps both values on mismatch).
+static int test1_1_Check(const char *name, struct RaBigNumber *bn, struct RaBigNumber *expected)
+{
+	if (BnCmp(bn, expected) == 0) {
+		printf("  [PASS] %s\n", name);
+		return 1;
+	}
+	printf("  [FAIL] %s\n", name);
+	printf("    got     : "); BnPrintLn(bn);
+	printf("    expected: "); BnPrintLn(expected);
+	return 0;
+}
+
+// _BnDiv128's internal 64bit/64bit trial-digit estimate can see a.high == b (its own
+// overflow boundary) even though the true quotient digit at that position is nowhere
+// near UINT64_MAX, because the estimate only looks at the divisor's top 64bit word
+// (bu), not the full multi-word divisor (bb). This exercises that saturate-then-correct
+// path inside BnDiv()/BnMod() with a case whose exact answer is known ahead of time.
+static int test1_1_BnDivOverflow(void)
+{
+	int ok = 1;
+	struct RaBigNumber *aa = NULL, *bb = NULL, *q = NULL, *r = NULL;
+	struct RaBigNumber *qExp = NULL, *rExp = NULL;
+	const bn_uint_t BU = UINT64_C(0x8000123456781234);	// bb's top word (top bit set: already normalized)
+
+	aa = BnNew(256);
+	bb = BnNew(256);
+	q = BnNew(256);
+	r = BnNew(256);
+	qExp = BnNew(256);
+	rExp = BnNew(256);
+
+	// bb = BU * 2^64 + 1
+	BnSetUInt64(bb, BU);
+	BnShiftL(bb, 64);
+	BnAddUInt(bb, 1);
+
+	// aa = BU * 2^128 + (2^64 - 1) = bb*(2^64-1) + (bb-1)
+	BnSetUInt64(aa, BU);
+	BnShiftL(aa, 128);
+	BnAddUInt(aa, UINT64_C(0xffffffffffffffff));
+
+	BnDiv(q, r, aa, bb);
+
+	// expected quotient: 2^64 - 1 (a single word, all bits set)
+	BnSetUInt64(qExp, UINT64_C(0xffffffffffffffff));
+	// expected remainder: bb - 1 == BU * 2^64
+	BnSetUInt64(rExp, BU);
+	BnShiftL(rExp, 64);
+
+	printf("BnDiv() overflow case (_BnDiv128 saturates on the top-word-only estimate)\n");
+	ok &= test1_1_Check("quotient", q, qExp);
+	ok &= test1_1_Check("remainder", r, rExp);
+
+	BN_SAFEFREE(aa);
+	BN_SAFEFREE(bb);
+	BN_SAFEFREE(q);
+	BN_SAFEFREE(r);
+	BN_SAFEFREE(qExp);
+	BN_SAFEFREE(rExp);
+
+	return ok;
+}
+
+// BnDivInt/BnDivUInt/BnModUInt process one word of the dividend per turn against a
+// single-word divisor. When a word is exactly equal to the divisor, the quotient digit
+// there is 1 (with remainder 0); a comparison of "> divisor" instead of ">=" treated
+// that as "smaller than divisor" and skipped it, letting the unreduced word carry into
+// the next turn as val.high == divisor -- which is genuine overflow input to
+// _BnDiv128(), and with no correction loop (unlike BnDiv()/BnMod()) the wrong,
+// saturated digit was written straight into the result.
+static int test1_1_SingleWordDivisorOverflow(void)
+{
+	int ok = 1;
+	struct RaBigNumber *bn = NULL, *qExp = NULL;
+	bn_uint_t remainder;
+	const bn_uint_t DU = UINT64_C(0x8000123456781234);	// unsigned divisor, top word == this value exactly
+	const bn_int_t DS = (bn_int_t)UINT64_C(0x1234567812345678);	// signed divisor (top bit clear)
+	const bn_uint_t LOW_DIGIT = 0x1234;
+
+	printf("BnDivUInt/BnDivInt/BnModUInt: dividend's top word == divisor exactly\n");
+
+	qExp = BnNew(256);
+	BnSetUInt64(qExp, 1);
+	BnShiftL(qExp, 64);	// expected quotient: 2^64
+
+	// BnDivUInt
+	bn = BnNew(256);
+	BnSetUInt64(bn, DU);
+	BnShiftL(bn, 64);
+	BnAddUInt(bn, LOW_DIGIT);
+	remainder = 0;
+	BnDivUInt(bn, DU, &remainder);
+	ok &= test1_1_Check("BnDivUInt quotient", bn, qExp);
+	if (remainder != LOW_DIGIT) {
+		printf("  [FAIL] BnDivUInt remainder: got %016llx expected %016llx\n",
+			(unsigned long long)remainder, (unsigned long long)LOW_DIGIT);
+		ok = 0;
+	}
+	else {
+		printf("  [PASS] BnDivUInt remainder\n");
+	}
+	BN_SAFEFREE(bn);
+
+	// BnDivInt (signed divisor, top bit clear so the sign handling itself stays out of the way)
+	bn = BnNew(256);
+	BnSetUInt64(bn, (bn_uint_t)DS);
+	BnShiftL(bn, 64);
+	BnAddUInt(bn, LOW_DIGIT);
+	remainder = 0;
+	BnDivInt(bn, DS, &remainder);
+	ok &= test1_1_Check("BnDivInt quotient", bn, qExp);
+	if (remainder != LOW_DIGIT) {
+		printf("  [FAIL] BnDivInt remainder: got %016llx expected %016llx\n",
+			(unsigned long long)remainder, (unsigned long long)LOW_DIGIT);
+		ok = 0;
+	}
+	else {
+		printf("  [PASS] BnDivInt remainder\n");
+	}
+	BN_SAFEFREE(bn);
+
+	// BnModUInt
+	bn = BnNew(256);
+	BnSetUInt64(bn, DU);
+	BnShiftL(bn, 64);
+	BnAddUInt(bn, LOW_DIGIT);
+	remainder = 0;
+	BnModUInt(bn, DU, &remainder);
+	if (remainder != LOW_DIGIT) {
+		printf("  [FAIL] BnModUInt remainder: got %016llx expected %016llx\n",
+			(unsigned long long)remainder, (unsigned long long)LOW_DIGIT);
+		ok = 0;
+	}
+	else {
+		printf("  [PASS] BnModUInt remainder\n");
+	}
+	BN_SAFEFREE(bn);
+
+	BN_SAFEFREE(qExp);
+
+	return ok;
+}
+
+int test1_1(void)
+{
+	int ok = 1;
+
+	ok &= test1_1_BnDivOverflow();
+	ok &= test1_1_SingleWordDivisorOverflow();
+
+	return ok ? RA_ERR_SUCCESS : RA_ERR_INVALID_DATA;
+}
+
 int test2(void)
 {
 	int result;
@@ -502,6 +657,7 @@ int test2_1(void)
 			result = RaGenPrimeNumberEx(N, TEST2_1_BIT_LEN, NULL, NULL, rand);
 			if (result != RA_ERR_SUCCESS)
 			{
+				printf("error: RaGenPrimeNumberEx");
 				goto _EXIT;
 			}
 		}
@@ -509,35 +665,41 @@ int test2_1(void)
 		result = BnGenRandom(val, TEST2_1_BIT_LEN, rand);
 		if (result != RA_ERR_SUCCESS)
 		{
+			printf("error: BnGenRandom");
 			goto _EXIT;
 		}
 		result = BnMod(val, val, N);
 		if (result != RA_ERR_SUCCESS)
 		{
+			printf("error: BnMod");
 			goto _EXIT;
 		}
 
 		result = RaMontCreate(N, &mont);
 		if (result != RA_ERR_SUCCESS)
 		{
+			printf("error: RaMontCreate");
 			goto _EXIT;
 		}
 
 		result = RaMontSqr(mont, sqr, val);
 		if (result != RA_ERR_SUCCESS)
 		{
+			printf("error: RaMontSqr");
 			goto _EXIT;
 		}
 
 		result = RaMontSqrt(mont, sqrt, sqr);
 		if (result != RA_ERR_SUCCESS)
 		{
+			printf("error: RaMontSqrt");
 			goto _EXIT;
 		}
 
 		result = RaMontSqr(mont, val, sqrt);
 		if (result != RA_ERR_SUCCESS)
 		{
+			printf("error: RaMontSqr");
 			goto _EXIT;
 		}
 		RaMontDestroy(mont);
@@ -3216,6 +3378,7 @@ struct StTest {
 static struct StTest test_list[] =
 {
 	TEST_FUNC(test1),
+	TEST_FUNC(test1_1),
 	TEST_FUNC(test2),
 	TEST_FUNC(test2_1),
 	TEST_FUNC(test2_2),
