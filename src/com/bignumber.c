@@ -1114,7 +1114,7 @@ int BnDivInt(struct RaBigNumber *bn, bn_int_t divisor, /*out*/bn_uint_t *remaind
 		val.high = val.low;
 		val.low = bn->data[i];
 
-		if (val.high != 0 || val.low > (bn_uint_t)divisor) {
+		if (val.high != 0 || val.low >= (bn_uint_t)divisor) {
 			if (length == 0)
 				length = i + 1;
 			bn->data[i] = _BnDiv128(val, (bn_uint_t)divisor, &val.low);
@@ -1149,7 +1149,7 @@ int BnDivInt(struct RaBigNumber *bn, bn_int_t divisor, /*out*/bn_uint_t *remaind
 	val = 0;
 	for (i = bn->length - 1; i >= 0; i--) {
 		val = (val << 32) + bn->data[i];
-		if (val > (uint32_t)divisor) {
+		if (val >= (uint32_t)divisor) {
 			if (length == 0)
 				length = i + 1;
 			bn->data[i] = (uint32_t)(val / (uint32_t)divisor);
@@ -1192,7 +1192,7 @@ int BnDivUInt(struct RaBigNumber *bn, bn_uint_t divisor, /*out*/bn_uint_t *remai
 		val.high = val.low;
 		val.low = bn->data[i];
 
-		if (val.high != 0 || val.low > (bn_uint_t)divisor) {
+		if (val.high != 0 || val.low >= (bn_uint_t)divisor) {
 			if (length == 0)
 				length = i + 1;
 			bn->data[i] = _BnDiv128(val, (bn_uint_t)divisor, &val.low);
@@ -1223,7 +1223,7 @@ int BnDivUInt(struct RaBigNumber *bn, bn_uint_t divisor, /*out*/bn_uint_t *remai
 	val = 0;
 	for (i = bn->length - 1; i >= 0; i--) {
 		val = (val << 32) + bn->data[i];
-		if (val > (uint32_t)divisor) {
+		if (val >= (uint32_t)divisor) {
 			if (length == 0)
 				length = i + 1;
 			bn->data[i] = (uint32_t)(val / (uint32_t)divisor);
@@ -1265,7 +1265,7 @@ int BnModUInt(struct RaBigNumber *bn, bn_uint_t divisor, /*out*/bn_uint_t *remai
 		val.high = val.low;
 		val.low = bn->data[i];
 
-		if (val.high > 0 || val.low > divisor) {
+		if (val.high > 0 || val.low >= divisor) {
 			if (length == 0)
 				length = i + 1;
 			_BnDiv128(val, divisor, &val.low);
@@ -1285,7 +1285,7 @@ int BnModUInt(struct RaBigNumber *bn, bn_uint_t divisor, /*out*/bn_uint_t *remai
 	val = 0;
 	for (i = bn->length - 1; i >= 0; i--) {
 		val = (val << 32) + bn->data[i];
-		if (val > divisor) {
+		if (val >= divisor) {
 			if (length == 0)
 				length = i + 1;
 			val %= (uint32_t)divisor;
@@ -2061,7 +2061,7 @@ static uint64_t _BnDiv128(bn_uint128_t a, uint64_t b, uint64_t *remainder)
 	if (remainder != NULL)
 		*remainder = (uint64_t)(a128 % b);
 	return (uint64_t)(a128 / b);
-#elif _MSC_VER > 1920 && defined(_M_X64)
+#elif _MSC_VER >= 1920 && defined(_M_X64)
 	uint64_t r = 0;
 	uint64_t q;
 	if (a.high >= b) {
@@ -2080,6 +2080,11 @@ static uint64_t _BnDiv128(bn_uint128_t a, uint64_t b, uint64_t *remainder)
 	uint64_t ru;
 	bn_uint128_t bq;
 	int bit;
+
+	if (a.high >= b) {
+		// overflow
+		return UINT64_C(0xFFFFFFFFFFFFFFFF);
+	}
 
 	q = 0;
 
