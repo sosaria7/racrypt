@@ -657,7 +657,7 @@ int test2_1(void)
 			result = RaGenPrimeNumberEx(N, TEST2_1_BIT_LEN, NULL, NULL, rand);
 			if (result != RA_ERR_SUCCESS)
 			{
-				printf("error: RaGenPrimeNumberEx");
+				printf("error: RaGenPrimeNumberEx()\n");
 				goto _EXIT;
 			}
 		}
@@ -665,41 +665,41 @@ int test2_1(void)
 		result = BnGenRandom(val, TEST2_1_BIT_LEN, rand);
 		if (result != RA_ERR_SUCCESS)
 		{
-			printf("error: BnGenRandom");
+			printf("error: BnGenRandom()\n");
 			goto _EXIT;
 		}
 		result = BnMod(val, val, N);
 		if (result != RA_ERR_SUCCESS)
 		{
-			printf("error: BnMod");
+			printf("error: BnMod()\n");
 			goto _EXIT;
 		}
 
 		result = RaMontCreate(N, &mont);
 		if (result != RA_ERR_SUCCESS)
 		{
-			printf("error: RaMontCreate");
+			printf("error: RaMontCreate()\n");
 			goto _EXIT;
 		}
 
 		result = RaMontSqr(mont, sqr, val);
 		if (result != RA_ERR_SUCCESS)
 		{
-			printf("error: RaMontSqr");
+			printf("error: RaMontSqr()\n");
 			goto _EXIT;
 		}
 
 		result = RaMontSqrt(mont, sqrt, sqr);
 		if (result != RA_ERR_SUCCESS)
 		{
-			printf("error: RaMontSqrt");
+			printf("error: RaMontSqrt()\n");
 			goto _EXIT;
 		}
 
 		result = RaMontSqr(mont, val, sqrt);
 		if (result != RA_ERR_SUCCESS)
 		{
-			printf("error: RaMontSqr");
+			printf("error: RaMontSqr()\n");
 			goto _EXIT;
 		}
 		RaMontDestroy(mont);
